@@ -307,38 +307,47 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildWelcomeBanner(String username, ColorScheme colorScheme) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        gradient: LinearGradient(
-          colors: [
-            colorScheme.primary.withValues(alpha: 0.15),
-            colorScheme.secondary.withValues(alpha: 0.05),
-          ],
-        ),
-        border: Border.all(
-          color: colorScheme.primary.withValues(alpha: 0.2),
-        ),
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Welcome back, $username 👋',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: colorScheme.onSurface,
+          Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: 'Welcome back, ',
+                  style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w300,
+                    color: colorScheme.onSurface.withValues(alpha: 0.8),
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                TextSpan(
+                  text: username,
+                  style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w700,
+                    color: colorScheme.primary,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const TextSpan(
+                  text: ' 👋',
+                  style: TextStyle(fontSize: 26),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Text(
             'Ready for game day?',
             style: TextStyle(
-              fontSize: 14,
-              color: colorScheme.onSurface.withValues(alpha: 0.6),
+              fontSize: 15,
+              fontWeight: FontWeight.w400,
+              color: colorScheme.onSurface.withValues(alpha: 0.5),
+              letterSpacing: 0.2,
             ),
           ),
         ],
