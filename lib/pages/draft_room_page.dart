@@ -307,6 +307,33 @@ class _DraftRoomPageState extends State<DraftRoomPage>
           child: StreamBuilder<Map<String, dynamic>>(
             stream: _draftService.streamDraftState(),
             builder: (context, stateSnap) {
+              if (stateSnap.hasError) {
+                return Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.error_outline,
+                          size: 40, color: colorScheme.error),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Failed to load draft state',
+                        style: TextStyle(color: colorScheme.onSurface),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${stateSnap.error}',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color:
+                              colorScheme.onSurface.withValues(alpha: 0.5),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                );
+              }
+
               if (!stateSnap.hasData) {
                 return const DyneLoading(message: 'Loading draft room...');
               }
@@ -353,9 +380,45 @@ class _DraftRoomPageState extends State<DraftRoomPage>
               return StreamBuilder<List<DraftPick>>(
                 stream: _draftService.streamPicks(),
                 builder: (context, picksSnap) {
-                  if (!picksSnap.hasData || picksSnap.data!.isEmpty) {
+                  if (picksSnap.hasError) {
+                    return Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.error_outline,
+                              size: 40,
+                              color: colorScheme.error),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Failed to load draft picks',
+                            style: TextStyle(color: colorScheme.onSurface),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${picksSnap.error}',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: colorScheme.onSurface
+                                  .withValues(alpha: 0.5),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  if (!picksSnap.hasData) {
                     return const DyneLoading(message: 'Loading picks...');
                   }
+
+                  if (picksSnap.data!.isEmpty) {
+                    // Picks collection empty — draft was just initialized,
+                    // batch write may still be propagating
+                    return const DyneLoading(
+                        message: 'Generating draft order...');
+                  }
+
                   final picks = picksSnap.data!;
                   final currentPickData = currentPick <= picks.length
                       ? picks[currentPick - 1]
@@ -1491,9 +1554,8 @@ class _DraftRoomPageState extends State<DraftRoomPage>
                 : ReorderableListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     itemCount: queuedPlayers.length,
-                    onReorder: (oldIndex, newIndex) {
+                    onReorderItem: (oldIndex, newIndex) {
                       setState(() {
-                        if (newIndex > oldIndex) newIndex--;
                         final item = _queue.removeAt(oldIndex);
                         _queue.insert(newIndex, item);
                       });
