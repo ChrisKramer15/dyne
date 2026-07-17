@@ -13,6 +13,7 @@ import '../utils/team_defaults.dart';
 import '../widgets/dyne_loading.dart';
 import '../widgets/trade_inbox.dart';
 import 'draft_room_page.dart';
+import 'matchup_page.dart';
 import 'league_chat_tab.dart';
 import 'league_settings_page.dart';
 
@@ -130,6 +131,8 @@ class _LeagueDashboardPageState extends State<LeagueDashboardPage> {
       case 3:
         return _buildStandingsTab(colorScheme);
       case 4:
+        return _buildScheduleTab(league, colorScheme);
+      case 5:
         return LeagueChatTab(leagueId: leagueId);
       default:
         return _buildDashboard(context, league, colorScheme);
@@ -142,6 +145,7 @@ class _LeagueDashboardPageState extends State<LeagueDashboardPage> {
       _NavItem(Icons.people_alt_rounded, 'Roster'),
       _NavItem(Icons.swap_horiz_rounded, 'Trades'),
       _NavItem(Icons.leaderboard_rounded, 'Standings'),
+      _NavItem(Icons.calendar_month_rounded, 'Schedule'),
       _NavItem(Icons.chat_bubble_rounded, 'Chat'),
     ];
 
@@ -747,30 +751,851 @@ class _LeagueDashboardPageState extends State<LeagueDashboardPage> {
     return _TradesTabView(leagueId: leagueId);
   }
 
-  // ─── Standings Tab (placeholder) ─────────────────────────────────
+  // ─── Standings Tab ────────────────────────────────────────────────
 
   Widget _buildStandingsTab(ColorScheme colorScheme) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.leaderboard_rounded,
-              size: 48, color: colorScheme.primary.withValues(alpha: 0.4)),
-          const SizedBox(height: 12),
-          Text(
-            'Standings',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: colorScheme.onSurface,
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('leagues')
+          .doc(leagueId)
+          .collection('teams')
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(child: DyneLoading());
+        }
+
+        final teamDocs = snapshot.data!.docs;
+        if (teamDocs.isEmpty) {
+          return Center(
+            child: Text(
+              'No teams yet',
+              style: TextStyle(
+                color: colorScheme.onSurface.withValues(alpha: 0.5),
+              ),
+            ),
+          );
+        }
+
+        // Build standings entries with simulated records
+        final standings = teamDocs.map((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          final hash = doc.id.hashCode;
+          final wins = (hash.abs() % 10);
+          final losses = ((hash.abs() >> 4) % 10);
+          final pointsFor = (hash.abs() % 500) + 800;
+          final pointsAgainst = ((hash.abs() >> 3) % 500) + 800;
+          return _StandingsEntry(
+            teamId: doc.id,
+            name: data['name'] as String? ?? 'Unknown',
+            abbreviation: data['abbreviation'] as String? ?? '???',
+            primaryColor: data['primaryColor'] != null
+                ? Color(data['primaryColor'] as int)
+                : colorScheme.primary,
+            iconIndex: data['iconIndex'] as int? ?? 0,
+            wins: wins,
+            losses: losses,
+            pointsFor: pointsFor.toDouble(),
+            pointsAgainst: pointsAgainst.toDouble(),
+          );
+        }).toList();
+
+        // Sort by wins desc, then points for desc
+        standings.sort((a, b) {
+          final wDiff = b.wins.compareTo(a.wins);
+          if (wDiff != 0) return wDiff;
+          return b.pointsFor.compareTo(a.pointsFor);
+        });
+
+        final uid = FirebaseAuth.instance.currentUser?.uid;
+
+        return Column(
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: colorScheme.primary.withValues(alpha: 0.1),
+                  ),
+                ),
+              ),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 28,
+                    child: Text(
+                      '#',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: colorScheme.onSurface.withValues(alpha: 0.4),
+                      ),
+                    ),
+                  ),
+                  const Expanded(
+                    child: Text(
+                      'TEAM',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white54,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 50,
+                    child: Text(
+                      'W-L',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: colorScheme.onSurface.withValues(alpha: 0.4),
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 50,
+                    child: Text(
+                      'PF',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: colorScheme.onSurface.withValues(alpha: 0.4),
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 50,
+                    child: Text(
+                      'PA',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: colorScheme.onSurface.withValues(alpha: 0.4),
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Team rows
+            Expanded(
+              child: ListView.builder(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                itemCount: standings.length,
+                itemBuilder: (context, index) {
+                  final entry = standings[index];
+                  final isMe = entry.teamId == uid;
+                  final rank = index + 1;
+
+                  return Container(
+                    margin: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      color: isMe
+                          ? entry.primaryColor.withValues(alpha: 0.08)
+                          : const Color(0xFF141829),
+                      border: Border.all(
+                        color: isMe
+                            ? entry.primaryColor.withValues(alpha: 0.3)
+                            : colorScheme.primary.withValues(alpha: 0.06),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        // Rank
+                        SizedBox(
+                          width: 28,
+                          child: Text(
+                            '$rank',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              color: rank <= 4
+                                  ? colorScheme.primary
+                                  : colorScheme.onSurface
+                                      .withValues(alpha: 0.4),
+                            ),
+                          ),
+                        ),
+                        // Team icon
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: entry.primaryColor.withValues(alpha: 0.15),
+                            border: Border.all(
+                              color:
+                                  entry.primaryColor.withValues(alpha: 0.4),
+                            ),
+                          ),
+                          child: Icon(
+                            TeamDefaults.iconOptions[entry.iconIndex
+                                .clamp(0, TeamDefaults.iconOptions.length - 1)],
+                            size: 14,
+                            color: entry.primaryColor,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        // Team name
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                entry.name,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight:
+                                      isMe ? FontWeight.w800 : FontWeight.w600,
+                                  color: colorScheme.onSurface,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                entry.abbreviation,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: entry.primaryColor
+                                      .withValues(alpha: 0.7),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Record
+                        SizedBox(
+                          width: 50,
+                          child: Text(
+                            '${entry.wins}-${entry.losses}',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: colorScheme.onSurface,
+                            ),
+                          ),
+                        ),
+                        // Points For
+                        SizedBox(
+                          width: 50,
+                          child: Text(
+                            entry.pointsFor.toStringAsFixed(0),
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: colorScheme.onSurface
+                                  .withValues(alpha: 0.6),
+                            ),
+                          ),
+                        ),
+                        // Points Against
+                        SizedBox(
+                          width: 50,
+                          child: Text(
+                            entry.pointsAgainst.toStringAsFixed(0),
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: colorScheme.onSurface
+                                  .withValues(alpha: 0.6),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // ─── Schedule Tab ────────────────────────────────────────────────
+
+  Widget _buildScheduleTab(League league, ColorScheme colorScheme) {
+    final regularWeeks = league.regularSeasonWeeks;
+    final playoffTeams = league.playoffTeams;
+    final hasDraftTime = league.draftStartTime != null;
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('leagues')
+          .doc(leagueId)
+          .collection('teams')
+          .snapshots(),
+      builder: (context, teamSnap) {
+        final teamDocs = teamSnap.data?.docs ?? [];
+        final teamNames = <String, String>{};
+        final teamColors = <String, Color>{};
+        for (final doc in teamDocs) {
+          final data = doc.data() as Map<String, dynamic>;
+          teamNames[doc.id] = data['name'] as String? ?? 'Team';
+          teamColors[doc.id] = data['primaryColor'] != null
+              ? Color(data['primaryColor'] as int)
+              : colorScheme.primary;
+        }
+
+        final memberIds = league.memberIds;
+        final uid = FirebaseAuth.instance.currentUser?.uid;
+
+        return DefaultTabController(
+          length: 3,
+          child: Column(
+            children: [
+              TabBar(
+                indicatorColor: colorScheme.primary,
+                labelColor: colorScheme.primary,
+                unselectedLabelColor:
+                    colorScheme.onSurface.withValues(alpha: 0.4),
+                labelStyle: const TextStyle(
+                    fontSize: 11, fontWeight: FontWeight.w700),
+                indicatorWeight: 2,
+                tabs: const [
+                  Tab(text: 'My Schedule'),
+                  Tab(text: 'Full Season'),
+                  Tab(text: 'Playoffs'),
+                ],
+              ),
+              Expanded(
+                child: TabBarView(
+                  children: [
+                    _buildMyScheduleView(
+                      colorScheme,
+                      league: league,
+                      memberIds: memberIds,
+                      teamNames: teamNames,
+                      teamColors: teamColors,
+                      uid: uid,
+                      regularWeeks: regularWeeks,
+                      hasDraftTime: hasDraftTime,
+                    ),
+                    _buildFullSeasonView(
+                      colorScheme,
+                      memberIds: memberIds,
+                      teamNames: teamNames,
+                      teamColors: teamColors,
+                      regularWeeks: regularWeeks,
+                    ),
+                    _buildPlayoffsView(
+                      colorScheme,
+                      playoffTeams: playoffTeams,
+                      regularWeeks: regularWeeks,
+                      teamNames: teamNames,
+                      teamColors: teamColors,
+                      memberIds: memberIds,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  int _playoffRoundsNeeded(int teams) {
+    if (teams <= 2) return 1;
+    if (teams <= 4) return 2;
+    if (teams <= 8) return 3;
+    return 4;
+  }
+
+  Widget _buildMyScheduleView(
+    ColorScheme colorScheme, {
+    required League league,
+    required List<String> memberIds,
+    required Map<String, String> teamNames,
+    required Map<String, Color> teamColors,
+    required String? uid,
+    required int regularWeeks,
+    required bool hasDraftTime,
+  }) {
+    if (uid == null) return const SizedBox.shrink();
+
+    return ListView.builder(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.all(12),
+      itemCount: regularWeeks + (hasDraftTime ? 1 : 0),
+      itemBuilder: (context, index) {
+        // Draft event at the top
+        if (hasDraftTime && index == 0) {
+          return _buildScheduleEvent(
+            colorScheme,
+            icon: Icons.sports_football,
+            title: 'Draft Day',
+            subtitle: _formatDraftTime(league.draftStartTime!),
+            color: const Color(0xFFFF8F00),
+            isHighlighted: true,
+          );
+        }
+
+        final weekIndex = hasDraftTime ? index - 1 : index;
+        final week = weekIndex + 1;
+
+        // Generate a consistent opponent for this week
+        final opponents = List<String>.from(memberIds)
+          ..remove(uid);
+        if (opponents.isEmpty) return const SizedBox.shrink();
+        final oppIndex =
+            (uid.hashCode + week * 7) % opponents.length;
+        final opponent = opponents[oppIndex];
+
+        // Check bye week (simulated: each team gets one bye)
+        final byeWeek = (uid.hashCode.abs() % regularWeeks) + 1;
+        if (week == byeWeek) {
+          return _buildScheduleEvent(
+            colorScheme,
+            icon: Icons.beach_access,
+            title: 'Week $week — BYE',
+            subtitle: 'No matchup this week',
+            color: colorScheme.onSurface.withValues(alpha: 0.3),
+            isHighlighted: false,
+          );
+        }
+
+        final oppName = teamNames[opponent] ?? 'Opponent';
+        final oppColor = teamColors[opponent] ?? colorScheme.primary;
+
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => MatchupPage(
+                  leagueId: leagueId,
+                  team1Id: uid,
+                  team2Id: opponent,
+                  week: week,
+                ),
+              ),
+            );
+          },
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              color: const Color(0xFF141829),
+            border: Border.all(
+              color: colorScheme.primary.withValues(alpha: 0.06),
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            'League standings will appear once the season starts',
-            style: TextStyle(
-              fontSize: 13,
-              color: colorScheme.onSurface.withValues(alpha: 0.5),
+          child: Row(
+            children: [
+              // Week number
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  color: colorScheme.primary.withValues(alpha: 0.1),
+                ),
+                child: Center(
+                  child: Text(
+                    '$week',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: colorScheme.primary,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Matchup info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Week $week',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'vs $oppName',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: oppColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Status indicator
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(6),
+                  color: colorScheme.onSurface.withValues(alpha: 0.05),
+                ),
+                child: Text(
+                  'Upcoming',
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w600,
+                    color: colorScheme.onSurface.withValues(alpha: 0.4),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        );
+      },
+    );
+  }
+
+  Widget _buildFullSeasonView(
+    ColorScheme colorScheme, {
+    required List<String> memberIds,
+    required Map<String, String> teamNames,
+    required Map<String, Color> teamColors,
+    required int regularWeeks,
+  }) {
+    return ListView.builder(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.all(12),
+      itemCount: regularWeeks,
+      itemBuilder: (context, index) {
+        final week = index + 1;
+
+        // Generate matchups for this week
+        final teams = List<String>.from(memberIds);
+        final matchups = <_Matchup>[];
+        final shuffled = List<String>.from(teams);
+        // Deterministic shuffle based on week
+        shuffled.sort((a, b) =>
+            (a.hashCode * week).compareTo(b.hashCode * week));
+
+        for (var i = 0; i + 1 < shuffled.length; i += 2) {
+          matchups.add(_Matchup(shuffled[i], shuffled[i + 1]));
+        }
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            color: const Color(0xFF141829),
+            border: Border.all(
+              color: colorScheme.primary.withValues(alpha: 0.08),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Week header
+              Row(
+                children: [
+                  Container(
+                    width: 3,
+                    height: 14,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(2),
+                      color: colorScheme.primary,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'WEEK $week',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.5,
+                      color: colorScheme.primary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              // Matchup rows
+              ...matchups.map((m) {
+                final team1Name = teamNames[m.team1] ?? 'Team';
+                final team2Name = teamNames[m.team2] ?? 'Team';
+                final team1Color =
+                    teamColors[m.team1] ?? colorScheme.primary;
+                final team2Color =
+                    teamColors[m.team2] ?? colorScheme.primary;
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: team1Color,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          team1Name,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: colorScheme.onSurface,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Text(
+                        'vs',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: colorScheme.onSurface
+                              .withValues(alpha: 0.3),
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          team2Name,
+                          textAlign: TextAlign.end,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: colorScheme.onSurface,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: team2Color,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPlayoffsView(
+    ColorScheme colorScheme, {
+    required int playoffTeams,
+    required int regularWeeks,
+    required Map<String, String> teamNames,
+    required Map<String, Color> teamColors,
+    required List<String> memberIds,
+  }) {
+    final rounds = _playoffRoundsNeeded(playoffTeams);
+
+    return ListView.builder(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.all(12),
+      itemCount: rounds,
+      itemBuilder: (context, index) {
+        final round = index + 1;
+        final weekNum = regularWeeks + round;
+        final teamsInRound = playoffTeams ~/ (1 << index);
+        final matchupsInRound = teamsInRound ~/ 2;
+
+        String roundName;
+        if (round == rounds) {
+          roundName = 'Championship';
+        } else if (round == rounds - 1 && rounds > 1) {
+          roundName = 'Semifinals';
+        } else {
+          roundName = 'Round $round';
+        }
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                const Color(0xFFFFD600).withValues(alpha: 0.08),
+                const Color(0xFF141829),
+              ],
+            ),
+            border: Border.all(
+              color: const Color(0xFFFFD600).withValues(alpha: 0.2),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    round == rounds ? Icons.emoji_events : Icons.stadium,
+                    size: 16,
+                    color: const Color(0xFFFFD600),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    roundName.toUpperCase(),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.5,
+                      color: Color(0xFFFFD600),
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    'Week $weekNum',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: colorScheme.onSurface.withValues(alpha: 0.4),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ...List.generate(matchupsInRound.clamp(1, 8), (i) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.white.withValues(alpha: 0.03),
+                      border: Border.all(
+                        color: const Color(0xFFFFD600)
+                            .withValues(alpha: 0.1),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Text(
+                          'Seed ${i * 2 + 1}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          'vs',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: colorScheme.onSurface
+                                .withValues(alpha: 0.3),
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          'Seed ${teamsInRound - i * 2}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildScheduleEvent(
+    ColorScheme colorScheme, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required bool isHighlighted,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        color: isHighlighted
+            ? color.withValues(alpha: 0.1)
+            : const Color(0xFF141829),
+        border: Border.all(
+          color: isHighlighted
+              ? color.withValues(alpha: 0.3)
+              : colorScheme.primary.withValues(alpha: 0.06),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              color: color.withValues(alpha: 0.15),
+            ),
+            child: Icon(icon, size: 18, color: color),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: color.withValues(alpha: 0.8),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -1195,7 +2020,7 @@ class _LeagueDashboardPageState extends State<LeagueDashboardPage> {
     final now = DateTime.now();
     final pickedDate = await showDatePicker(
       context: context,
-      initialDate: league.draftStartTime ?? now.add(const Duration(days: 7)),
+      initialDate: league.draftStartTime ?? now,
       firstDate: now,
       lastDate: now.add(const Duration(days: 365)),
     );
@@ -1205,7 +2030,7 @@ class _LeagueDashboardPageState extends State<LeagueDashboardPage> {
     final pickedTime = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.fromDateTime(
-          league.draftStartTime ?? DateTime(2024, 1, 1, 19, 0)),
+          league.draftStartTime ?? now),
     );
 
     if (pickedTime == null || !context.mounted) return;
@@ -2511,4 +3336,34 @@ class _LeagueRosterSlot {
   final String position;
   final _RosterPick? player;
   final bool isHeader;
+}
+
+class _StandingsEntry {
+  const _StandingsEntry({
+    required this.teamId,
+    required this.name,
+    required this.abbreviation,
+    required this.primaryColor,
+    required this.iconIndex,
+    required this.wins,
+    required this.losses,
+    required this.pointsFor,
+    required this.pointsAgainst,
+  });
+
+  final String teamId;
+  final String name;
+  final String abbreviation;
+  final Color primaryColor;
+  final int iconIndex;
+  final int wins;
+  final int losses;
+  final double pointsFor;
+  final double pointsAgainst;
+}
+
+class _Matchup {
+  const _Matchup(this.team1, this.team2);
+  final String team1;
+  final String team2;
 }

@@ -213,17 +213,24 @@ class _DashboardPageState extends State<DashboardPage>
             child: SafeArea(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildAppBar(user, colorScheme),
-                    _buildWelcomeBanner(username, colorScheme),
-                    const SizedBox(height: 12),
-                    _buildLiveMatchupSection(colorScheme),
-                    const SizedBox(height: 16),
-                    _buildSectionTitle('My Leagues', theme),
-                    const SizedBox(height: 8),
-                    Expanded(
+                child: CustomScrollView(
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildAppBar(user, colorScheme),
+                          _buildWelcomeBanner(username, colorScheme),
+                          const SizedBox(height: 12),
+                          _buildLiveMatchupSection(colorScheme),
+                          const SizedBox(height: 16),
+                          _buildSectionTitle('My Leagues', theme),
+                          const SizedBox(height: 8),
+                        ],
+                      ),
+                    ),
+                    SliverFillRemaining(
+                      hasScrollBody: false,
                       child: _buildLeaguesSection(colorScheme),
                     ),
                   ],
@@ -911,11 +918,9 @@ class _DashboardPageState extends State<DashboardPage>
 
         return Column(
           children: [
-            ...displayLeagues.map((league) => Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: _buildLeagueCard(league, colorScheme),
-              ),
+            ...displayLeagues.map((league) => Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: _buildLeagueCard(league, colorScheme),
             )),
             Padding(
               padding: const EdgeInsets.only(top: 4, bottom: 8),

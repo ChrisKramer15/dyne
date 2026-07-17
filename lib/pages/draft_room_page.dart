@@ -413,10 +413,59 @@ class _DraftRoomPageState extends State<DraftRoomPage>
                   }
 
                   if (picksSnap.data!.isEmpty) {
-                    // Picks collection empty — draft was just initialized,
-                    // batch write may still be propagating
-                    return const DyneLoading(
-                        message: 'Generating draft order...');
+                    // Picks collection empty — draft state exists but picks
+                    // were never written (failed batch). Let user re-initialize.
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(40),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.warning_amber_rounded,
+                                size: 40,
+                                color: colorScheme.primary
+                                    .withValues(alpha: 0.6)),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Draft order not found',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: colorScheme.onSurface,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'The draft picks may not have been created properly. Tap below to regenerate.',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: colorScheme.onSurface
+                                    .withValues(alpha: 0.5),
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 24),
+                            ElevatedButton.icon(
+                              onPressed: () => _regeneratePicks(draftState),
+                              icon: const Icon(Icons.refresh),
+                              label: const Text('Regenerate Picks'),
+                            ),
+                            const SizedBox(height: 12),
+                            GestureDetector(
+                              onTap: () => Navigator.pop(context),
+                              child: Text(
+                                'Go Back',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: colorScheme.onSurface
+                                      .withValues(alpha: 0.4),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
                   }
 
                   final picks = picksSnap.data!;
@@ -578,14 +627,34 @@ class _DraftRoomPageState extends State<DraftRoomPage>
 
   Future<void> _initializeDraft(Map<String, dynamic> leagueData) async {
     final memberIds = List<String>.from(leagueData['memberIds'] ?? []);
+    final maxMembers = leagueData['maxMembers'] as int? ?? 12;
     final draftType = leagueData['draftType'] as String? ?? 'Snake';
     final roundMode = leagueData['roundMode'] as String? ?? 'Fill Roster';
     final rosterSlots = Map<String, int>.from(leagueData['rosterSlots'] ?? {});
     final roundCount = leagueData['roundCount'] as int? ?? 15;
 
-    final totalRounds = roundMode == 'Fill Roster'
-        ? rosterSlots.values.fold(0, (a, b) => a + b)
-        : roundCount;
+    // Block draft start until all slots are filled
+    if (memberIds.length < maxMembers) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                'Cannot start draft. Need ${maxMembers - memberIds.length} more members (${memberIds.length}/$maxMembers).'),
+          ),
+        );
+      }
+      return;
+    }
+
+    int totalRounds;
+    if (roundMode == 'Fill Roster' && rosterSlots.isNotEmpty) {
+      totalRounds = rosterSlots.values.fold(0, (a, b) => a + b);
+    } else {
+      totalRounds = roundCount;
+    }
+
+    // Safety: ensure we have at least some rounds
+    if (totalRounds <= 0) totalRounds = 15;
 
     await _draftService.initializeDraft(
       teamIds: memberIds,
@@ -593,6 +662,52 @@ class _DraftRoomPageState extends State<DraftRoomPage>
       rounds: totalRounds,
       pickTimerSeconds: 120,
     );
+  }
+
+  Future<void> _regeneratePicks(Map<String, dynamic> draftState) async {
+    // Show a loading indicator
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Regenerating picks...'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+
+    try {
+      // Always read from the league doc for reliable data
+      final leagueDoc = await FirebaseFirestore.instance
+          .collection('leagues')
+          .doc(widget.leagueId)
+          .get();
+      final leagueData = leagueDoc.data() ?? {};
+
+      // Also delete the broken draft state so initializeDraft can start fresh
+      await FirebaseFirestore.instance
+          .collection('leagues')
+          .doc(widget.leagueId)
+          .collection('draft')
+          .doc('state')
+          .delete();
+
+      await _initializeDraft(leagueData);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Draft initialized successfully!')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+    }
   }
 
   // ─── Home Tab ─────────────────────────────────────────────────────
@@ -2908,13 +3023,32 @@ class _DraftBoardState extends State<_DraftBoard> {
   }
 
   void _scrollToCurrentPick() {
-    final row = widget.currentRound - 1;
-    final targetV = (row * _cellHeight) - 100;
+    // Find the current (first incomplete) pick
+    final currentPick = widget.picks.where((p) => !p.isComplete).firstOrNull;
+    if (currentPick == null) return;
+
+    // Scroll vertically to the current round
+    final row = currentPick.round - 1;
+    final viewportHeight = _vScroll.position.viewportDimension;
+    final targetV = (row * _cellHeight) - (viewportHeight / 2) + (_cellHeight / 2);
     _vScroll.animateTo(
       targetV.clamp(0.0, _vScroll.position.maxScrollExtent),
       duration: const Duration(milliseconds: 400),
       curve: Curves.easeOutCubic,
     );
+
+    // Scroll horizontally to the team on the clock
+    final col = widget.teamIds.indexOf(currentPick.teamId);
+    if (col >= 0 && _hScroll.hasClients) {
+      final viewportWidth = _hScroll.position.viewportDimension;
+      final targetH = (col * _cellWidth + 50) - (viewportWidth / 2) + (_cellWidth / 2);
+      _hScroll.animateTo(
+        targetH.clamp(0.0, _hScroll.position.maxScrollExtent),
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeOutCubic,
+      );
+    }
+
     setState(() => _hasScrolled = false);
   }
 
