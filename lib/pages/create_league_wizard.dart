@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/league_service.dart';
 import '../services/seed_league_data.dart';
 import '../theme/dyne_theme.dart';
+import '../utils/env_config.dart';
 import 'league_dashboard_page.dart';
 
 /// Multi-step wizard for creating a new league.
@@ -568,8 +569,10 @@ class _CreateLeagueWizardState extends State<CreateLeagueWizard> {
         contractNegotiations: _contractNegotiations,
       );
 
-      // Instantly seed bot teams to fill all slots except the commissioner
-      await SeedLeagueData.seed(league.id, teamCount: _teamCount);
+      // Seed bot teams only in dev builds; production leagues start with just the commissioner
+      if (EnvConfig.isDev) {
+        await SeedLeagueData.seed(league.id, teamCount: _teamCount);
+      }
 
       if (mounted) {
         Navigator.pushReplacement(
