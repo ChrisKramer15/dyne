@@ -1,0 +1,395 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+
+import '../theme/dyne_theme.dart';
+import '../utils/team_defaults.dart';
+
+class EditTeamModal extends StatefulWidget {
+  const EditTeamModal({
+    super.key,
+    required this.leagueId,
+    required this.currentData,
+  });
+
+  final String leagueId;
+  final Map<String, dynamic> currentData;
+
+  @override
+  State<EditTeamModal> createState() => _EditTeamModalState();
+}
+
+class _EditTeamModalState extends State<EditTeamModal> {
+  late final TextEditingController _nameController;
+  late final TextEditingController _abbrevController;
+  late Color _primaryColor;
+  late Color _secondaryColor;
+  late int _selectedIconIndex;
+  bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(
+        text: widget.currentData['name'] as String? ?? '');
+    _abbrevController = TextEditingController(
+        text: widget.currentData['abbreviation'] as String? ?? '');
+    _primaryColor = widget.currentData['primaryColor'] != null
+        ? Color(widget.currentData['primaryColor'] as int)
+        : const Color(0xFF00E5FF);
+    _secondaryColor = widget.currentData['secondaryColor'] != null
+        ? Color(widget.currentData['secondaryColor'] as int)
+        : const Color(0xFF0B0E1A);
+    _selectedIconIndex = widget.currentData['iconIndex'] as int? ?? 0;
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _abbrevController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _saveChanges() async {
+    final name = _nameController.text.trim();
+    final abbrev = _abbrevController.text.trim().toUpperCase();
+
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a team name.')),
+      );
+      return;
+    }
+
+    if (abbrev.isEmpty || abbrev.length > 4) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Abbreviation must be 1-4 characters.')),
+      );
+      return;
+    }
+
+    setState(() => _isSaving = true);
+
+    try {
+      final uid = FirebaseAuth.instance.currentUser!.uid;
+      await FirebaseFirestore.instance
+          .collection('leagues')
+          .doc(widget.leagueId)
+          .collection('teams')
+          .doc(uid)
+          .update({
+        'name': name,
+        'abbreviation': abbrev,
+        'primaryColor': _primaryColor.toARGB32(),
+        'secondaryColor': _secondaryColor.toARGB32(),
+        'iconIndex': _selectedIconIndex,
+      });
+
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to save: $e')),
+        );
+        setState(() => _isSaving = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: DyneTheme.landingGradient,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(2),
+                  color: colorScheme.onSurface.withValues(alpha: 0.2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Edit Team',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+                color: colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Update your team identity',
+              style: TextStyle(
+                fontSize: 13,
+                color: colorScheme.onSurface.withValues(alpha: 0.5),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Preview
+            _buildPreview(colorScheme),
+            const SizedBox(height: 24),
+
+            // Team Name
+            _buildLabel('Team Name', colorScheme),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _nameController,
+              maxLength: 24,
+              onChanged: (_) => setState(() {}),
+              decoration: _inputDecoration('Team name', colorScheme),
+              style: TextStyle(color: colorScheme.onSurface),
+            ),
+            const SizedBox(height: 16),
+
+            // Abbreviation
+            _buildLabel('Abbreviation', colorScheme),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _abbrevController,
+              maxLength: 4,
+              textCapitalization: TextCapitalization.characters,
+              onChanged: (_) => setState(() {}),
+              decoration: _inputDecoration('ABV', colorScheme),
+              style: TextStyle(color: colorScheme.onSurface),
+            ),
+            const SizedBox(height: 16),
+
+            // Icon
+            _buildLabel('Team Icon', colorScheme),
+            const SizedBox(height: 10),
+            _buildIconPicker(colorScheme),
+            const SizedBox(height: 20),
+
+            // Primary Color
+            _buildLabel('Primary Color', colorScheme),
+            const SizedBox(height: 10),
+            _buildColorPicker(isPrimary: true, colorScheme: colorScheme),
+            const SizedBox(height: 16),
+
+            // Secondary Color
+            _buildLabel('Secondary Color', colorScheme),
+            const SizedBox(height: 10),
+            _buildColorPicker(isPrimary: false, colorScheme: colorScheme),
+            const SizedBox(height: 28),
+
+            // Save button
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                onPressed: _isSaving ? null : _saveChanges,
+                child: _isSaving
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text(
+                        'Save Changes',
+                        style: TextStyle(
+                            fontSize: 15, fontWeight: FontWeight.w700),
+                      ),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPreview(ColorScheme colorScheme) {
+    final name = _nameController.text.trim().isEmpty
+        ? 'Your Team'
+        : _nameController.text.trim();
+    final abbrev = _abbrevController.text.trim().toUpperCase();
+
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          color: _secondaryColor.withValues(alpha: 0.5),
+          border: Border.all(color: _primaryColor.withValues(alpha: 0.5)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: [_primaryColor, _primaryColor.withValues(alpha: 0.6)],
+                ),
+              ),
+              child: Icon(
+                TeamDefaults.iconOptions[_selectedIconIndex.clamp(
+                    0, TeamDefaults.iconOptions.length - 1)],
+                color: Colors.white,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+                if (abbrev.isNotEmpty)
+                  Text(
+                    abbrev,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1.5,
+                      color: _primaryColor,
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIconPicker(ColorScheme colorScheme) {
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: TeamDefaults.iconOptions.asMap().entries.map((entry) {
+        final index = entry.key;
+        final icon = entry.value;
+        final isSelected = _selectedIconIndex == index;
+
+        return GestureDetector(
+          onTap: () => setState(() => _selectedIconIndex = index),
+          child: Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              color: isSelected
+                  ? _primaryColor.withValues(alpha: 0.2)
+                  : const Color(0xFF141829),
+              border: Border.all(
+                color: isSelected
+                    ? _primaryColor
+                    : colorScheme.primary.withValues(alpha: 0.15),
+                width: isSelected ? 2 : 1,
+              ),
+            ),
+            child: Icon(
+              icon,
+              size: 20,
+              color: isSelected
+                  ? _primaryColor
+                  : colorScheme.onSurface.withValues(alpha: 0.5),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildColorPicker(
+      {required bool isPrimary, required ColorScheme colorScheme}) {
+    final selected = isPrimary ? _primaryColor : _secondaryColor;
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: TeamDefaults.colorOptions.map((color) {
+        final isSelected = selected.toARGB32() == color.toARGB32();
+
+        return GestureDetector(
+          onTap: () => setState(() {
+            if (isPrimary) {
+              _primaryColor = color;
+            } else {
+              _secondaryColor = color;
+            }
+          }),
+          child: Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: color,
+              border: Border.all(
+                color: isSelected ? Colors.white : Colors.transparent,
+                width: isSelected ? 3 : 0,
+              ),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: color.withValues(alpha: 0.5),
+                        blurRadius: 8,
+                      )
+                    ]
+                  : null,
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildLabel(String text, ColorScheme colorScheme) {
+    return Text(
+      text,
+      style: TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+        color: colorScheme.onSurface.withValues(alpha: 0.7),
+      ),
+    );
+  }
+
+  InputDecoration _inputDecoration(String hint, ColorScheme colorScheme) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: TextStyle(
+        color: colorScheme.onSurface.withValues(alpha: 0.3),
+      ),
+      filled: true,
+      fillColor: const Color(0xFF141829),
+      counterStyle: TextStyle(
+        color: colorScheme.onSurface.withValues(alpha: 0.3),
+      ),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(
+          color: colorScheme.primary.withValues(alpha: 0.3),
+        ),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: colorScheme.primary),
+      ),
+    );
+  }
+}

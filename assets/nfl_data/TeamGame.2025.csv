@@ -1,0 +1,671 @@
+Season,Stadium,ThirdDownPercentage,TeamID
+2025,Tom Benson Hall of Fame Stadium,30.8,29
+2025,Tom Benson Hall of Fame Stadium,9.1,11
+2025,M&T Bank Stadium,31.6,14
+2025,M&T Bank Stadium,35.7,3
+2025,Lincoln Financial Field,25.0,7
+2025,Lincoln Financial Field,20.0,26
+2025,Lumen Field,35.7,25
+2025,Lumen Field,53.3,30
+2025,Mercedes-Benz Stadium,33.3,11
+2025,Mercedes-Benz Stadium,14.3,2
+2025,Bank of America Stadium,40.0,8
+2025,Bank of America Stadium,25.0,5
+2025,Gillette Stadium,38.5,35
+2025,Gillette Stadium,50.0,21
+2025,Highmark Stadium,47.4,23
+2025,Highmark Stadium,11.1,4
+2025,U.S. Bank Stadium,42.9,13
+2025,U.S. Bank Stadium,38.5,20
+2025,SoFi Stadium,36.4,9
+2025,SoFi Stadium,45.5,32
+2025,EverBank Stadium,61.5,28
+2025,EverBank Stadium,30.0,15
+2025,Raymond James Stadium,38.5,34
+2025,Raymond James Stadium,43.8,33
+2025,Lambeau Field,53.3,24
+2025,Lambeau Field,10.0,12
+2025,State Farm Stadium,38.5,16
+2025,State Farm Stadium,44.4,1
+2025,Levi's Stadium,37.5,10
+2025,Levi's Stadium,8.3,31
+2025,Soldier Field,43.8,19
+2025,Soldier Field,42.9,6
+2025,SoFi Stadium,23.1,22
+2025,SoFi Stadium,42.9,29
+2025,Mercedes-Benz Stadium,38.5,34
+2025,Mercedes-Benz Stadium,33.3,2
+2025,Lumen Field,44.4,16
+2025,Lumen Field,58.3,30
+2025,NRG Stadium,10.0,5
+2025,NRG Stadium,35.7,13
+2025,Lucas Oil Stadium,50.0,12
+2025,Lucas Oil Stadium,27.3,14
+2025,Lincoln Financial Field,56.2,8
+2025,Lincoln Financial Field,33.3,26
+2025,Ford Field,53.8,19
+2025,Ford Field,8.3,11
+2025,U.S. Bank Stadium,60.0,21
+2025,U.S. Bank Stadium,33.3,20
+2025,Allegiant Stadium,27.3,31
+2025,Allegiant Stadium,56.2,25
+2025,Acrisure Stadium,33.3,33
+2025,Acrisure Stadium,16.7,28
+2025,SoFi Stadium,38.5,29
+2025,SoFi Stadium,38.5,32
+2025,MetLife Stadium,47.1,24
+2025,MetLife Stadium,55.6,23
+2025,AT&T Stadium,47.1,3
+2025,AT&T Stadium,18.2,9
+2025,Empower Field at Mile High,15.4,1
+2025,Empower Field at Mile High,45.5,10
+2025,Caesars Superdome,50.0,15
+2025,Caesars Superdome,30.8,22
+2025,Soldier Field,0,4
+2025,Soldier Field,56.2,6
+2025,Northwest Stadium,40.0,7
+2025,Northwest Stadium,40.0,35
+2025,Bank of America Stadium,44.4,28
+2025,Bank of America Stadium,56.2,5
+2025,MetLife Stadium,35.7,21
+2025,MetLife Stadium,57.1,23
+2025,MetLife Stadium,37.5,26
+2025,MetLife Stadium,25.0,24
+2025,AT&T Stadium,50.0,2
+2025,AT&T Stadium,36.4,9
+2025,Nissan Stadium,40.0,20
+2025,Nissan Stadium,33.3,34
+2025,Arrowhead Stadium,50.0,6
+2025,Arrowhead Stadium,55.6,16
+2025,Northwest Stadium,62.5,3
+2025,Northwest Stadium,50.0,35
+2025,Paycor Stadium,53.3,14
+2025,Paycor Stadium,18.2,7
+2025,Ford Field,75.0,13
+2025,Ford Field,14.3,11
+2025,Huntington Bank Field,8.3,32
+2025,Huntington Bank Field,38.5,8
+2025,Caesars Superdome,43.8,10
+2025,Caesars Superdome,38.5,22
+2025,Lambeau Field,15.4,30
+2025,Lambeau Field,33.3,12
+2025,Hard Rock Stadium,35.7,15
+2025,Hard Rock Stadium,33.3,19
+2025,Raymond James Stadium,33.3,4
+2025,Raymond James Stadium,61.5,33
+2025,Levi's Stadium,23.1,29
+2025,Levi's Stadium,23.1,31
+2025,State Farm Stadium,28.6,25
+2025,State Farm Stadium,28.6,1
+2025,Lincoln Financial Field,63.6,9
+2025,Lincoln Financial Field,61.5,26
+2025,Arena Corinthians,35.7,16
+2025,Arena Corinthians,53.8,29
+2025,Huntington Bank Field,50.0,7
+2025,Huntington Bank Field,56.2,8
+2025,Lucas Oil Stadium,50.0,19
+2025,Lucas Oil Stadium,46.7,14
+2025,Caesars Superdome,46.2,1
+2025,Caesars Superdome,35.7,22
+2025,Gillette Stadium,38.5,25
+2025,Gillette Stadium,28.6,21
+2025,EverBank Stadium,53.3,5
+2025,EverBank Stadium,41.7,15
+2025,Northwest Stadium,25.0,23
+2025,Northwest Stadium,36.4,35
+2025,MetLife Stadium,40.0,28
+2025,Mercedes-Benz Stadium,50.0,33
+2025,MetLife Stadium,50.0,24
+2025,Mercedes-Benz Stadium,40.0,2
+2025,Lumen Field,50.0,31
+2025,Lumen Field,30.0,30
+2025,Empower Field at Mile High,14.3,34
+2025,Empower Field at Mile High,40.0,10
+2025,SoFi Stadium,22.2,13
+2025,SoFi Stadium,53.8,32
+2025,Lambeau Field,33.3,11
+2025,Lambeau Field,40.0,12
+2025,Highmark Stadium,54.5,3
+2025,Highmark Stadium,46.7,4
+2025,Soldier Field,25.0,20
+2025,Soldier Field,25.0,6
+2025,Lambeau Field,31.2,35
+2025,Lambeau Field,41.7,12
+2025,Ford Field,53.8,6
+2025,Ford Field,40.0,11
+2025,Paycor Stadium,46.2,15
+2025,Paycor Stadium,42.9,7
+2025,Hard Rock Stadium,58.3,21
+2025,Hard Rock Stadium,40.0,19
+2025,AT&T Stadium,42.9,23
+2025,AT&T Stadium,42.9,9
+2025,Acrisure Stadium,42.9,30
+2025,Acrisure Stadium,33.3,28
+2025,Caesars Superdome,53.3,31
+2025,Caesars Superdome,36.4,22
+2025,MetLife Stadium,35.7,4
+2025,Nissan Stadium,41.7,32
+2025,MetLife Stadium,0,24
+2025,Nissan Stadium,40.0,34
+2025,M&T Bank Stadium,38.9,8
+2025,M&T Bank Stadium,25.0,3
+2025,State Farm Stadium,33.3,5
+2025,State Farm Stadium,33.3,1
+2025,Lucas Oil Stadium,44.4,10
+2025,Lucas Oil Stadium,46.2,14
+2025,Arrowhead Stadium,35.7,26
+2025,Arrowhead Stadium,33.3,16
+2025,U.S. Bank Stadium,40.0,2
+2025,U.S. Bank Stadium,36.4,20
+2025,NRG Stadium,42.9,33
+2025,NRG Stadium,22.2,13
+2025,Allegiant Stadium,36.4,29
+2025,Allegiant Stadium,50.0,25
+2025,Highmark Stadium,66.7,19
+2025,Highmark Stadium,54.5,4
+2025,Gillette Stadium,44.4,28
+2025,Gillette Stadium,46.2,21
+2025,Lincoln Financial Field,30.0,32
+2025,Lincoln Financial Field,35.7,26
+2025,Raymond James Stadium,27.3,24
+2025,Raymond James Stadium,30.8,33
+2025,Nissan Stadium,25.0,14
+2025,Nissan Stadium,35.7,34
+2025,U.S. Bank Stadium,27.3,7
+2025,U.S. Bank Stadium,33.3,20
+2025,EverBank Stadium,26.7,13
+2025,EverBank Stadium,26.7,15
+2025,Bank of America Stadium,38.5,2
+2025,Bank of America Stadium,27.3,5
+2025,Huntington Bank Field,55.6,12
+2025,Huntington Bank Field,30.8,8
+2025,Northwest Stadium,21.4,25
+2025,Northwest Stadium,50.0,35
+2025,SoFi Stadium,15.4,10
+2025,Lumen Field,33.3,22
+2025,Lumen Field,33.3,30
+2025,SoFi Stadium,47.1,29
+2025,Levi's Stadium,33.3,1
+2025,Levi's Stadium,20.0,31
+2025,Soldier Field,27.3,9
+2025,Soldier Field,57.1,6
+2025,MetLife Stadium,53.3,16
+2025,MetLife Stadium,10.0,23
+2025,M&T Bank Stadium,50.0,11
+2025,M&T Bank Stadium,54.5,3
+2025,State Farm Stadium,46.2,30
+2025,State Farm Stadium,40.0,1
+2025,Croke Park,28.6,20
+2025,Croke Park,40.0,28
+2025,Gillette Stadium,35.7,5
+2025,Gillette Stadium,33.3,21
+2025,MetLife Stadium,33.3,29
+2025,MetLife Stadium,46.7,23
+2025,Ford Field,21.4,8
+2025,Ford Field,42.9,11
+2025,Raymond James Stadium,35.7,26
+2025,Raymond James Stadium,23.1,33
+2025,Mercedes-Benz Stadium,12.5,35
+2025,Mercedes-Benz Stadium,50.0,2
+2025,Highmark Stadium,38.5,22
+2025,Highmark Stadium,30.0,4
+2025,NRG Stadium,18.2,34
+2025,NRG Stadium,40.0,13
+2025,Levi's Stadium,28.6,15
+2025,Levi's Stadium,61.5,31
+2025,SoFi Stadium,33.3,14
+2025,SoFi Stadium,33.3,32
+2025,Allegiant Stadium,43.8,6
+2025,Allegiant Stadium,25.0,25
+2025,Arrowhead Stadium,30.0,3
+2025,Arrowhead Stadium,33.3,16
+2025,AT&T Stadium,71.4,12
+2025,AT&T Stadium,36.4,9
+2025,Hard Rock Stadium,44.4,24
+2025,Hard Rock Stadium,33.3,19
+2025,Empower Field at Mile High,18.2,7
+2025,Empower Field at Mile High,57.1,10
+2025,SoFi Stadium,38.9,31
+2025,SoFi Stadium,40.0,32
+2025,Tottenham Hotspur Stadium,33.3,20
+2025,Tottenham Hotspur Stadium,20.0,8
+2025,Lucas Oil Stadium,57.1,25
+2025,Lucas Oil Stadium,80.0,14
+2025,Caesars Superdome,30.0,23
+2025,Lincoln Financial Field,31.2,10
+2025,Caesars Superdome,46.7,22
+2025,Lincoln Financial Field,18.2,26
+2025,Bank of America Stadium,38.5,19
+2025,Bank of America Stadium,45.5,5
+2025,M&T Bank Stadium,58.3,13
+2025,M&T Bank Stadium,37.5,3
+2025,MetLife Stadium,46.2,9
+2025,MetLife Stadium,43.8,24
+2025,State Farm Stadium,33.3,34
+2025,State Farm Stadium,43.8,1
+2025,Lumen Field,63.6,33
+2025,Lumen Field,66.7,30
+2025,Paycor Stadium,25.0,11
+2025,Paycor Stadium,36.4,7
+2025,SoFi Stadium,28.6,35
+2025,SoFi Stadium,56.2,29
+2025,Highmark Stadium,33.3,21
+2025,Highmark Stadium,55.6,4
+2025,EverBank Stadium,55.6,16
+2025,EverBank Stadium,55.6,15
+2025,MetLife Stadium,11.1,26
+2025,MetLife Stadium,68.8,23
+2025,Tottenham Hotspur Stadium,33.3,10
+2025,Tottenham Hotspur Stadium,13.3,24
+2025,Hard Rock Stadium,40.0,29
+2025,Hard Rock Stadium,45.5,19
+2025,Bank of America Stadium,41.7,9
+2025,Bank of America Stadium,37.5,5
+2025,Caesars Superdome,46.2,21
+2025,Caesars Superdome,33.3,22
+2025,Lucas Oil Stadium,64.3,1
+2025,Lucas Oil Stadium,50.0,14
+2025,M&T Bank Stadium,40.0,32
+2025,M&T Bank Stadium,41.2,3
+2025,Acrisure Stadium,35.3,8
+2025,Acrisure Stadium,38.5,28
+2025,EverBank Stadium,8.3,30
+2025,EverBank Stadium,25.0,15
+2025,Allegiant Stadium,23.1,34
+2025,Allegiant Stadium,46.2,25
+2025,Lambeau Field,40.0,7
+2025,Lambeau Field,45.5,12
+2025,Raymond James Stadium,43.8,31
+2025,Raymond James Stadium,37.5,33
+2025,Arrowhead Stadium,45.5,11
+2025,Arrowhead Stadium,40.0,16
+2025,Mercedes-Benz Stadium,22.2,4
+2025,Mercedes-Benz Stadium,41.7,2
+2025,Northwest Stadium,30.0,6
+2025,Northwest Stadium,37.5,35
+2025,Paycor Stadium,70.0,28
+2025,Paycor Stadium,50.0,7
+2025,Wembley Stadium,20.0,32
+2025,Wembley Stadium,20.0,15
+2025,U.S. Bank Stadium,30.0,26
+2025,U.S. Bank Stadium,46.7,20
+2025,Soldier Field,30.0,22
+2025,Soldier Field,25.0,6
+2025,MetLife Stadium,29.4,5
+2025,MetLife Stadium,46.7,24
+2025,Nissan Stadium,41.7,21
+2025,Nissan Stadium,30.0,34
+2025,Arrowhead Stadium,0,25
+2025,Arrowhead Stadium,60.0,16
+2025,Huntington Bank Field,7.7,19
+2025,Huntington Bank Field,36.4,8
+2025,SoFi Stadium,45.5,14
+2025,SoFi Stadium,50.0,29
+2025,Empower Field at Mile High,40.0,23
+2025,Empower Field at Mile High,30.8,10
+2025,AT&T Stadium,43.8,35
+2025,AT&T Stadium,50.0,9
+2025,State Farm Stadium,30.0,12
+2025,State Farm Stadium,50.0,1
+2025,Levi's Stadium,45.5,2
+2025,Levi's Stadium,60.0,31
+2025,Ford Field,25.0,33
+2025,Ford Field,23.1,11
+2025,Lumen Field,13.3,13
+2025,Lumen Field,14.3,30
+2025,SoFi Stadium,27.3,20
+2025,SoFi Stadium,69.2,29
+2025,Paycor Stadium,46.7,24
+2025,Paycor Stadium,44.4,7
+2025,M&T Bank Stadium,46.2,6
+2025,M&T Bank Stadium,40.0,3
+2025,Bank of America Stadium,58.3,4
+2025,Bank of America Stadium,36.4,5
+2025,Mercedes-Benz Stadium,46.2,19
+2025,Mercedes-Benz Stadium,18.2,2
+2025,Lincoln Financial Field,41.7,23
+2025,NRG Stadium,33.3,31
+2025,Lincoln Financial Field,25.0,26
+2025,NRG Stadium,56.2,13
+2025,Gillette Stadium,18.2,8
+2025,Gillette Stadium,27.3,21
+2025,Caesars Superdome,23.1,33
+2025,Caesars Superdome,50.0,22
+2025,Lucas Oil Stadium,40.0,34
+2025,Lucas Oil Stadium,33.3,14
+2025,Empower Field at Mile High,36.4,9
+2025,Empower Field at Mile High,62.5,10
+2025,Acrisure Stadium,41.7,12
+2025,Acrisure Stadium,10.0,28
+2025,Arrowhead Stadium,58.3,35
+2025,Arrowhead Stadium,40.0,16
+2025,Hard Rock Stadium,38.5,3
+2025,Hard Rock Stadium,16.7,19
+2025,MetLife Stadium,54.5,31
+2025,MetLife Stadium,41.7,23
+2025,Acrisure Stadium,42.9,14
+2025,Acrisure Stadium,33.3,28
+2025,NRG Stadium,40.0,10
+2025,NRG Stadium,17.6,13
+2025,Lambeau Field,40.0,5
+2025,Lambeau Field,53.8,12
+2025,Paycor Stadium,53.3,6
+2025,Paycor Stadium,50.0,7
+2025,Nissan Stadium,53.8,29
+2025,Nissan Stadium,11.1,34
+2025,Gillette Stadium,10.0,2
+2025,Gillette Stadium,66.7,21
+2025,Ford Field,33.3,20
+2025,Ford Field,29.4,11
+2025,SoFi Stadium,22.2,22
+2025,SoFi Stadium,50.0,32
+2025,Allegiant Stadium,56.2,15
+2025,Allegiant Stadium,70.0,25
+2025,Highmark Stadium,23.1,16
+2025,Highmark Stadium,58.3,4
+2025,Northwest Stadium,63.6,30
+2025,Northwest Stadium,46.2,35
+2025,AT&T Stadium,53.8,1
+2025,AT&T Stadium,41.7,9
+2025,Empower Field at Mile High,26.7,25
+2025,Empower Field at Mile High,33.3,10
+2025,Olympiastadion,0,2
+2025,Olympiastadion,16.7,14
+2025,Hard Rock Stadium,33.3,4
+2025,Hard Rock Stadium,33.3,19
+2025,MetLife Stadium,37.5,8
+2025,MetLife Stadium,27.3,24
+2025,NRG Stadium,36.4,15
+2025,NRG Stadium,66.7,13
+2025,Bank of America Stadium,47.1,22
+2025,Bank of America Stadium,33.3,5
+2025,Raymond James Stadium,35.7,21
+2025,Raymond James Stadium,38.5,33
+2025,U.S. Bank Stadium,40.0,3
+2025,U.S. Bank Stadium,21.4,20
+2025,Soldier Field,35.7,23
+2025,Soldier Field,27.3,6
+2025,Lumen Field,37.5,1
+2025,Lumen Field,60.0,30
+2025,Levi's Stadium,55.6,32
+2025,Levi's Stadium,37.5,31
+2025,Northwest Stadium,50.0,11
+2025,Northwest Stadium,20.0,35
+2025,SoFi Stadium,18.2,28
+2025,SoFi Stadium,35.3,29
+2025,Lambeau Field,43.8,26
+2025,Lambeau Field,38.5,12
+2025,Gillette Stadium,57.1,24
+2025,Gillette Stadium,50.0,21
+2025,Santiago Bernabeu Stadium,46.2,35
+2025,Santiago Bernabeu Stadium,33.3,19
+2025,Highmark Stadium,56.2,33
+2025,Highmark Stadium,54.5,4
+2025,EverBank Stadium,25.0,29
+2025,EverBank Stadium,50.0,15
+2025,Acrisure Stadium,46.7,7
+2025,Acrisure Stadium,53.8,28
+2025,MetLife Stadium,63.6,12
+2025,MetLife Stadium,50.0,23
+2025,Mercedes-Benz Stadium,35.3,5
+2025,U.S. Bank Stadium,38.9,6
+2025,Mercedes-Benz Stadium,36.4,2
+2025,U.S. Bank Stadium,27.3,20
+2025,Nissan Stadium,30.8,13
+2025,Nissan Stadium,40.0,34
+2025,State Farm Stadium,33.3,31
+2025,State Farm Stadium,42.9,1
+2025,SoFi Stadium,43.8,30
+2025,SoFi Stadium,18.2,32
+2025,Huntington Bank Field,38.5,3
+2025,Huntington Bank Field,14.3,8
+2025,Empower Field at Mile High,38.5,16
+2025,Empower Field at Mile High,46.7,10
+2025,Lincoln Financial Field,23.1,11
+2025,Lincoln Financial Field,26.7,26
+2025,Allegiant Stadium,40.0,9
+2025,Allegiant Stadium,25.0,25
+2025,NRG Stadium,31.2,4
+2025,NRG Stadium,16.7,13
+2025,Lambeau Field,22.2,20
+2025,Lambeau Field,50.0,12
+2025,Paycor Stadium,38.5,21
+2025,M&T Bank Stadium,36.4,24
+2025,Arrowhead Stadium,38.5,14
+2025,Paycor Stadium,23.1,7
+2025,M&T Bank Stadium,18.2,3
+2025,Arrowhead Stadium,43.8,16
+2025,Nissan Stadium,28.6,30
+2025,Nissan Stadium,35.3,34
+2025,Ford Field,50.0,23
+2025,Ford Field,41.7,11
+2025,Soldier Field,57.1,28
+2025,Soldier Field,53.8,6
+2025,State Farm Stadium,27.3,15
+2025,State Farm Stadium,31.2,1
+2025,Allegiant Stadium,25.0,8
+2025,Allegiant Stadium,23.5,25
+2025,AT&T Stadium,41.7,26
+2025,AT&T Stadium,41.7,9
+2025,Caesars Superdome,25.0,2
+2025,Caesars Superdome,31.2,22
+2025,SoFi Stadium,41.2,33
+2025,SoFi Stadium,40.0,32
+2025,Levi's Stadium,14.3,5
+2025,Levi's Stadium,53.8,31
+2025,Ford Field,50.0,12
+2025,Ford Field,61.5,11
+2025,AT&T Stadium,38.5,16
+2025,AT&T Stadium,56.2,9
+2025,M&T Bank Stadium,42.1,7
+2025,M&T Bank Stadium,30.0,3
+2025,Lincoln Financial Field,58.8,6
+2025,Lincoln Financial Field,33.3,26
+2025,Nissan Stadium,23.1,15
+2025,Nissan Stadium,16.7,34
+2025,Bank of America Stadium,40.0,32
+2025,Bank of America Stadium,46.7,5
+2025,Lucas Oil Stadium,46.2,13
+2025,Lucas Oil Stadium,30.0,14
+2025,MetLife Stadium,33.3,2
+2025,MetLife Stadium,43.8,24
+2025,Huntington Bank Field,64.7,31
+2025,Huntington Bank Field,27.3,8
+2025,Raymond James Stadium,37.5,1
+2025,Hard Rock Stadium,33.3,22
+2025,Raymond James Stadium,43.8,33
+2025,Hard Rock Stadium,33.3,19
+2025,Lumen Field,20.0,20
+2025,Lumen Field,40.0,30
+2025,SoFi Stadium,25.0,25
+2025,SoFi Stadium,70.6,29
+2025,Acrisure Stadium,53.3,4
+2025,Acrisure Stadium,33.3,28
+2025,Northwest Stadium,46.7,10
+2025,Northwest Stadium,47.1,35
+2025,Gillette Stadium,36.4,23
+2025,Gillette Stadium,46.2,21
+2025,Ford Field,40.0,9
+2025,Ford Field,37.5,11
+2025,M&T Bank Stadium,42.9,28
+2025,M&T Bank Stadium,38.9,3
+2025,U.S. Bank Stadium,30.0,35
+2025,U.S. Bank Stadium,54.5,20
+2025,MetLife Stadium,20.0,19
+2025,MetLife Stadium,8.3,24
+2025,Raymond James Stadium,45.5,22
+2025,Raymond James Stadium,23.1,33
+2025,Highmark Stadium,83.3,7
+2025,Highmark Stadium,54.5,4
+2025,Mercedes-Benz Stadium,46.2,30
+2025,Mercedes-Benz Stadium,7.7,2
+2025,Huntington Bank Field,35.3,34
+2025,Huntington Bank Field,42.9,8
+2025,EverBank Stadium,54.5,14
+2025,EverBank Stadium,46.7,15
+2025,Allegiant Stadium,58.3,10
+2025,Allegiant Stadium,33.3,25
+2025,State Farm Stadium,37.5,32
+2025,State Farm Stadium,33.3,1
+2025,Lambeau Field,50.0,6
+2025,Lambeau Field,66.7,12
+2025,Arrowhead Stadium,44.4,13
+2025,Arrowhead Stadium,28.6,16
+2025,SoFi Stadium,30.8,26
+2025,SoFi Stadium,36.8,29
+2025,Raymond James Stadium,45.5,2
+2025,Raymond James Stadium,44.4,33
+2025,NRG Stadium,41.7,1
+2025,NRG Stadium,53.8,13
+2025,Soldier Field,28.6,8
+2025,Soldier Field,38.5,6
+2025,Lincoln Financial Field,25.0,25
+2025,Lincoln Financial Field,76.9,26
+2025,Gillette Stadium,57.1,4
+2025,Gillette Stadium,50.0,21
+2025,Arrowhead Stadium,35.7,29
+2025,Arrowhead Stadium,46.2,16
+2025,MetLife Stadium,27.3,35
+2025,MetLife Stadium,16.7,23
+2025,Paycor Stadium,28.6,3
+2025,Paycor Stadium,20.0,7
+2025,EverBank Stadium,53.3,24
+2025,EverBank Stadium,44.4,15
+2025,Lumen Field,38.5,14
+2025,Lumen Field,15.4,30
+2025,Levi's Stadium,33.3,34
+2025,Levi's Stadium,60.0,31
+2025,Empower Field at Mile High,46.2,12
+2025,Empower Field at Mile High,36.4,10
+2025,Caesars Superdome,50.0,5
+2025,Caesars Superdome,54.5,22
+2025,SoFi Stadium,35.7,11
+2025,SoFi Stadium,22.2,32
+2025,AT&T Stadium,22.2,20
+2025,AT&T Stadium,16.7,9
+2025,Acrisure Stadium,25.0,19
+2025,Acrisure Stadium,30.8,28
+2025,Lumen Field,40.0,32
+2025,Lumen Field,36.4,30
+2025,Northwest Stadium,44.4,26
+2025,Northwest Stadium,20.0,35
+2025,Soldier Field,50.0,12
+2025,Soldier Field,18.2,6
+2025,Hard Rock Stadium,50.0,7
+2025,Hard Rock Stadium,20.0,19
+2025,Caesars Superdome,13.3,24
+2025,Caesars Superdome,47.1,22
+2025,Huntington Bank Field,25.0,4
+2025,Huntington Bank Field,57.1,8
+2025,Nissan Stadium,11.1,16
+2025,Nissan Stadium,52.9,34
+2025,Bank of America Stadium,57.1,33
+2025,Bank of America Stadium,50.0,5
+2025,MetLife Stadium,58.3,20
+2025,MetLife Stadium,20.0,23
+2025,AT&T Stadium,63.6,29
+2025,AT&T Stadium,44.4,9
+2025,Empower Field at Mile High,53.3,15
+2025,Empower Field at Mile High,35.7,10
+2025,State Farm Stadium,50.0,2
+2025,State Farm Stadium,53.8,1
+2025,NRG Stadium,42.9,25
+2025,NRG Stadium,46.7,13
+2025,Ford Field,50.0,28
+2025,Ford Field,40.0,11
+2025,M&T Bank Stadium,33.3,21
+2025,M&T Bank Stadium,63.6,3
+2025,Lucas Oil Stadium,63.6,31
+2025,Lucas Oil Stadium,50.0,14
+2025,Northwest Stadium,40.0,9
+2025,Northwest Stadium,16.7,35
+2025,U.S. Bank Stadium,35.7,11
+2025,U.S. Bank Stadium,23.1,20
+2025,Arrowhead Stadium,61.1,10
+2025,Arrowhead Stadium,36.4,16
+2025,SoFi Stadium,27.3,13
+2025,SoFi Stadium,40.0,29
+2025,Lambeau Field,71.4,3
+2025,Lambeau Field,50.0,12
+2025,Huntington Bank Field,20.0,28
+2025,MetLife Stadium,44.4,21
+2025,MetLife Stadium,31.2,24
+2025,Huntington Bank Field,36.4,8
+2025,Paycor Stadium,23.1,1
+2025,Paycor Stadium,66.7,7
+2025,Nissan Stadium,45.5,22
+2025,Nissan Stadium,33.3,34
+2025,Lucas Oil Stadium,50.0,15
+2025,Lucas Oil Stadium,36.4,14
+2025,Bank of America Stadium,56.2,30
+2025,Bank of America Stadium,9.1,5
+2025,Hard Rock Stadium,46.2,33
+2025,Hard Rock Stadium,33.3,19
+2025,Allegiant Stadium,46.2,23
+2025,Allegiant Stadium,23.1,25
+2025,Highmark Stadium,23.1,26
+2025,Highmark Stadium,40.0,4
+2025,Levi's Stadium,50.0,6
+2025,Levi's Stadium,70.0,31
+2025,Mercedes-Benz Stadium,38.5,32
+2025,Mercedes-Benz Stadium,38.5,2
+2025,Raymond James Stadium,12.5,5
+2025,Raymond James Stadium,53.3,33
+2025,Levi's Stadium,46.2,30
+2025,Levi's Stadium,22.2,31
+2025,MetLife Stadium,25.0,9
+2025,MetLife Stadium,57.1,23
+2025,EverBank Stadium,28.6,34
+2025,EverBank Stadium,44.4,15
+2025,NRG Stadium,53.3,14
+2025,NRG Stadium,30.8,13
+2025,U.S. Bank Stadium,25.0,12
+2025,U.S. Bank Stadium,20.0,20
+2025,Mercedes-Benz Stadium,31.2,22
+2025,Mercedes-Benz Stadium,28.6,2
+2025,Paycor Stadium,35.7,8
+2025,Paycor Stadium,45.5,7
+2025,Soldier Field,46.2,11
+2025,Gillette Stadium,38.5,19
+2025,Soldier Field,36.4,6
+2025,Gillette Stadium,50.0,21
+2025,Empower Field at Mile High,35.0,29
+2025,Lincoln Financial Field,54.5,35
+2025,Empower Field at Mile High,33.3,10
+2025,Lincoln Financial Field,42.9,26
+2025,Allegiant Stadium,17.6,16
+2025,Highmark Stadium,38.5,24
+2025,Allegiant Stadium,25.0,25
+2025,Highmark Stadium,46.2,4
+2025,SoFi Stadium,36.4,1
+2025,SoFi Stadium,56.2,32
+2025,Acrisure Stadium,33.3,3
+2025,Acrisure Stadium,56.2,28
+2025,Bank of America Stadium,23.1,32
+2025,Bank of America Stadium,41.7,5
+2025,Soldier Field,40.0,12
+2025,Soldier Field,52.6,6
+2025,EverBank Stadium,50.0,4
+2025,EverBank Stadium,55.6,15
+2025,Lincoln Financial Field,54.5,31
+2025,Lincoln Financial Field,31.2,26
+2025,Gillette Stadium,10.0,29
+2025,Gillette Stadium,36.4,21
+2025,Acrisure Stadium,66.7,13
+2025,Acrisure Stadium,14.3,28
+2025,Empower Field at Mile High,66.7,4
+2025,Empower Field at Mile High,50.0,10
+2025,Lumen Field,50.0,31
+2025,Lumen Field,40.0,30
+2025,Gillette Stadium,41.2,13
+2025,Gillette Stadium,21.4,21
+2025,Soldier Field,31.2,32
+2025,Soldier Field,47.4,6
+2025,Empower Field at Mile High,33.3,21
+2025,Empower Field at Mile High,28.6,10
+2025,Lumen Field,12.5,32
+2025,Lumen Field,53.8,30
+2025,Moscone Center,0,37
+2025,Moscone Center,0,36
+2025,Levi's Stadium,25.0,30
+2025,Levi's Stadium,40.0,21

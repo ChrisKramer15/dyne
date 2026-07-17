@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "31669439721",
+    "project_id": "dyne-fantasy",
+    "storage_bucket": "dyne-fantasy.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:31669439721:android:b22877bb634be9dd7a7478",
+        "android_client_info": {
+          "package_name": "com.example.dyne"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "31669439721-a5kq8k5flekfvgopm06n6cd72vc0ig2s.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDpmAyJuKe1JDbanijCxbmSQb_qVWpSOhU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "31669439721-a5kq8k5flekfvgopm06n6cd72vc0ig2s.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

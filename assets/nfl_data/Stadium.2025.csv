@@ -1,0 +1,61 @@
+StadiumID,Name,City,Capacity,PlayingSurface,GeoLong,Type
+1,Highmark Stadium,Orchard Park,71608,Artificial,-78.786837,Outdoor
+2,Hard Rock Stadium,Miami Gardens,64767,Grass,-80.238889,Outdoor
+3,MetLife Stadium,East Rutherford,82500,Artificial,-74.074361,Outdoor
+4,Gillette Stadium,Foxborough,64628,Artificial,-71.264244,Outdoor
+5,Paycor Stadium,Cincinnati,65515,Artificial,-84.516003,Outdoor
+6,Huntington Bank Field,Cleveland,67431,Grass,-81.699444,Outdoor
+7,M&T Bank Stadium,Baltimore,71008,Grass,-76.622778,Outdoor
+8,Acrisure Stadium,Pittsburgh,68400,Grass,-80.015833,Outdoor
+9,Lucas Oil Stadium,Indianapolis,67000,Artificial,-86.163806,RetractableDome
+10,EverBank Stadium,Jacksonville,42507,Grass,-81.637500,Outdoor
+11,Reliant Stadium,Houston,72220,Artificial,-95.410833,RetractableDome
+12,Nissan Stadium,Nashville,69143,Grass,-86.771389,Outdoor
+13,Empower Field at Mile High,Denver,76125,Grass,-105.020097,Outdoor
+14,Qualcomm Stadium,San Diego,70561,Grass,-117.119439,Outdoor
+15,Arrowhead Stadium,Kansas City,76416,Grass,-94.483889,Outdoor
+16,RingCentral Coliseum ,Oakland,53200,Grass,-122.200509,Outdoor
+17,AT&T Stadium,Arlington,80000,Artificial,-97.092778,RetractableDome
+18,Lincoln Financial Field,Philadelphia,67594,Grass,-75.167469,Outdoor
+19,Northwest Stadium,Landover,62000,Grass,-76.864444,Outdoor
+20,Soldier Field,Chicago,61500,Grass,-87.616699,Outdoor
+21,Ford Field,Detroit,65000,Artificial,-83.045556,Dome
+22,Lambeau Field,Green Bay,81441,Grass,-88.062222,Outdoor
+23,Mall of America Field,Minneapolis,64111,Artificial,-93.225000,Dome
+24,Raymond James Stadium,Tampa Bay,69218,Grass,-82.503333,Outdoor
+25,Georgia Dome,Atlanta,74228,Artificial,-84.400972,Dome
+26,Bank of America Stadium,Charlotte,74867,Artificial,-80.852778,Outdoor
+27,Caesars Superdome,New Orleans,73208,Artificial,-90.081111,Dome
+28,Candlestick Park,San Francisco,70207,Grass,-121.970274,Outdoor
+29,State Farm Stadium,Glendale,63400,Grass,-112.263036,RetractableDome
+30,Edward Jones Dome,St. Louis,66000,Artificial,-90.188547,Dome
+31,Lumen Field,Seattle,68740,Artificial,-122.331625,Outdoor
+33,Wembley Stadium,London,86000,Grass,-0.279722,RetractableDome
+34,Rogers Centre,Toronto,86000,Dome,-79.390028,RetractableDome
+35,Fawcett Stadium,Canton,22375,Artificial,-81.398177,Outdoor
+36,Huntington Bank Stadium,Minneapolis,50805,Artificial,-93.225000,Outdoor
+37,Levi's Stadium,Santa Clara,68500,Grass,-121.970274,Outdoor
+38,Los Angeles Memorial Coliseum,Los Angeles,93607,Grass,-118.287778,Outdoor
+39,Camping World Stadium,Orlando,65000,Artificial,-81.402749,Outdoor
+40,Twickenham Stadium,London,82000,Grass,-0.341516,Outdoor
+41,Estadio Banorte,Mexico City,87000,Grass,-99.150528,Outdoor
+42,U.S. Bank Stadium,Minneapolis,66655,Artificial,-93.258000,Dome
+43,Dignity Health Sports Park,Carson,27000,Grass,-118.256666,Outdoor
+45,Mercedes-Benz Stadium,Atlanta,71000,Artificial,-84.401000,RetractableDome
+46,Tom Benson Hall of Fame Stadium,Canton,23000,Artificial,-81.398157,Outdoor
+47,Tottenham Hotspur Stadium,London,62062,Artificial,-0.066389,Outdoor
+48,Aloha Stadium,Honolulu,50000,Artificial,-157.929821,Outdoor
+50,Investors Group Field,Winnipeg,33134,Artificial,-97.143056,Outdoor
+53,Allegiant Stadium,Las Vegas,65000,Grass,-115.183611,Dome
+54,SoFi Stadium,Inglewood,70240,Artificial,-118.339200,Dome
+55,Allianz Arena,Munich,75024,Grass,11.624722,Outdoor
+86,Deutsche Bank Park,Frankfurt,48000,Grass,8.645806,Outdoor
+87,Arena Corinthians,Sao Paulo,47252,Grass,-46.474278,Outdoor
+88,Olympiastadion,Berlin,74475,Grass,13.239444,Outdoor
+89,Santiago Bernabeu Stadium,Madrid,78297,Artificial,-3.688333,Retractable Dome
+90,Croke Park,Dublin,82300,Grass,-6.251900,Outdoor
+91,Moscone Center,San Francisco,,,-122.401557,
+92,Melbourne Cricket Ground,East Melbourne,100024,Grass,144.983333,Outdoor
+93,Maracana Stadium,Rio de Janeiro,73139,Grass,-43.230164,Outdoor
+94,Stade de France,Paris,81338,Grass,2.360200,Outdoor
+95,Highmark Stadium,Orchard Park,63000,Grass,-78.792222,Outdoor
