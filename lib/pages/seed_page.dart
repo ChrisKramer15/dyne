@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -297,6 +299,138 @@ class _SeedPageState extends State<SeedPage> {
     setState(() => _logs.add(msg));
   }
 
+  static const _leagueNames = [
+    'Gridiron Gladiators',
+    'Sunday Scaries',
+    'Touchdown Town',
+    'The Waiver Wire',
+    'Bench Warmers',
+    'Draft Day Dummies',
+    'End Zone Elite',
+    'Fantasy Fiends',
+    'Pigskin Posse',
+    'Sleeper Cell',
+    'Trade Block Party',
+    'Sack Attack',
+    'Redzone Renegades',
+    'The Commissioner\'s League',
+    'Fourth & Goal',
+    'Hail Mary Heroes',
+  ];
+
+  static const _leagueTypes = [
+    'Redraft',
+    'Dynasty',
+    'Keeper',
+    'Best Ball',
+  ];
+
+  static const _scoringFormats = [
+    'PPR',
+    'Half PPR',
+    'Standard',
+    'TE Premium',
+  ];
+
+  static const _draftTypes = [
+    'Snake',
+    'Auction',
+    'Linear',
+  ];
+
+  Future<void> _seedLeagues() async {
+    setState(() {
+      _running = true;
+      _logs.clear();
+    });
+
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) {
+      _addLog('✗ Not signed in. Sign in first.');
+      setState(() => _running = false);
+      return;
+    }
+
+    final firestore = FirebaseFirestore.instance;
+    final random = Random();
+    final uid = currentUser.uid;
+
+    // Shuffle league names and pick 8
+    final names = List<String>.from(_leagueNames)..shuffle(random);
+    final count = 8;
+
+    for (var i = 0; i < count; i++) {
+      final name = names[i];
+      final leagueType = _leagueTypes[random.nextInt(_leagueTypes.length)];
+      final scoringFormat =
+          _scoringFormats[random.nextInt(_scoringFormats.length)];
+      final draftType = _draftTypes[random.nextInt(_draftTypes.length)];
+      final maxMembers = [8, 10, 12, 14][random.nextInt(4)];
+      final memberCount = random.nextInt(maxMembers - 1) + 2;
+
+      // Generate fake member IDs (current user + random UIDs)
+      final memberIds = <String>[uid];
+      for (var m = 1; m < memberCount; m++) {
+        memberIds.add('bot_${random.nextInt(999999).toString().padLeft(6, '0')}');
+      }
+
+      final inviteCode = List.generate(
+        12,
+        (_) => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[
+            random.nextInt(32)],
+      ).join();
+
+      await firestore.collection('leagues').add({
+        'name': name,
+        'inviteCode': inviteCode,
+        'commissionerId': uid,
+        'memberIds': memberIds,
+        'maxMembers': maxMembers,
+        'createdAt': Timestamp.fromDate(
+          DateTime.now().subtract(Duration(days: random.nextInt(90))),
+        ),
+        'leagueType': leagueType,
+        'scoringFormat': scoringFormat,
+        'draftType': draftType,
+        'salariesEnabled': random.nextBool(),
+        'contractsEnabled': leagueType == 'Dynasty',
+        'schemesEnabled': false,
+        'practiceSquadEnabled': random.nextBool(),
+        'practiceSquadSize': 10,
+        'scoringValues': <String, double>{},
+        'scoringEnabled': <String, bool>{},
+        'rosterPreset': 'Classic',
+        'rosterSlots': <String, int>{},
+        'roundMode': 'Fill Roster',
+        'roundCount': 15,
+        'regularSeasonWeeks': 14,
+        'playoffTeams': [4, 6][random.nextInt(2)],
+        'tradeDeadline': 'Week ${random.nextInt(4) + 9}',
+        'waiverFormat': random.nextBool() ? 'Rolling' : 'FAAB',
+        'faabBudget': 100,
+        'practiceSquadStealing': false,
+        'minimumRosterSize': 10,
+        'scoutCollegePlayers': false,
+        'contractNegotiations': false,
+        'draftCompleted': random.nextBool(),
+        'pickTimerSeconds': [60, 90, 120][random.nextInt(3)],
+        'sleepModeEnabled': false,
+        'sleepModeStart': '23:00',
+        'sleepModeEnd': '08:00',
+        'sleepModePickTimer': 480,
+        'memberStrikes': <String, int>{},
+        'aiTeams': <String>[],
+      });
+
+      _addLog(
+          '✓ Created: "$name" ($leagueType, $scoringFormat, $memberCount/$maxMembers)');
+    }
+
+    _addLog('');
+    _addLog('Done! Created $count test leagues.');
+    setState(() => _running = false);
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -347,6 +481,17 @@ class _SeedPageState extends State<SeedPage> {
                   child: OutlinedButton(
                     onPressed: _running ? null : _sendTestMessages,
                     child: const Text('Send Test Messages'),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: _running ? null : _seedLeagues,
+                    child: const Text('Seed Test Leagues'),
                   ),
                 ),
               ),
