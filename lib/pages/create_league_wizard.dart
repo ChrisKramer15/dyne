@@ -756,11 +756,11 @@ class _CreateLeagueWizardState extends State<CreateLeagueWizard> {
           _buildLabel('League Type', colorScheme),
           const SizedBox(height: 12),
           _buildOptionChips(
-            options: ['Redraft', 'Keeper', 'Dynasty', 'Guillotine'],
+            options: ['Redraft', 'Keeper', 'Dynasty', 'Best Ball', 'Guillotine'],
             selected: _leagueType,
             onSelected: (v) => setState(() {
               _leagueType = v;
-              if (v == 'Redraft' || v == 'Guillotine') {
+              if (v == 'Redraft' || v == 'Guillotine' || v == 'Best Ball') {
                 _contractsBeforeDisable = _contractsEnabled;
                 _contractsEnabled = false;
                 _practiceSquadBeforeDisable = _practiceSquadEnabled;
@@ -803,7 +803,7 @@ class _CreateLeagueWizardState extends State<CreateLeagueWizard> {
           _buildLabel('Scoring Preset', colorScheme),
           const SizedBox(height: 12),
           _buildOptionChips(
-            options: ['Standard', 'Half PPR', 'PPR', 'Teamwork'],
+            options: ['Standard', 'Half PPR', 'PPR', 'TE Premium', 'Teamwork'],
             selected: _scoringFormat,
             onSelected: (v) => setState(() {
               _scoringFormat = v;
@@ -870,6 +870,11 @@ class _CreateLeagueWizardState extends State<CreateLeagueWizard> {
         _scoringValues = Map.of(_teamworkDefaults);
         _scoringEnabled = {for (final key in _teamworkDefaults.keys) key: true};
         break;
+      case 'TE Premium':
+        _scoringValues = Map.of(_pprDefaults);
+        _scoringValues['Reception (TE)'] = 1.5;
+        _scoringEnabled = {for (final key in _scoringValues.keys) key: true};
+        break;
     }
   }
 
@@ -881,6 +886,8 @@ class _CreateLeagueWizardState extends State<CreateLeagueWizard> {
         return '0.5 points per reception. Balanced between rushers and receivers.';
       case 'PPR':
         return '1 point per reception. Heavily rewards pass-catching players.';
+      case 'TE Premium':
+        return '1.5 points per TE reception, 1 for others. Elevates tight ends to elite value.';
       case 'Teamwork':
         return 'Balanced scoring across all positions. Every roster spot matters equally.';
       default:

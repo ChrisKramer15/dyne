@@ -31,6 +31,18 @@ class DraftService {
   }) async {
     final picks = _generatePickOrder(teamIds, draftType, rounds);
 
+    // Write picks first (in batches of 450 to stay under Firestore limit)
+    for (var i = 0; i < picks.length; i += 450) {
+      final batch = _firestore.batch();
+      final chunk = picks.skip(i).take(450);
+      for (final pick in chunk) {
+        final docRef = _picksRef.doc('pick_${pick.overallPick}');
+        batch.set(docRef, pick.toMap());
+      }
+      await batch.commit();
+    }
+
+    // Only set draft state after picks are fully written
     await _draftRef.set({
       'status': 'active',
       'draftType': draftType,
@@ -44,14 +56,55 @@ class DraftService {
       'draftedPlayerIds': <String>[],
       'startedAt': FieldValue.serverTimestamp(),
     });
+  }
 
-    // Write all picks
-    final batch = _firestore.batch();
-    for (final pick in picks) {
-      final docRef = _picksRef.doc('pick_${pick.overallPick}');
-      batch.set(docRef, pick.toMap());
+  /// Regenerate picks only (when state exists but picks are missing).
+  Future<void> regeneratePicks({
+    required List<String> teamIds,
+    required String draftType,
+    required int rounds,
+  }) async {
+    final testDoc = _picksRef.doc('_test_write');
+
+    try {
+      await testDoc.set({'test': true, 'timestamp': FieldValue.serverTimestamp()});
+    } catch (e) {
+      rethrow;
     }
-    await batch.commit();
+
+    try {
+      final readBack = await testDoc.get();
+      if (!readBack.exists) {
+        throw Exception('Write succeeded but read failed. Path: ${testDoc.path}');
+      }
+    } catch (e) {
+      rethrow;
+    }
+
+    await testDoc.delete();
+
+    final picks = _generatePickOrder(teamIds, draftType, rounds);
+
+    if (picks.isEmpty) {
+      throw Exception('Generated 0 picks. teamIds=${teamIds.length}, rounds=$rounds');
+    }
+
+    for (var i = 0; i < picks.length; i += 450) {
+      final batch = _firestore.batch();
+      final chunk = picks.skip(i).take(450);
+      for (final pick in chunk) {
+        final docRef = _picksRef.doc('pick_${pick.overallPick}');
+        batch.set(docRef, pick.toMap());
+      }
+      await batch.commit();
+    }
+
+    await _draftRef.update({
+      'currentPick': 1,
+      'totalPicks': picks.length,
+      'pickStartedAt': FieldValue.serverTimestamp(),
+      'draftedPlayerIds': <String>[],
+    });
   }
 
   List<DraftPick> _generatePickOrder(
@@ -100,10 +153,14 @@ class DraftService {
 
   /// Stream all picks.
   Stream<List<DraftPick>> streamPicks() {
-    return _picksRef.orderBy('overallPick').snapshots().map(
-          (snapshot) => snapshot.docs
-              .map((doc) => DraftPick.fromMap(doc.data() as Map<String, dynamic>))
-              .toList(),
+    return _picksRef.snapshots().map(
+          (snapshot) {
+            final picks = snapshot.docs
+                .map((doc) => DraftPick.fromMap(doc.data() as Map<String, dynamic>))
+                .toList();
+            picks.sort((a, b) => a.overallPick.compareTo(b.overallPick));
+            return picks;
+          },
         );
   }
 
@@ -177,14 +234,89 @@ class DraftService {
       }
     }
 
-    // Fallback: best available by rank
+    // Smart fallback: pick based on roster needs
     final available = PlayerPool.players
         .where((p) => !draftedPlayerIds.contains(p.id))
         .toList()
       ..sort((a, b) => a.rank.compareTo(b.rank));
 
-    if (available.isNotEmpty) {
-      await makePick(overallPick, available.first);
+    if (available.isEmpty) return;
+
+    // Try to determine roster needs
+    if (teamId != null) {
+      try {
+        final leagueDoc = await _firestore.collection('leagues').doc(leagueId).get();
+        final leagueData = leagueDoc.data() ?? {};
+        final rosterSlots = Map<String, int>.from(leagueData['rosterSlots'] ?? {});
+
+        if (rosterSlots.isNotEmpty) {
+          // Count what the team has already drafted by position
+          final teamPicks = await _picksRef
+              .where('teamId', isEqualTo: teamId)
+              .get();
+          final positionCounts = <String, int>{};
+          for (final doc in teamPicks.docs) {
+            final data = doc.data() as Map<String, dynamic>;
+            final pos = data['playerPosition'] as String?;
+            if (pos != null) {
+              positionCounts[pos] = (positionCounts[pos] ?? 0) + 1;
+            }
+          }
+
+          // Map roster slot names to position abbreviations
+          final slotNeeds = <String, int>{};
+          for (final entry in rosterSlots.entries) {
+            final abbrev = _slotToPosition(entry.key);
+            if (abbrev != null) {
+              slotNeeds[abbrev] = (slotNeeds[abbrev] ?? 0) + entry.value;
+            }
+          }
+
+          // Find positions that still have unfilled starter slots
+          final neededPositions = <String>[];
+          for (final entry in slotNeeds.entries) {
+            final have = positionCounts[entry.key] ?? 0;
+            if (have < entry.value) {
+              neededPositions.add(entry.key);
+            }
+          }
+
+          // If there are unfilled needs, pick the highest-ranked player at a needed position
+          if (neededPositions.isNotEmpty) {
+            final needPick = available.where(
+                (p) => neededPositions.contains(p.position)).firstOrNull;
+            if (needPick != null) {
+              await makePick(overallPick, needPick);
+              return;
+            }
+          }
+        }
+      } catch (_) {
+        // Fall through to best available if roster logic fails
+      }
+    }
+
+    // Final fallback: best available by rank
+    await makePick(overallPick, available.first);
+  }
+
+  /// Map roster slot display names to position abbreviations.
+  String? _slotToPosition(String slot) {
+    switch (slot) {
+      case 'Quarterback':
+        return 'QB';
+      case 'Running Back':
+        return 'RB';
+      case 'Wide Receiver':
+        return 'WR';
+      case 'Tight End':
+        return 'TE';
+      case 'Kicker':
+        return 'K';
+      case 'Defense':
+        return 'DEF';
+      default:
+        return null; // Flex, Bench, etc. — don't restrict
     }
   }
 

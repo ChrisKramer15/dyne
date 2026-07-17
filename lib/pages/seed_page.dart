@@ -366,11 +366,10 @@ class _SeedPageState extends State<SeedPage> {
           _scoringFormats[random.nextInt(_scoringFormats.length)];
       final draftType = _draftTypes[random.nextInt(_draftTypes.length)];
       final maxMembers = [8, 10, 12, 14][random.nextInt(4)];
-      final memberCount = random.nextInt(maxMembers - 1) + 2;
 
-      // Generate fake member IDs (current user + random UIDs)
+      // Fill all member slots so draft can start
       final memberIds = <String>[uid];
-      for (var m = 1; m < memberCount; m++) {
+      for (var m = 1; m < maxMembers; m++) {
         memberIds.add('bot_${random.nextInt(999999).toString().padLeft(6, '0')}');
       }
 
@@ -401,7 +400,7 @@ class _SeedPageState extends State<SeedPage> {
         'scoringEnabled': <String, bool>{},
         'rosterPreset': 'Classic',
         'rosterSlots': <String, int>{},
-        'roundMode': 'Fill Roster',
+        'roundMode': 'Custom',
         'roundCount': 15,
         'regularSeasonWeeks': 14,
         'playoffTeams': [4, 6][random.nextInt(2)],
@@ -412,7 +411,10 @@ class _SeedPageState extends State<SeedPage> {
         'minimumRosterSize': 10,
         'scoutCollegePlayers': false,
         'contractNegotiations': false,
-        'draftCompleted': random.nextBool(),
+        'draftCompleted': false,
+        'draftStartTime': Timestamp.fromDate(
+          DateTime.now().subtract(const Duration(minutes: 5)),
+        ),
         'pickTimerSeconds': [60, 90, 120][random.nextInt(3)],
         'sleepModeEnabled': false,
         'sleepModeStart': '23:00',
@@ -423,7 +425,7 @@ class _SeedPageState extends State<SeedPage> {
       });
 
       _addLog(
-          '✓ Created: "$name" ($leagueType, $scoringFormat, $memberCount/$maxMembers)');
+          '✓ Created: "$name" ($leagueType, $scoringFormat, $maxMembers/$maxMembers)');
     }
 
     _addLog('');
