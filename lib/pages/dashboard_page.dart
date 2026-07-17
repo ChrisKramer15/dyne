@@ -11,6 +11,7 @@ import '../services/auth_service.dart';
 import '../services/chat_service.dart';
 import '../services/league_service.dart';
 import '../theme/dyne_theme.dart';
+import '../utils/env_config.dart';
 import '../widgets/dyne_loading.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -268,31 +269,33 @@ class _DashboardPageState extends State<DashboardPage> {
                       label: const Text('Sign Out'),
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    width: double.infinity,
-                    child: TextButton.icon(
-                      onPressed: () {
-                        Navigator.pop(ctx);
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const SeedPage()),
-                        );
-                      },
-                      icon: Icon(Icons.bug_report,
-                          color: colorScheme.onSurface
-                              .withValues(alpha: 0.4)),
-                      label: Text(
-                        'Seed Test Users (Dev)',
-                        style: TextStyle(
-                          color: colorScheme.onSurface
-                              .withValues(alpha: 0.4),
-                          fontSize: 12,
+                  if (EnvConfig.isDev) ...[
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      child: TextButton.icon(
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const SeedPage()),
+                          );
+                        },
+                        icon: Icon(Icons.bug_report,
+                            color: colorScheme.onSurface
+                                .withValues(alpha: 0.4)),
+                        label: Text(
+                          'Seed Test Users (Dev)',
+                          style: TextStyle(
+                            color: colorScheme.onSurface
+                                .withValues(alpha: 0.4),
+                            fontSize: 12,
+                          ),
                         ),
                       ),
                     ),
-                  ),
+                  ],
                   const SizedBox(height: 12),
                 ],
               ),

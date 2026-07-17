@@ -8,6 +8,7 @@ import '../services/draft_service.dart';
 import '../services/league_service.dart';
 import '../services/seed_league_data.dart';
 import '../theme/dyne_theme.dart';
+import '../utils/env_config.dart';
 import '../utils/team_defaults.dart';
 import '../widgets/dyne_loading.dart';
 import 'edit_team_modal.dart';
@@ -554,20 +555,21 @@ class _LeagueSettingsPageState extends State<LeagueSettingsPage> {
                 onTap: () =>
                     _showDraftSettingsModal(context, league, colorScheme),
               ),
-              _buildActionTile(
-                Icons.bug_report,
-                'Seed Test Data (Dev)',
-                'Add dummy members, chat messages, and DMs',
-                colorScheme,
-                onTap: () async {
-                  await SeedLeagueData.seed(widget.leagueId);
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Test data seeded!')),
-                    );
-                  }
-                },
-              ),
+              if (EnvConfig.isDev)
+                _buildActionTile(
+                  Icons.bug_report,
+                  'Seed Test Data (Dev)',
+                  'Add dummy members, chat messages, and DMs',
+                  colorScheme,
+                  onTap: () async {
+                    await SeedLeagueData.seed(widget.leagueId);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Test data seeded!')),
+                      );
+                    }
+                  },
+                ),
             ],
           ),
           const SizedBox(height: 16),

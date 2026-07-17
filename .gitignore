@@ -30,4 +30,4 @@ firebase-debug.log
 
 # Misc
 *.log
-*.kiro
+.kiro/
