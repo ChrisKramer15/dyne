@@ -174,7 +174,17 @@ describe('glow and motion (Req 2.5, 2.7)', () => {
   it('reduced-motion removes transition/animation but keeps the glow', () => {
     const idx = appCss.indexOf('@media (prefers-reduced-motion: reduce)')
     expect(idx).toBeGreaterThanOrEqual(0)
-    const block = appCss.slice(idx)
+    // Slice just this @media block (brace matching) so later sections are not included.
+    let depth = 0
+    let end = idx
+    for (let i = appCss.indexOf('{', idx); i < appCss.length; i++) {
+      if (appCss[i] === '{') depth++
+      else if (appCss[i] === '}' && --depth === 0) {
+        end = i + 1
+        break
+      }
+    }
+    const block = appCss.slice(idx, end)
     expect(block).toMatch(/transition:\s*none/)
     expect(block).toMatch(/animation:\s*none/)
     expect(block).not.toMatch(/box-shadow/)
@@ -189,6 +199,87 @@ describe('background', () => {
     expect(Number(base.match(/z-index:\s*(-?\d+)/)![1])).toBeLessThan(0)
     expect(base).toMatch(/var\(--bg\);/)
     expect(appCss).not.toMatch(/url\(/)
+  })
+})
+
+describe('auth modal backdrop (Req 1.3)', () => {
+  it('.auth-modal-backdrop covers the viewport with position: fixed and inset: 0', () => {
+    const body = rule(appCss, '.auth-modal-backdrop')
+    expect(body).toMatch(/(?<![\w-])position:\s*fixed\s*;/)
+    expect(body).toMatch(/(?<![\w-])inset:\s*0\s*;/)
+  })
+})
+
+describe('auth modal Diamond styling (Req 14.1, 14.8, 14.9, 14.14, 14.15)', () => {
+  // Slice the last @media (prefers-reduced-motion) block, which holds the auth modal rules.
+  const reducedMotionBlock = () => {
+    const idx = appCss.lastIndexOf('@media (prefers-reduced-motion: reduce)')
+    expect(idx).toBeGreaterThanOrEqual(0)
+    let depth = 0
+    for (let i = appCss.indexOf('{', idx); i < appCss.length; i++) {
+      if (appCss[i] === '{') depth++
+      else if (appCss[i] === '}' && --depth === 0) return appCss.slice(idx, i + 1)
+    }
+    throw new Error('Unterminated reduced-motion block')
+  }
+
+  it('card is chamfered with a clip-path of at least 22px, not rounded', () => {
+    const body = rule(appCss, '.auth-modal')
+    const poly = body.match(/clip-path:\s*polygon\(([^;]*)\);/)
+    expect(poly).not.toBeNull()
+    expect(poly![1]).toMatch(/var\(--diamond-cut\)/)
+    expect(parseFloat(cssVar('diamond-cut'))).toBeGreaterThanOrEqual(22)
+    expect(body).not.toMatch(/border-radius/)
+  })
+
+  it('card fill is translucent, using the --diamond-fill-* alphas', () => {
+    expect(rule(appCss, '.auth-modal')).toMatch(
+      /background:\s*linear-gradient\([^;]*var\(--diamond-fill-top\)[^;]*var\(--diamond-fill-bottom\)/,
+    )
+    for (const n of ['diamond-fill-top', 'diamond-fill-bottom']) {
+      const alpha = Number(cssVar(n).match(/\/\s*([\d.]+)\s*\)/)![1])
+      expect(alpha, n).toBeGreaterThan(0)
+      expect(alpha, n).toBeLessThan(1)
+    }
+  })
+
+  it('submit is an orange-to-magenta gradient with --bg label >= 4.5:1 on both stops', () => {
+    const body = rule(appCss, '.auth-modal .auth-modal-submit')
+    expect(body).toMatch(/(?<!-)color:\s*var\(--bg\)/)
+    const stops = body.match(/background:\s*linear-gradient\(([^;]*)\);/)![1]
+    const names = [...stops.matchAll(/var\(--(neon-[\w-]+)\)/g)].map((m) => m[1])
+    expect(names).toEqual(['neon-orange', 'neon-magenta'])
+    for (const n of names) {
+      expect(contrast(bg, colorToRgb(cssVar(n))), n).toBeGreaterThanOrEqual(4.5)
+    }
+    expect(body).toMatch(/clip-path:\s*polygon\(/)
+  })
+
+  it('active switch option has a bold green label and a filled green marker', () => {
+    const option = rule(appCss, ".auth-modal .auth-modal-switch-option[aria-pressed='true']")
+    expect(option).toMatch(/(?<!-)color:\s*var\(--neon-green\)/)
+    expect(option).toMatch(/font-weight:\s*(700|bold)/)
+    const marker = rule(
+      appCss,
+      ".auth-modal .auth-modal-switch-option[aria-pressed='true'] .auth-modal-base",
+    )
+    expect(marker).toMatch(/background:\s*var\(--neon-green\)/)
+    expect(contrast(neon['neon-green'], bg)).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it('reduced motion also covers the auth modal frame, outline draw-in, submit and markers', () => {
+    const block = reducedMotionBlock()
+    for (const sel of [
+      '.auth-modal-outline-reveal',
+      '.auth-modal-frame',
+      '.auth-modal .auth-modal-submit',
+      '.auth-modal .auth-modal-switch-option',
+      '.auth-modal .auth-modal-base',
+    ]) {
+      expect(block, sel).toContain(sel)
+    }
+    expect(block).toMatch(/transition:\s*none/)
+    expect(block).toMatch(/animation:\s*none/)
   })
 })
 

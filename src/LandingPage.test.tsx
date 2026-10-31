@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { AuthState } from './auth/authReducer'
@@ -50,23 +50,25 @@ describe('LandingPage', () => {
   })
 
   it.each([
-    ['Login', 'login'],
-    ['Register', 'register'],
-  ])('%s navigates on click (4.4, 4.5)', async (name, target) => {
+    ['Login', 'login', 'Hello, Again!'],
+    ['Register', 'register', 'Create account'],
+  ])('%s navigates on click and opens the modal (4.4, 4.5, 8.3)', async (name, target, dialogName) => {
     const onNavigate = vi.fn()
     const user = userEvent.setup()
     render(<LandingPage onNavigate={onNavigate} />)
+    expect(screen.queryByRole('dialog')).toBeNull()
     await user.click(screen.getByRole('button', { name }))
     expect(onNavigate).toHaveBeenCalledTimes(1)
     expect(onNavigate).toHaveBeenCalledWith(target)
+    expect(screen.getByRole('dialog', { name: dialogName })).toBeTruthy()
   })
 
   it.each([
-    ['Login', 'login', '{Enter}'],
-    ['Login', 'login', ' '],
-    ['Register', 'register', '{Enter}'],
-    ['Register', 'register', ' '],
-  ])('%s navigates on keyboard %j (4.4, 4.5, 7.6)', async (name, target, key) => {
+    ['Login', 'login', 'Hello, Again!', '{Enter}'],
+    ['Login', 'login', 'Hello, Again!', ' '],
+    ['Register', 'register', 'Create account', '{Enter}'],
+    ['Register', 'register', 'Create account', ' '],
+  ])('%s navigates on keyboard %j and opens the modal (4.4, 4.5, 7.6, 8.3)', async (name, target, dialogName, key) => {
     const onNavigate = vi.fn()
     const user = userEvent.setup()
     render(<LandingPage onNavigate={onNavigate} />)
@@ -74,6 +76,7 @@ describe('LandingPage', () => {
     await user.keyboard(key)
     expect(onNavigate).toHaveBeenCalledTimes(1)
     expect(onNavigate).toHaveBeenCalledWith(target)
+    expect(screen.getByRole('dialog', { name: dialogName })).toBeTruthy()
   })
 
   it('shows an alert message when navigation throws and stays on the page (4.6)', async () => {
@@ -81,11 +84,28 @@ describe('LandingPage', () => {
       throw new Error('boom')
     })
     const user = userEvent.setup()
-    render(<LandingPage onNavigate={onNavigate} />)
-    expect(screen.getByRole('alert').textContent).toBe('')
+    const { container } = render(<LandingPage onNavigate={onNavigate} />)
+    // The modal adds its own alert regions once open, so scope to the page.
+    const pageAlert = () => container.querySelector('.landing [role="alert"]')
+    expect(pageAlert()?.textContent).toBe('')
     await user.click(screen.getByRole('button', { name: 'Login' }))
-    expect(screen.getByRole('alert').textContent).toMatch(/could not open/i)
-    expect(screen.getByRole('button', { name: 'Login' })).toBeTruthy()
+    expect(pageAlert()?.textContent).toMatch(/could not open/i)
+    expect(within(container).getByRole('button', { name: 'Login', hidden: true })).toBeTruthy()
+    // A navigation failure does not stop the modal from opening (8.4).
+    expect(screen.getByRole('dialog', { name: 'Hello, Again!' })).toBeTruthy()
+  })
+
+  it.each([
+    ['Login', 'Hello, Again!'],
+    ['Register', 'Create account'],
+  ])('%s without onNavigate opens the modal without error or page change (8.5)', async (name, dialogName) => {
+    const user = userEvent.setup()
+    const before = window.location.href
+    const { container } = render(<LandingPage />)
+    await user.click(screen.getByRole('button', { name }))
+    expect(screen.getByRole('dialog', { name: dialogName })).toBeTruthy()
+    expect(container.querySelector('.landing [role="alert"]')?.textContent).toBe('')
+    expect(window.location.href).toBe(before)
   })
 
   it('places the four features on the bases in run order: first, second, third, home', () => {

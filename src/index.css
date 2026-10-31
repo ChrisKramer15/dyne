@@ -12,6 +12,23 @@
   /* Accent for the Login button, paired with magenta in a gradient */
   --neon-orange: hsl(25 100% 58%);
 
+  /* Frosted glass card (auth modal): same hue as --surface */
+  --glass-rgb: 11 13 20;
+  --glass-alpha: 0.8;
+  --glass-input-alpha: 0.08;
+  --glass-border: hsl(0 0% 100% / 0.22);
+
+  /* Diamond direction (auth modal) */
+  --neon-purple: hsl(270 100% 72%);
+  --diamond-cut: 22px;
+  --diamond-input-cut: 10px;
+  --diamond-fill-top: hsl(228 40% 8% / 0.92);
+  --diamond-fill-bottom: hsl(228 40% 5% / 0.92);
+  --diamond-glow-cyan: hsl(185 100% 60% / 0.45);
+  --diamond-glow-purple: hsl(270 100% 65% / 0.25);
+  --diamond-input-fill: hsl(185 100% 60% / 0.06);
+  --diamond-input-border: hsl(185 100% 60% / 0.35);
+
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --display: 'Sora', system-ui, 'Segoe UI', Roboto, sans-serif;
 
