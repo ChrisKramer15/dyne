@@ -2,156 +2,499 @@
 .landing {
   position: relative;
   isolation: isolate;
-  display: flex;
-  flex-direction: column;
-  min-height: 100dvh;
   width: 100%;
-  max-width: 100%;
-  color: var(--text);
+  /* Single screen, no scrolling: everything below is sized against the
+     viewport height (dvh) as well as width so it always fits. */
+  height: 100dvh;
+  overflow: hidden;
   background-color: var(--bg);
 }
 
-/* Fixed full-viewport cover image; solid --bg shows if the image fails */
-.landing::before,
-.landing::after {
+/* Fixed backdrop: two soft bands of colour on solid --bg.
+   Top edge flows blue -> green; bottom edge flows purple -> pink.
+   Each glow is a wide, flat ellipse centred on the edge itself, so it spreads
+   sideways along the edge rather than forming a ball. Neighbouring ellipses
+   overlap by ~50% so their colours blend, and the extra mid-stop eases the
+   falloff so there is no visible rim. The middle of the screen stays dark. */
+.landing::before {
   content: '';
   position: fixed;
   inset: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-}
-
-.landing::before {
-  z-index: -2;
-  background: var(--bg) url('./assets/landing-bg.jpg') center / cover no-repeat;
-}
-
-/* 50% dark overlay */
-.landing::after {
   z-index: -1;
-  background: var(--overlay);
+  pointer-events: none;
+  background:
+    /* Top band */
+    radial-gradient(
+      ellipse 85vw 55vh at 10% 0%,
+      hsl(185 100% 60% / 0.24),
+      hsl(185 100% 60% / 0.1) 45%,
+      transparent 100%
+    ),
+    radial-gradient(
+      ellipse 80vw 50vh at 90% 0%,
+      hsl(130 100% 55% / 0.16),
+      hsl(130 100% 55% / 0.06) 45%,
+      transparent 100%
+    ),
+    /* Bottom band */
+    radial-gradient(
+      ellipse 80vw 50vh at 10% 100%,
+      hsl(270 100% 65% / 0.18),
+      hsl(270 100% 65% / 0.07) 45%,
+      transparent 100%
+    ),
+    radial-gradient(
+      ellipse 85vw 55vh at 90% 100%,
+      hsl(315 100% 60% / 0.22),
+      hsl(315 100% 60% / 0.09) 45%,
+      transparent 100%
+    ),
+    var(--bg);
 }
 
 .landing-main {
-  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 24px;
-  min-width: 0;
-  max-width: 100%;
-  padding: 32px 16px;
-  text-align: center;
+  justify-content: space-evenly;
+  height: 100%;
+  padding: clamp(12px, 3dvh, 40px) 16px;
 }
 
-.landing-main h1 {
-  font-size: 56px;
-  font-weight: 600;
-  line-height: 115%;
-  letter-spacing: -1px;
-  color: var(--text);
-  max-width: 100%;
-  overflow-wrap: anywhere;
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
 
-  @media (max-width: 1024px) {
-    font-size: 40px;
+/* Shared entrance */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
   }
 }
 
-.loading {
+/* Wordmark: written "Dyne" so screen readers say the word, shown in caps */
+.wordmark {
+  margin: 0;
+  /* Offset the trailing letter-spacing so the word sits optically centred */
+  margin-right: -0.32em;
+  font-family: var(--display);
+  font-size: clamp(1.75rem, min(6vw, 6.5dvh), 4rem);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
   color: var(--text);
+  /* Subtle top-to-bottom sheen; falls back to solid --text */
+  background: linear-gradient(180deg, #ffffff 0%, #ffffff 45%, #c9d4ff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: rise-in 700ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+/* ---------- The diamond ---------- */
+
+/* Square stage; children are placed by percentage, and text inside is sized
+   in cqi (a share of the stage width) so the whole field scales as one. */
+.diamond {
+  position: relative;
+  container-type: inline-size;
+  width: min(92vw, 56dvh, 560px);
+  aspect-ratio: 1;
+  flex-shrink: 0;
+}
+
+.field-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Outfield wall and foul lines: faint dashed neon green */
+.field-wall {
+  stroke: var(--neon-green);
+  stroke-opacity: 0.3;
+  /* Units are the SVG's 100x100 viewBox, so lines scale with the field */
+  stroke-width: 0.3;
+  stroke-dasharray: 1.2 2;
+}
+
+.field-infield {
+  fill: hsl(185 100% 60% / 0.05);
+}
+
+/* Base paths: neon blue, drawn in on load */
+.field-paths {
+  stroke: var(--neon-cyan);
+  stroke-opacity: 0.6;
+  stroke-width: 0.4;
+  /* pathLength=1 on the element, so one dash covers the whole path */
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  filter: drop-shadow(0 0 3px hsl(185 100% 60% / 0.6));
+  animation: draw-paths 1100ms cubic-bezier(0.45, 0, 0.2, 1) 200ms forwards;
+}
+
+@keyframes draw-paths {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* The logo on the pitcher's mound, centred in the infield */
+.mound {
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  width: 20cqi;
+  translate: -50% -50%;
+  animation: rise-in 700ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.bubble {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* Neon glow: tight cyan halo plus a softer green spill below */
+  filter: drop-shadow(0 0 6px hsl(185 100% 60% / 0.55))
+    drop-shadow(0 10px 28px hsl(130 100% 55% / 0.3));
+}
+
+/* Dark glass so the neon field lines read like a lit sign */
+.bubble-body {
+  fill: rgba(11, 13, 20, 0.72);
+}
+
+.field path,
+.field circle {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Outfield: neon green wall and foul lines over a faint green turf tint */
+.field-outfield {
+  fill: hsl(130 100% 55% / 0.1);
+  stroke: var(--neon-green);
+  stroke-width: 2.25;
+}
+
+/* Infield: neon blue base paths */
+.field-diamond {
+  fill: hsl(185 100% 60% / 0.12);
+  stroke: var(--neon-cyan);
+  stroke-width: 2.25;
+}
+
+/* Pitcher's mound: neon pink accent at the centre of the diamond */
+.field-mound {
+  fill: var(--neon-magenta);
+}
+
+.field-base {
+  fill: #ffffff;
+}
+
+/* ---------- Bases (the features) ---------- */
+
+.bases {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.accent-cyan {
+  --accent: var(--neon-cyan);
+}
+
+.accent-green {
+  --accent: var(--neon-green);
+}
+
+.accent-magenta {
+  --accent: var(--neon-magenta);
+}
+
+.accent-purple {
+  --accent: hsl(270 100% 72%);
+}
+
+.base {
+  --marker: 5cqi;
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  /* Size to the label, not to the space left beside the base (first base
+     sits near the edge and was squeezing its label onto three lines) */
+  width: max-content;
+  /* The marker's centre sits exactly on (x, y); the label hangs below it */
+  translate: -50% calc(var(--marker) / -2);
+  animation: rise-in 500ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation-delay: calc(500ms + var(--i) * 220ms);
+}
+
+/* Second base: label above the marker, so it stays clear of the mound */
+.base-second {
+  translate: -50% calc(-100% + var(--marker) / 2);
+}
+
+.base-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.6cqi;
+  /* Generous hit area around the small marker */
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.base-second .base-btn {
+  flex-direction: column-reverse;
+}
+
+.base-btn:focus-visible {
+  outline: none;
+}
+
+.base-btn:focus-visible .base-label {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+/* Rotated-square base in the feature's neon colour */
+.base-marker {
+  flex: none;
+  width: var(--marker);
+  height: var(--marker);
+  background: var(--accent);
+  border-radius: 12%;
+  rotate: 45deg;
+  box-shadow: 0 0 1.5cqi var(--accent);
+  transition:
+    scale 180ms ease-out,
+    box-shadow 180ms ease-out;
+}
+
+/* Home plate is a pentagon, point down */
+.base-home .base-marker {
+  rotate: none;
+  border-radius: 0;
+  clip-path: polygon(0 0, 100% 0, 100% 55%, 50% 100%, 0 55%);
+  /* clip-path hides box-shadow; use a drop-shadow on the shape instead */
+  box-shadow: none;
+  filter: drop-shadow(0 0 1cqi var(--accent));
+}
+
+.base-label {
+  max-width: 34cqi;
+  font-family: var(--display);
+  font-size: clamp(0.75rem, 3.6cqi, 1.25rem);
+  font-weight: 500;
+  line-height: 1.2;
+  text-align: center;
+  text-wrap: balance;
+  color: var(--text);
+  /* Dark halo so base-path lines never cut through the text */
+  text-shadow:
+    0 0 4px var(--bg),
+    0 0 8px var(--bg),
+    0 0 12px var(--bg);
+  transition: color 180ms ease-out;
+}
+
+/* Hovered, focused or tapped base lights up */
+.base.is-active .base-marker {
+  scale: 1.35;
+  box-shadow:
+    0 0 1.5cqi var(--accent),
+    0 0 4cqi var(--accent);
+}
+
+.base-home.is-active .base-marker {
+  box-shadow: none;
+  filter: drop-shadow(0 0 1.5cqi var(--accent)) drop-shadow(0 0 3cqi var(--accent));
+}
+
+.base.is-active .base-label {
+  color: var(--accent);
+}
+
+/* ---------- Description line under the field ---------- */
+
+.pitch {
+  /* Reserve two lines so swapping descriptions never shifts the layout */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(2 * 1.45em);
+  max-width: min(100%, 44ch);
+  font-family: var(--display);
+  font-size: clamp(0.875rem, 2.2dvh, 1.0625rem);
+  font-weight: 300;
+  line-height: 1.45;
+  text-align: center;
+  text-wrap: balance;
+  color: var(--text-muted);
+  transition: color 180ms ease-out;
+}
+
+.pitch.has-feature {
+  font-weight: 400;
+  color: var(--accent);
+}
+
+/* ---------- Call to action ---------- */
+
+/* Fixed min-height so the page doesn't shift as auth resolves */
+.cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  min-height: clamp(44px, 6.5dvh, 56px);
+  animation: rise-in 600ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation-delay: 900ms;
+}
+
+.loading {
+  font-family: var(--display);
+  color: var(--text-muted);
 }
 
 .welcome {
   max-width: min(100%, 40ch);
-  font-size: 1.5rem;
-  line-height: 130%;
+  font-family: var(--display);
+  font-size: 1.25rem;
+  font-weight: 500;
   color: var(--neon-green);
+  text-align: center;
   overflow-wrap: anywhere;
-  word-break: break-word;
 }
 
 .error {
-  max-width: 100%;
   padding: 8px 12px;
+  font-family: var(--display);
+  font-size: 0.875rem;
   color: var(--text);
   background: var(--surface);
   border: 1px solid var(--neon-magenta);
-  border-radius: 6px;
-  overflow-wrap: anywhere;
+  border-radius: 8px;
 }
 
-/* Action buttons */
+/* Register and Login side by side as equals, on every screen size */
 .actions {
   display: flex;
-  flex-wrap: wrap;
   justify-content: center;
-  gap: 12px;
-  max-width: 100%;
+  /* 8px floor keeps adjacent tap targets clearly separated */
+  gap: clamp(8px, 1.5vw, 16px);
 }
 
-.actions button {
-  --btn-color: var(--neon-cyan);
-  min-width: 44px;
-  min-height: 44px;
-  padding: 10px 28px;
-  font: inherit;
-  font-weight: 600;
-  color: var(--btn-color);
-  background: var(--surface);
-  border: 2px solid var(--btn-color);
-  border-radius: 8px;
+.btn {
+  /* 200px each on wide screens; on phones each takes half the width so the
+     pair always fits on one row */
+  min-width: min(200px, (100vw - 56px) / 2);
+  /* 44px floor keeps a comfortable touch target on short screens */
+  min-height: clamp(44px, 6.5dvh, 52px);
+  padding: clamp(8px, 1.5dvh, 14px) clamp(16px, 3vw, 40px);
+  font-family: var(--display);
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  border-radius: 999px;
   cursor: pointer;
-  box-shadow: none;
-  transition: box-shadow 150ms ease-out;
+  transition:
+    transform 160ms ease-out,
+    box-shadow 160ms ease-out;
 }
 
-.actions button:nth-child(2) {
-  --btn-color: var(--neon-magenta);
+/* Primary: solid neon blue-to-green fill with dark text */
+.btn-primary {
+  color: var(--bg);
+  background: linear-gradient(90deg, var(--neon-cyan), var(--neon-green));
+  border: none;
+  box-shadow: 0 0 18px hsl(170 100% 55% / 0.35);
 }
 
-.actions button:hover,
-.actions button:focus-visible {
+.btn-primary:hover,
+.btn-primary:focus-visible {
+  transform: translateY(-2px);
   box-shadow:
-    0 0 12px var(--btn-color),
-    0 0 24px var(--btn-color);
+    0 0 14px hsl(185 100% 60% / 0.7),
+    0 0 32px hsl(130 100% 55% / 0.45);
 }
 
-.actions button:active {
-  color: var(--btn-color);
-  background: var(--surface);
+.btn:active {
+  transform: translateY(0);
 }
 
-.actions button:focus-visible {
-  outline: 3px solid var(--neon-cyan);
-  outline-offset: 2px;
+.btn:focus-visible {
+  outline: 3px solid var(--text);
+  outline-offset: 3px;
 }
 
-/* Attribution footer */
-.landing-footer {
-  padding: 16px;
-  text-align: center;
-  font-size: 0.875rem;
-  color: var(--text);
-  overflow-wrap: anywhere;
+/* Login: neon orange-to-pink fill with dark text, the warm counterpart to
+   Register's cool blue-to-green */
+.btn-login {
+  color: var(--bg);
+  background: linear-gradient(90deg, var(--neon-orange), var(--neon-magenta));
+  border: none;
+  box-shadow: 0 0 18px hsl(345 100% 60% / 0.35);
 }
 
-.landing-footer a {
-  color: var(--neon-cyan);
-  text-underline-offset: 2px;
+.btn-login:hover,
+.btn-login:focus-visible {
+  transform: translateY(-2px);
+  box-shadow:
+    0 0 14px hsl(25 100% 58% / 0.7),
+    0 0 32px hsl(315 100% 60% / 0.45);
 }
 
-.landing-footer a:focus-visible {
-  outline: 3px solid var(--neon-cyan);
-  outline-offset: 2px;
-}
-
-/* Remove animation only; the glow itself stays */
 @media (prefers-reduced-motion: reduce) {
-  .actions button {
+  .wordmark,
+  .mound,
+  .base,
+  .cta,
+  .btn,
+  .base-marker,
+  .base-label,
+  .pitch {
     transition: none;
     animation: none;
+  }
+
+  .field-paths {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+
+  .btn-primary:hover,
+  .btn-primary:focus-visible,
+  .btn-login:hover,
+  .btn-login:focus-visible {
+    transform: none;
   }
 }

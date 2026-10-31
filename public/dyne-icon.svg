@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96">
+  <!-- Dyne mark: neon baseball field in a dark glass bubble.
+       Mirrors BubbleIcon in src/LandingPage.tsx; colours are inlined because
+       favicons cannot read the app's CSS variables. -->
+  <defs>
+    <linearGradient id="rim" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="hsl(185 100% 60%)"/>
+      <stop offset="0.55" stop-color="hsl(130 100% 55%)"/>
+      <stop offset="1" stop-color="hsl(315 100% 60%)"/>
+    </linearGradient>
+    <radialGradient id="shine" cx="0.32" cy="0.24" r="0.42">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- Opaque body so the mark reads on light and dark browser tabs -->
+  <circle cx="48" cy="48" r="44" fill="#0b0d14"/>
+  <circle cx="48" cy="48" r="44" fill="url(#shine)"/>
+  <circle cx="48" cy="48" r="43" fill="none" stroke="url(#rim)" stroke-width="3"/>
+  <g stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 42A45.25 45.25 0 0 1 80 42L48 74Z" fill="hsl(130 100% 55% / 0.1)" stroke="hsl(130 100% 55%)" stroke-width="2.75"/>
+    <path d="M48 74L65 57L48 40L31 57Z" fill="hsl(185 100% 60% / 0.12)" stroke="hsl(185 100% 60%)" stroke-width="2.75"/>
+    <circle cx="48" cy="57" r="2.8" fill="hsl(315 100% 60%)"/>
+    <path fill="#ffffff" d="M65 53.8l3.2 3.2-3.2 3.2-3.2-3.2zM48 36.8l3.2 3.2-3.2 3.2-3.2-3.2zM31 53.8l3.2 3.2-3.2 3.2-3.2-3.2zM44.6 71.2h6.8v3.4L48 78l-3.4-3.4z"/>
+  </g>
+</svg>

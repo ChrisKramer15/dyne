@@ -4,14 +4,16 @@
   --surface: #0b0d14;
   --text: #f2f5ff;
   --text-muted: #c4cbe0;
-  --overlay: rgba(0, 0, 0, 0.5);
 
   /* Neon palette (hues 185 / 315 / 130, saturation >= 80%, lightness 50-70%) */
   --neon-cyan: hsl(185 100% 60%);
   --neon-magenta: hsl(315 100% 60%);
   --neon-green: hsl(130 100% 55%);
+  /* Accent for the Login button, paired with magenta in a gradient */
+  --neon-orange: hsl(25 100% 58%);
 
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --display: 'Sora', system-ui, 'Segoe UI', Roboto, sans-serif;
 
   font: 18px/145% var(--sans);
   color-scheme: dark;

@@ -39,9 +39,12 @@ describe('LandingPage states', () => {
         mockState.current = state
         const { container, unmount } = render(<LandingPage />)
         try {
-          const buttons = Array.from(container.querySelectorAll('button')).map(
+          // Auth controls live in the call-to-action slot; the four base
+          // buttons on the diamond are feature previews, shown in every state.
+          const buttons = Array.from(container.querySelectorAll('.cta button')).map(
             (b) => b.textContent,
           )
+          expect(container.querySelectorAll('.base-btn')).toHaveLength(4)
           const welcome = container.querySelector('.welcome')
           const loading = container.querySelector('[role="status"]')
 
@@ -57,7 +60,7 @@ describe('LandingPage states', () => {
             expect(loading).toBeNull()
             expect(buttons).toEqual([])
           } else {
-            expect(buttons).toEqual(['Login', 'Register'])
+            expect(buttons).toEqual(['Register', 'Login'])
             expect(welcome).toBeNull()
             expect(loading).toBeNull()
           }
