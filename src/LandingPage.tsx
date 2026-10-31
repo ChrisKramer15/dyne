@@ -7,7 +7,7 @@ import type { NavTarget } from './navigation/useNavigationGuard'
 // TODO: photographer could not be determined automatically (Unsplash page not
 // reachable without auth). Replace with the real name and profile URL from
 // https://unsplash.com/photos/man-holding-baseball-bat-on-green-field-syyBwqVX0Hc
-export const PHOTOGRAPHER_NAME = 'Photographer (TODO: fill in from Unsplash)'
+export const PHOTOGRAPHER_NAME = 'Christopher Campbell (https://unsplash.com/@chrisjoelcampbell)'
 export const PHOTOGRAPHER_URL =
   'https://unsplash.com/photos/man-holding-baseball-bat-on-green-field-syyBwqVX0Hc'
 export const UNSPLASH_URL = 'https://unsplash.com/?utm_source=dyne&utm_medium=referral'
