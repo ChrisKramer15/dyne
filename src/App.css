@@ -1,184 +1,157 @@
-.counter {
-  font-size: 16px;
-  padding: 5px 10px;
-  border-radius: 5px;
-  color: var(--accent);
-  background: var(--accent-bg);
-  border: 2px solid transparent;
-  transition: border-color 0.3s;
-  margin-bottom: 24px;
-
-  &:hover {
-    border-color: var(--accent-border);
-  }
-  &:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-  }
-}
-
-.hero {
+/* Landing page */
+.landing {
   position: relative;
-
-  .base,
-  .framework,
-  .vite {
-    inset-inline: 0;
-    margin: 0 auto;
-  }
-
-  .base {
-    width: 170px;
-    position: relative;
-    z-index: 0;
-  }
-
-  .framework,
-  .vite {
-    position: absolute;
-  }
-
-  .framework {
-    z-index: 1;
-    top: 34px;
-    height: 28px;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(44deg) rotateY(39deg)
-      scale(1.4);
-  }
-
-  .vite {
-    z-index: 0;
-    top: 107px;
-    height: 26px;
-    width: auto;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(40deg) rotateY(39deg)
-      scale(0.8);
-  }
-}
-
-#center {
+  isolation: isolate;
   display: flex;
   flex-direction: column;
-  gap: 25px;
-  place-content: center;
-  place-items: center;
-  flex-grow: 1;
-
-  @media (max-width: 1024px) {
-    padding: 32px 20px 24px;
-    gap: 18px;
-  }
-}
-
-#next-steps {
-  display: flex;
-  border-top: 1px solid var(--border);
-  text-align: left;
-
-  & > div {
-    flex: 1 1 0;
-    padding: 32px;
-    @media (max-width: 1024px) {
-      padding: 24px 20px;
-    }
-  }
-
-  .icon {
-    margin-bottom: 16px;
-    width: 22px;
-    height: 22px;
-  }
-
-  @media (max-width: 1024px) {
-    flex-direction: column;
-    text-align: center;
-  }
-}
-
-#docs {
-  border-right: 1px solid var(--border);
-
-  @media (max-width: 1024px) {
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-  }
-}
-
-#next-steps ul {
-  list-style: none;
-  padding: 0;
-  display: flex;
-  gap: 8px;
-  margin: 32px 0 0;
-
-  .logo {
-    height: 18px;
-  }
-
-  a {
-    color: var(--text-h);
-    font-size: 16px;
-    border-radius: 6px;
-    background: var(--social-bg);
-    display: flex;
-    padding: 6px 12px;
-    align-items: center;
-    gap: 8px;
-    text-decoration: none;
-    transition: box-shadow 0.3s;
-
-    &:hover {
-      box-shadow: var(--shadow);
-    }
-    .button-icon {
-      height: 18px;
-      width: 18px;
-    }
-  }
-
-  @media (max-width: 1024px) {
-    margin-top: 20px;
-    flex-wrap: wrap;
-    justify-content: center;
-
-    li {
-      flex: 1 1 calc(50% - 8px);
-    }
-
-    a {
-      width: 100%;
-      justify-content: center;
-      box-sizing: border-box;
-    }
-  }
-}
-
-#spacer {
-  height: 88px;
-  border-top: 1px solid var(--border);
-  @media (max-width: 1024px) {
-    height: 48px;
-  }
-}
-
-.ticks {
-  position: relative;
+  min-height: 100dvh;
   width: 100%;
+  max-width: 100%;
+  color: var(--text);
+  background-color: var(--bg);
+}
 
-  &::before,
-  &::after {
-    content: '';
-    position: absolute;
-    top: -4.5px;
-    border: 5px solid transparent;
-  }
+/* Fixed full-viewport cover image; solid --bg shows if the image fails */
+.landing::before,
+.landing::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
 
-  &::before {
-    left: 0;
-    border-left-color: var(--border);
+.landing::before {
+  z-index: -2;
+  background: var(--bg) url('./assets/landing-bg.jpg') center / cover no-repeat;
+}
+
+/* 50% dark overlay */
+.landing::after {
+  z-index: -1;
+  background: var(--overlay);
+}
+
+.landing-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 32px 16px;
+  text-align: center;
+}
+
+.landing-main h1 {
+  font-size: 56px;
+  font-weight: 600;
+  line-height: 115%;
+  letter-spacing: -1px;
+  color: var(--text);
+  max-width: 100%;
+  overflow-wrap: anywhere;
+
+  @media (max-width: 1024px) {
+    font-size: 40px;
   }
-  &::after {
-    right: 0;
-    border-right-color: var(--border);
+}
+
+.loading {
+  color: var(--text);
+}
+
+.welcome {
+  max-width: min(100%, 40ch);
+  font-size: 1.5rem;
+  line-height: 130%;
+  color: var(--neon-green);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.error {
+  max-width: 100%;
+  padding: 8px 12px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--neon-magenta);
+  border-radius: 6px;
+  overflow-wrap: anywhere;
+}
+
+/* Action buttons */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  max-width: 100%;
+}
+
+.actions button {
+  --btn-color: var(--neon-cyan);
+  min-width: 44px;
+  min-height: 44px;
+  padding: 10px 28px;
+  font: inherit;
+  font-weight: 600;
+  color: var(--btn-color);
+  background: var(--surface);
+  border: 2px solid var(--btn-color);
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: none;
+  transition: box-shadow 150ms ease-out;
+}
+
+.actions button:nth-child(2) {
+  --btn-color: var(--neon-magenta);
+}
+
+.actions button:hover,
+.actions button:focus-visible {
+  box-shadow:
+    0 0 12px var(--btn-color),
+    0 0 24px var(--btn-color);
+}
+
+.actions button:active {
+  color: var(--btn-color);
+  background: var(--surface);
+}
+
+.actions button:focus-visible {
+  outline: 3px solid var(--neon-cyan);
+  outline-offset: 2px;
+}
+
+/* Attribution footer */
+.landing-footer {
+  padding: 16px;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.landing-footer a {
+  color: var(--neon-cyan);
+  text-underline-offset: 2px;
+}
+
+.landing-footer a:focus-visible {
+  outline: 3px solid var(--neon-cyan);
+  outline-offset: 2px;
+}
+
+/* Remove animation only; the glow itself stays */
+@media (prefers-reduced-motion: reduce) {
+  .actions button {
+    transition: none;
+    animation: none;
   }
 }

@@ -1,0 +1,73 @@
+import { describe, it, expect } from 'vitest'
+import fc from 'fast-check'
+import { authReducer, type AuthAction, type AuthState } from './authReducer'
+
+// Feature: landing-page, Property 4: Latest auth event determines state
+// **Validates: Requirements 5.7, 6.3, 6.4, 6.5, 6.6**
+
+const sessionArb = fc.option(
+  fc.record({ user: fc.record({ user_metadata: fc.anything() }) }),
+  { nil: null },
+)
+
+const initialArb: fc.Arbitrary<AuthAction> = fc.oneof(
+  sessionArb.map((session): AuthAction => ({ type: 'SESSION_RESOLVED', session })),
+  fc.constant<AuthAction>({ type: 'SESSION_FAILED' }),
+)
+
+const laterArb: fc.Arbitrary<AuthAction> = fc.oneof(
+  initialArb,
+  sessionArb.map((session): AuthAction => ({ type: 'AUTH_EVENT', session })),
+)
+
+const run = (actions: AuthAction[]): AuthState =>
+  actions.reduce(authReducer, { status: 'loading' } as AuthState)
+
+describe('authReducer Property 4: latest auth event determines state', () => {
+  it('state follows the last session-bearing action, regardless of history', () => {
+    fc.assert(
+      fc.property(initialArb, fc.array(laterArb, { maxLength: 20 }), (first, rest) => {
+        const actions = [first, ...rest]
+        const final = run(actions)
+        // Session-bearing actions: everything except SESSION_FAILED
+        const bearing = [...actions].reverse().find((a) => a.type !== 'SESSION_FAILED')
+        if (!bearing) {
+          expect(final).toEqual({ status: 'unauthenticated' })
+        } else if (bearing.session) {
+          expect(final).toEqual({
+            status: 'authenticated',
+            userMetadata: bearing.session.user.user_metadata,
+          })
+        } else {
+          expect(final).toEqual({ status: 'unauthenticated' })
+        }
+      }),
+      { numRuns: 100 },
+    )
+  })
+
+  it('a late SESSION_FAILED is ignored once state has left loading', () => {
+    fc.assert(
+      fc.property(
+        sessionArb,
+        fc.array(laterArb, { maxLength: 10 }),
+        fc.integer({ min: 1, max: 5 }),
+        (session, rest, failures) => {
+          const before = run([{ type: 'SESSION_RESOLVED', session }, ...rest])
+          const after = Array.from({ length: failures }).reduce<AuthState>(
+            (s) => authReducer(s, { type: 'SESSION_FAILED' }),
+            before,
+          )
+          expect(after).toBe(before)
+        },
+      ),
+      { numRuns: 100 },
+    )
+  })
+
+  it('SESSION_FAILED while loading yields unauthenticated', () => {
+    expect(authReducer({ status: 'loading' }, { type: 'SESSION_FAILED' })).toEqual({
+      status: 'unauthenticated',
+    })
+  })
+})
