@@ -176,15 +176,18 @@ export default function LandingPage({ authService }: LandingPageProps) {
   // dismissed back into a half-signed-in state (see onClose below).
   const recovering = auth.status === 'recovering'
   const effectiveMode: AuthMode | null = recovering ? 'update-password' : modalMode
+  const [signingOut, setSigningOut] = useState(false)
 
   // Build the real service lazily so importing this component never forces the
   // Supabase client (and its env-var check) to initialise — tests that mock
   // auth state and never open the modal must not need Supabase configured.
+  // It is needed whenever a form is open or the user is signed in (sign out).
+  const needsService = effectiveMode !== null || auth.status === 'authenticated'
   const service = useMemo<AuthService | null>(() => {
     if (authService) return authService
-    if (effectiveMode === null) return null
+    if (!needsService) return null
     return createAuthService(supabase, authStorage)
-  }, [authService, effectiveMode])
+  }, [authService, needsService])
 
   return (
     <div className="landing">
@@ -239,7 +242,27 @@ export default function LandingPage({ authService }: LandingPageProps) {
             </p>
           )}
           {auth.status === 'authenticated' && (
-            <p className="welcome">{formatWelcome(auth.userMetadata)}</p>
+            <div className="signed-in">
+              <p className="welcome">{formatWelcome(auth.userMetadata)}</p>
+              <button
+                type="button"
+                className="btn btn-login"
+                disabled={signingOut || !service}
+                onClick={async () => {
+                  if (!service || signingOut) return
+                  setSigningOut(true)
+                  try {
+                    await service.signOut()
+                  } finally {
+                    // onAuthStateChange flips the UI back to unauthenticated;
+                    // reset the flag in case the component is still mounted.
+                    setSigningOut(false)
+                  }
+                }}
+              >
+                {signingOut ? 'Signing out…' : 'Sign out'}
+              </button>
+            </div>
           )}
           {auth.status === 'unauthenticated' && (
             <div className="actions">

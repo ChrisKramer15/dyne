@@ -58,7 +58,8 @@ describe('LandingPage states', () => {
             expect(welcome).not.toBeNull()
             expect(welcome!.textContent).toBe(formatWelcome(state.userMetadata))
             expect(loading).toBeNull()
-            expect(buttons).toEqual([])
+            // Authenticated state offers exactly one control: sign out.
+            expect(buttons).toEqual(['Sign out'])
           } else {
             expect(buttons).toEqual(['Register', 'Login'])
             expect(welcome).toBeNull()

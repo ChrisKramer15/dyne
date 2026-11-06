@@ -50,3 +50,22 @@ use:
    through the dashboard SQL Editor instead, or run `db push` off the VPN. Edge
    Function deploys use HTTPS and work through the VPN: use
    `supabase functions deploy <name> --use-api` (`--use-api` avoids needing Docker).
+## TODO
+
+### Configure custom SMTP before launch
+
+Auth emails (password reset, and email confirmation if re-enabled) currently
+rely on Supabase's built-in email service, which is for testing only:
+
+- Hard-capped at ~2 emails per hour, project-wide, and can change without notice.
+- Only delivers to members of the Supabase organization - it will not email real
+  users.
+
+Before any real use, configure a custom SMTP provider (e.g. Resend, SendGrid,
+Mailgun, Brevo) in the dashboard under **Authentication -> Emails -> SMTP
+Settings**, then raise the email rate limit under **Authentication -> Rate
+Limits**.
+
+Note: email confirmation is currently **disabled** (`mailer_autoconfirm = true`)
+to allow testing without SMTP. Re-enable it (**Authentication -> Sign In /
+Providers -> Email -> Confirm email**) once SMTP is in place.

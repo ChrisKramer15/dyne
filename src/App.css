@@ -435,6 +435,14 @@
   overflow-wrap: anywhere;
 }
 
+/* Welcome line with the sign-out button stacked beneath it */
+.signed-in {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
 .error {
   padding: 8px 12px;
   font-family: var(--display);
