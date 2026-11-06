@@ -10,10 +10,15 @@ export type SignUpResult =
 
 export type ResetResult = { ok: true } | { ok: false; error: 'reset_unavailable' }
 
+export type UpdatePasswordResult =
+  | { ok: true }
+  | { ok: false; error: 'update_unavailable' }
+
 export interface AuthService {
   signIn(i: { username: string; password: string; remember: boolean }): Promise<SignInResult>
   signUp(i: { username: string; email: string; password: string }): Promise<SignUpResult>
   requestPasswordReset(identifier: string): Promise<ResetResult>
+  updatePassword(newPassword: string): Promise<UpdatePasswordResult>
   signOut(): Promise<void>
 }
 
@@ -97,6 +102,7 @@ export interface AuthClientLike {
       data: { session: unknown; user: { identities?: unknown[] } | null }
       error: unknown
     }>
+    updateUser(args: { password: string }): PromiseLike<{ error: unknown }>
     signOut(args?: { scope?: 'global' | 'local' | 'others' }): PromiseLike<{ error: unknown }>
   }
   functions: {
@@ -168,6 +174,16 @@ export function createAuthService(client: AuthClientLike, storage: SwitchableSto
         return { ok: true }
       } catch {
         return { ok: false, error: 'reset_unavailable' }
+      }
+    },
+
+    async updatePassword(newPassword) {
+      try {
+        const { error } = await withTimeout(client.auth.updateUser({ password: newPassword }))
+        if (error) return { ok: false, error: 'update_unavailable' }
+        return { ok: true }
+      } catch {
+        return { ok: false, error: 'update_unavailable' }
       }
     },
 

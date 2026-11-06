@@ -1,421 +1,467 @@
-import { useEffect, useId, useRef, useState, type Dispatch, type FormEvent, type ReactNode } from 'react'
-import { createPortal } from 'react-dom'
-import type { AuthModalAction, AuthModalState, ServiceError } from './authModalReducer'
-import type { AuthService } from './authService'
-import { useFocusTrap } from './focusTrap'
+import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
 import {
-  LIMITS,
-  validateIdentifier,
   validateLogin,
   validateRegister,
+  validateIdentifier,
+  validateUpdatePassword,
   type Field,
   type FieldError,
 } from './validation'
+import type { AuthService } from './authService'
+
+export type AuthMode = 'login' | 'register' | 'reset' | 'update-password'
 
 export interface AuthModalProps {
-  state: AuthModalState
-  dispatch: Dispatch<AuthModalAction>
+  /** Which form to show when the modal opens. */
+  mode: AuthMode
+  /** The headless auth service to drive network calls. */
   service: AuthService
-  /** Called after a successful sign-in when the login could not be remembered. */
-  onRememberFailed?: () => void
+  /** Called when the user dismisses the modal (backdrop, Escape or close button). */
+  onClose: () => void
+  /** Called after a successful sign in so the host can react (e.g. refresh state). */
+  onAuthenticated?: () => void
 }
 
-const SERVICE_MESSAGES: Record<ServiceError, string> = {
-  invalid_credentials: 'Invalid username or password.',
-  unavailable: 'Sign-in is temporarily unavailable. Please try again.',
-  username_taken: 'That username is already in use.',
-  email_taken: 'That email is already in use.',
-  reset_unavailable: 'The request could not be sent. Please try again.',
+// Human-readable copy for each field error code. Kept deliberately vague for
+// login so lengths/credentials never leak.
+const FIELD_MESSAGES: Record<string, string> = {
+  'username:required': 'Enter your username.',
+  'username:format': 'Use 3–20 letters, numbers or underscores.',
+  'email:required': 'Enter your email.',
+  'email:invalid': 'Enter a valid email address.',
+  'password:required': 'Enter your password.',
+  'password:too_short': 'Use at least 8 characters.',
+  'confirmPassword:required': 'Re-enter your password.',
+  'confirmPassword:mismatch': 'Passwords do not match.',
+  'identifier:required': 'Enter your username or email.',
+  'newPassword:required': 'Enter a new password.',
+  'newPassword:too_short': 'Use at least 8 characters.',
 }
 
-const NOTICE_MESSAGES = {
-  confirm_email: 'Check your email and confirm your address to finish creating your account.',
-  reset_sent: 'If an account matches, a password reset link has been sent to its email address.',
-} as const
-
-const FIELD_LABELS: Record<Field, string> = {
-  username: 'Username',
-  email: 'Email',
-  password: 'Password',
-  confirmPassword: 'Confirm password',
-  identifier: 'Username or email',
+function messageFor(err: FieldError): string {
+  return FIELD_MESSAGES[`${err.field}:${err.code}`] ?? 'Check this field.'
 }
 
-function fieldErrorMessage(e: FieldError): string {
-  const label = FIELD_LABELS[e.field]
-  switch (e.code) {
-    case 'required':
-      return `${label} is required.`
-    case 'format':
-      return 'Username must be 3 to 20 characters: letters, digits and underscores only.'
-    case 'invalid':
-      return 'Enter a valid email address.'
-    case 'too_short':
-      return `Password must be at least ${LIMITS.minPassword} characters.`
-    case 'mismatch':
-      return 'Passwords do not match.'
+function errorFor(errors: FieldError[], field: Field): FieldError | undefined {
+  return errors.find((e) => e.field === field)
+}
+
+const TITLES: Record<AuthMode, string> = {
+  login: 'Log in',
+  register: 'Create your account',
+  reset: 'Reset your password',
+  'update-password': 'Choose a new password',
+}
+
+// A top-of-form status line: either an error or a success/info note.
+type Banner = { kind: 'error' | 'success'; text: string } | null
+
+export default function AuthModal({ mode: initialMode, service, onClose, onAuthenticated }: AuthModalProps) {
+  const [mode, setMode] = useState<AuthMode>(initialMode)
+  const [fieldErrors, setFieldErrors] = useState<FieldError[]>([])
+  const [banner, setBanner] = useState<Banner>(null)
+  const [busy, setBusy] = useState(false)
+
+  // Controlled inputs. Kept across mode switches where it makes sense.
+  const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [identifier, setIdentifier] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [remember, setRemember] = useState(false)
+
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const firstFieldRef = useRef<HTMLInputElement>(null)
+  const titleId = useId()
+  const bannerId = useId()
+
+  // Reset transient UI whenever the mode changes.
+  function switchMode(next: AuthMode) {
+    setMode(next)
+    setFieldErrors([])
+    setBanner(null)
   }
-}
 
-// Registration reports taken values by name; keep the message specific there.
-function serviceMessage(error: ServiceError, view: string): string {
-  if (error === 'unavailable' && view === 'register') {
-    return 'Registration is temporarily unavailable. Please try again.'
+  // Focus the first field on open and on mode change.
+  useEffect(() => {
+    firstFieldRef.current?.focus()
+  }, [mode])
+
+  // Escape closes; Tab is trapped within the dialog.
+  function onKeyDown(e: React.KeyboardEvent) {
+    if (e.key === 'Escape') {
+      e.stopPropagation()
+      onClose()
+      return
+    }
+    if (e.key !== 'Tab') return
+    const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    )
+    if (!focusable || focusable.length === 0) return
+    const first = focusable[0]
+    const last = focusable[focusable.length - 1]
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault()
+      last.focus()
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault()
+      first.focus()
+    }
   }
-  return SERVICE_MESSAGES[error]
-}
 
-interface PasswordFieldProps {
-  id: string
-  name: string
-  label: string
-  value: string
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
-  maxLength?: number
-  autoComplete: string
-  invalid: boolean
-}
+  async function onSubmit(e: FormEvent) {
+    e.preventDefault()
+    if (busy) return
+    setBanner(null)
 
-// Visibility is local state; the parent remounts it (via key) on view change.
-function PasswordField({ id, name, label, value, onChange, maxLength, autoComplete, invalid }: PasswordFieldProps) {
-  const [visible, setVisible] = useState(false)
+    if (mode === 'login') {
+      const errors = validateLogin({ username, password })
+      setFieldErrors(errors)
+      if (errors.length > 0) return
+      setBusy(true)
+      const result = await service.signIn({ username, password, remember })
+      setBusy(false)
+      if (result.ok) {
+        if (result.rememberFailed) {
+          setBanner({ kind: 'success', text: "Signed in. We couldn't keep you logged in on this device." })
+        }
+        onAuthenticated?.()
+        onClose()
+        return
+      }
+      setBanner({
+        kind: 'error',
+        text:
+          result.error === 'invalid_credentials'
+            ? 'That username or password is incorrect.'
+            : 'Something went wrong. Please try again.',
+      })
+      return
+    }
+
+    if (mode === 'register') {
+      const errors = validateRegister({ username, email, password, confirmPassword })
+      setFieldErrors(errors)
+      if (errors.length > 0) return
+      setBusy(true)
+      const result = await service.signUp({ username, email, password })
+      setBusy(false)
+      if (result.ok) {
+        setBanner({
+          kind: 'success',
+          text: result.confirmationRequired
+            ? 'Account created. Check your email to confirm your address.'
+            : 'Account created. You can now log in.',
+        })
+        return
+      }
+      if (result.error === 'username_taken') {
+        setFieldErrors([{ field: 'username', code: 'format' }])
+        setBanner({ kind: 'error', text: 'That username is already taken.' })
+      } else if (result.error === 'email_taken') {
+        setFieldErrors([{ field: 'email', code: 'invalid' }])
+        setBanner({ kind: 'error', text: 'That email is already registered.' })
+      } else {
+        setBanner({ kind: 'error', text: 'Something went wrong. Please try again.' })
+      }
+      return
+    }
+
+    if (mode === 'reset') {
+      const errors = validateIdentifier(identifier)
+      setFieldErrors(errors)
+      if (errors.length > 0) return
+      setBusy(true)
+      const result = await service.requestPasswordReset(identifier)
+      setBusy(false)
+      if (result.ok) {
+        setBanner({
+          kind: 'success',
+          text: 'If an account matches that, we’ve sent a reset link.',
+        })
+      } else {
+        setBanner({ kind: 'error', text: 'Something went wrong. Please try again.' })
+      }
+      return
+    }
+
+    // update-password (reached from a reset link)
+    const errors = validateUpdatePassword({ newPassword, confirmPassword })
+    setFieldErrors(errors)
+    if (errors.length > 0) return
+    setBusy(true)
+    const result = await service.updatePassword(newPassword)
+    setBusy(false)
+    if (result.ok) {
+      onAuthenticated?.()
+      onClose()
+    } else {
+      setBanner({ kind: 'error', text: 'Something went wrong. Please try again.' })
+    }
+  }
+
+  // Field markup helper so the three forms stay consistent and accessible.
+  function fieldProps(field: Field) {
+    const err = errorFor(fieldErrors, field)
+    const errId = `${titleId}-${field}-error`
+    return {
+      err,
+      errId,
+      inputProps: {
+        'aria-invalid': err ? true : undefined,
+        'aria-describedby': err ? errId : undefined,
+      },
+    }
+  }
+
+  function renderError(field: Field) {
+    const err = errorFor(fieldErrors, field)
+    if (!err) return null
+    return (
+      <span className="auth-field-error" id={`${titleId}-${field}-error`} role="alert">
+        {messageFor(err)}
+      </span>
+    )
+  }
+
   return (
-    <div className="auth-modal-field auth-modal-password">
-      <label htmlFor={id} className="visually-hidden">
-        {label}
-      </label>
-      <input
-        id={id}
-        name={name}
-        type={visible ? 'text' : 'password'}
-        className="auth-modal-input"
-        placeholder={label}
-        value={value}
-        onChange={onChange}
-        maxLength={maxLength}
-        autoComplete={autoComplete}
-        aria-invalid={invalid || undefined}
-      />
-      <button
-        type="button"
-        className="auth-modal-eye"
-        aria-label={visible ? 'Hide password' : 'Show password'}
-        aria-pressed={visible}
-        onClick={() => setVisible((v) => !v)}
-      >
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
-          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-          <circle cx="12" cy="12" r="3" />
-          {visible && <path d="M3 3l18 18" />}
-        </svg>
-      </button>
-    </div>
-  )
-}
-
-function SegmentedSwitch({
-  view,
-  pending,
-  onSelect,
-}: {
-  view: 'login' | 'register'
-  pending: boolean
-  onSelect: () => void
-}) {
-  const option = (target: 'login' | 'register', text: string) => (
-    <button
-      type="button"
-      className="auth-modal-switch-option"
-      aria-pressed={view === target}
-      aria-disabled={pending || undefined}
-      onClick={() => {
-        if (view !== target) onSelect()
+    <div
+      className="auth-overlay"
+      // Click on the backdrop (not the dialog) closes.
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose()
       }}
     >
-      <i className="auth-modal-base" aria-hidden="true" />
-      {text}
-    </button>
-  )
-  return (
-    <div className="auth-modal-switch" role="group" aria-label="Choose form">
-      {option('login', 'Login')}
-      {option('register', 'Register')}
-    </div>
-  )
-}
-
-export function AuthModal({ state, dispatch, service, onRememberFailed }: AuthModalProps) {
-  const dialogRef = useRef<HTMLDivElement>(null)
-  const uid = useId()
-  const open = state.open
-  const view = state.open ? state.view : null
-
-  useFocusTrap(dialogRef, open)
-
-  // Focus the first input when the modal opens and whenever the view changes.
-  useEffect(() => {
-    if (!open) return
-    dialogRef.current?.querySelector<HTMLElement>('input:not([type="hidden"])')?.focus()
-  }, [open, view])
-
-  // Escape closes the modal.
-  useEffect(() => {
-    if (!open) return
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') dispatch({ type: 'CLOSE' })
-    }
-    document.addEventListener('keydown', onKeyDown)
-    return () => document.removeEventListener('keydown', onKeyDown)
-  }, [open, dispatch])
-
-  if (!state.open) return null
-
-  const headingId = `${uid}-heading`
-  const subtitleId = `${uid}-subtitle`
-  // useId() ids contain colons, which are awkward inside url(#...); strip them.
-  const maskId = `${uid.replace(/:/g, '')}-outline-mask`
-  const id = (name: string) => `${uid}-${name}`
-  const errorsFor = (f: Field) => state.fieldErrors.some((e) => e.field === f)
-
-  const change =
-    (field: 'username' | 'email' | 'password' | 'confirmPassword' | 'identifier') =>
-    (e: React.ChangeEvent<HTMLInputElement>) =>
-      dispatch({ type: 'CHANGE', field, value: e.target.value })
-
-  async function submit(e: FormEvent) {
-    e.preventDefault()
-    if (!state.open || state.pending) return
-
-    if (state.view === 'login') {
-      const errors = validateLogin(state)
-      if (errors.length) return dispatch({ type: 'SUBMIT_INVALID', errors })
-      dispatch({ type: 'SUBMIT_START' })
-      const r = await service.signIn({
-        username: state.username,
-        password: state.password,
-        remember: state.remember,
-      })
-      if (!r.ok) return dispatch({ type: 'SUBMIT_FAILED', error: r.error })
-      if (r.rememberFailed) onRememberFailed?.()
-      dispatch({ type: 'SESSION_CHANGED', authenticated: true })
-    } else if (state.view === 'register') {
-      const errors = validateRegister(state)
-      if (errors.length) return dispatch({ type: 'SUBMIT_INVALID', errors })
-      dispatch({ type: 'SUBMIT_START' })
-      const r = await service.signUp({
-        username: state.username,
-        email: state.email,
-        password: state.password,
-      })
-      if (!r.ok) return dispatch({ type: 'SUBMIT_FAILED', error: r.error })
-      if (r.confirmationRequired) dispatch({ type: 'CONFIRM_EMAIL' })
-      else dispatch({ type: 'SESSION_CHANGED', authenticated: true })
-    } else {
-      const errors = validateIdentifier(state.identifier)
-      if (errors.length) return dispatch({ type: 'SUBMIT_INVALID', errors })
-      dispatch({ type: 'SUBMIT_START' })
-      const r = await service.requestPasswordReset(state.identifier)
-      if (!r.ok) return dispatch({ type: 'SUBMIT_FAILED', error: r.error })
-      dispatch({ type: 'RESET_SENT' })
-    }
-  }
-
-  const textField = (
-    name: 'username' | 'email' | 'identifier',
-    type: 'text' | 'email',
-    value: string,
-    extra: { maxLength?: number; autoComplete: string },
-  ) => (
-    <div className="auth-modal-field">
-      <label htmlFor={id(name)} className="visually-hidden">
-        {FIELD_LABELS[name]}
-      </label>
-      <input
-        id={id(name)}
-        name={name}
-        type={type}
-        className="auth-modal-input"
-        placeholder={FIELD_LABELS[name]}
-        value={value}
-        onChange={change(name)}
-        maxLength={extra.maxLength}
-        autoComplete={extra.autoComplete}
-        aria-invalid={errorsFor(name) || undefined}
-      />
-    </div>
-  )
-
-  const passwordField = (
-    name: 'password' | 'confirmPassword',
-    value: string,
-    extra: { maxLength?: number; autoComplete: string },
-  ) => (
-    <PasswordField
-      key={`${state.view}-${name}`}
-      id={id(name)}
-      name={name}
-      label={FIELD_LABELS[name]}
-      value={value}
-      onChange={change(name)}
-      maxLength={extra.maxLength}
-      autoComplete={extra.autoComplete}
-      invalid={errorsFor(name)}
-    />
-  )
-
-  let heading: string
-  let subtitle: string
-  let fields: ReactNode
-  let submitLabel: string
-  let belowSubmit: ReactNode
-
-  if (state.view === 'login') {
-    heading = 'Hello, Again!'
-    subtitle = 'We are happy to have you back.'
-    submitLabel = 'Log in'
-    fields = (
-      <>
-        {textField('username', 'text', state.username, {
-          maxLength: LIMITS.loginUsername,
-          autoComplete: 'username',
-        })}
-        {passwordField('password', state.password, {
-          maxLength: LIMITS.loginPassword,
-          autoComplete: 'current-password',
-        })}
-        <div className="auth-modal-remember">
-          <input
-            id={id('remember')}
-            type="checkbox"
-            checked={state.remember}
-            onChange={(e) => dispatch({ type: 'SET_REMEMBER', value: e.target.checked })}
-          />
-          <label htmlFor={id('remember')}>Remember me</label>
-        </div>
-      </>
-    )
-    belowSubmit = (
-      <button
-        type="button"
-        className="auth-modal-link auth-modal-forgot"
-        onClick={() => dispatch({ type: 'FORGOT' })}
-      >
-        Forgot password?
-      </button>
-    )
-  } else if (state.view === 'register') {
-    heading = 'Create account'
-    subtitle = 'Create your Dyne account.'
-    submitLabel = 'Create account'
-    fields = (
-      <>
-        {textField('username', 'text', state.username, { autoComplete: 'username' })}
-        {textField('email', 'email', state.email, {
-          maxLength: LIMITS.email,
-          autoComplete: 'email',
-        })}
-        {passwordField('password', state.password, { autoComplete: 'new-password' })}
-        {passwordField('confirmPassword', state.confirmPassword, { autoComplete: 'new-password' })}
-      </>
-    )
-    belowSubmit = null
-  } else {
-    heading = 'Reset password'
-    subtitle = 'Enter your username or email and we will send a reset link.'
-    submitLabel = 'Send reset link'
-    fields = textField('identifier', 'text', state.identifier, {
-      maxLength: LIMITS.email,
-      autoComplete: 'username',
-    })
-    belowSubmit = (
-      <button
-        type="button"
-        className="auth-modal-link auth-modal-forgot"
-        onClick={() => dispatch({ type: 'BACK_TO_LOGIN' })}
-      >
-        Back to log in
-      </button>
-    )
-  }
-  const messages: string[] = [
-    ...state.fieldErrors.map(fieldErrorMessage),
-    ...(state.serviceError ? [serviceMessage(state.serviceError, state.view)] : []),
-  ]
-
-  return createPortal(
-    <div
-      className="auth-modal-backdrop"
-      onClick={() => dispatch({ type: 'CLOSE' })}
-    >
-      <div className="auth-modal-frame" onClick={(e) => e.stopPropagation()}>
       <div
-        ref={dialogRef}
-        className="auth-modal"
+        className={`auth-dialog auth-dialog-${mode}`}
         role="dialog"
         aria-modal="true"
-        aria-labelledby={headingId}
-        aria-describedby={subtitleId}
-        onClick={(e) => e.stopPropagation()}
+        aria-labelledby={titleId}
+        aria-describedby={banner ? bannerId : undefined}
+        ref={dialogRef}
+        onKeyDown={onKeyDown}
       >
-        <svg className="auth-modal-outline" aria-hidden="true" focusable="false">
-          <defs>
-            <mask id={maskId} maskUnits="userSpaceOnUse" x="0" y="0" width="100%" height="100%">
-              <rect className="auth-modal-outline-reveal" pathLength={1} />
-            </mask>
-          </defs>
-          <rect className="auth-modal-outline-path" mask={`url(#${maskId})`} />
-        </svg>
-        <button
-          type="button"
-          className="auth-modal-close"
-          aria-label="Close"
-          onClick={() => dispatch({ type: 'CLOSE' })}
-        >
-          ×
+        <button type="button" className="auth-close" aria-label="Close" onClick={onClose}>
+          <span aria-hidden="true">×</span>
         </button>
-        <header className="auth-modal-header">
-          <svg className="auth-modal-plate" viewBox="0 0 34 34" aria-hidden="true" focusable="false">
-            <path d="M5 5h24v13L17 30 5 18z" fill="currentColor" />
-          </svg>
-          <h2 id={headingId} className="auth-modal-title">
-            {heading}
-          </h2>
-          <p id={subtitleId} className="auth-modal-subtitle">
-            {subtitle}
+
+        <h2 className="auth-title" id={titleId}>
+          {TITLES[mode]}
+        </h2>
+
+        {banner && (
+          <p className={`auth-banner auth-banner-${banner.kind}`} id={bannerId} role="status">
+            {banner.text}
           </p>
-        </header>
-        <form
-          className="auth-modal-form"
-          onSubmit={submit}
-          noValidate
-          aria-busy={state.pending}
-        >
-          {fields}
-          <div className="auth-modal-error" role="alert">
-            {messages.map((m) => (
-              <p key={m}>{m}</p>
-            ))}
-          </div>
-          {state.notice && (
-            <p className="auth-modal-notice" role="status">
-              {NOTICE_MESSAGES[state.notice]}
+        )}
+
+        <form className="auth-form" onSubmit={onSubmit} noValidate>
+          {mode === 'login' && (
+            <>
+              <label className="auth-label" htmlFor={`${titleId}-username`}>
+                Username
+              </label>
+              <input
+                id={`${titleId}-username`}
+                className="auth-input"
+                type="text"
+                autoComplete="username"
+                ref={firstFieldRef}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                {...fieldProps('username').inputProps}
+              />
+              {renderError('username')}
+
+              <label className="auth-label" htmlFor={`${titleId}-password`}>
+                Password
+              </label>
+              <input
+                id={`${titleId}-password`}
+                className="auth-input"
+                type="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                {...fieldProps('password').inputProps}
+              />
+              {renderError('password')}
+
+              <label className="auth-check">
+                <input
+                  type="checkbox"
+                  checked={remember}
+                  onChange={(e) => setRemember(e.target.checked)}
+                />
+                Keep me logged in
+              </label>
+            </>
+          )}
+
+          {mode === 'register' && (
+            <>
+              <label className="auth-label" htmlFor={`${titleId}-username`}>
+                Username
+              </label>
+              <input
+                id={`${titleId}-username`}
+                className="auth-input"
+                type="text"
+                autoComplete="username"
+                ref={firstFieldRef}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                {...fieldProps('username').inputProps}
+              />
+              {renderError('username')}
+
+              <label className="auth-label" htmlFor={`${titleId}-email`}>
+                Email
+              </label>
+              <input
+                id={`${titleId}-email`}
+                className="auth-input"
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                {...fieldProps('email').inputProps}
+              />
+              {renderError('email')}
+
+              <label className="auth-label" htmlFor={`${titleId}-password`}>
+                Password
+              </label>
+              <input
+                id={`${titleId}-password`}
+                className="auth-input"
+                type="password"
+                autoComplete="new-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                {...fieldProps('password').inputProps}
+              />
+              {renderError('password')}
+
+              <label className="auth-label" htmlFor={`${titleId}-confirm`}>
+                Confirm password
+              </label>
+              <input
+                id={`${titleId}-confirm`}
+                className="auth-input"
+                type="password"
+                autoComplete="new-password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                {...fieldProps('confirmPassword').inputProps}
+              />
+              {renderError('confirmPassword')}
+            </>
+          )}
+
+          {mode === 'reset' && (
+            <>
+              <label className="auth-label" htmlFor={`${titleId}-identifier`}>
+                Username or email
+              </label>
+              <input
+                id={`${titleId}-identifier`}
+                className="auth-input"
+                type="text"
+                autoComplete="username"
+                ref={firstFieldRef}
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                {...fieldProps('identifier').inputProps}
+              />
+              {renderError('identifier')}
+            </>
+          )}
+
+          {mode === 'update-password' && (
+            <>
+              <label className="auth-label" htmlFor={`${titleId}-new-password`}>
+                New password
+              </label>
+              <input
+                id={`${titleId}-new-password`}
+                className="auth-input"
+                type="password"
+                autoComplete="new-password"
+                ref={firstFieldRef}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                {...fieldProps('newPassword').inputProps}
+              />
+              {renderError('newPassword')}
+
+              <label className="auth-label" htmlFor={`${titleId}-confirm`}>
+                Confirm new password
+              </label>
+              <input
+                id={`${titleId}-confirm`}
+                className="auth-input"
+                type="password"
+                autoComplete="new-password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                {...fieldProps('confirmPassword').inputProps}
+              />
+              {renderError('confirmPassword')}
+            </>
+          )}
+
+          <button
+            type="submit"
+            className={`btn ${mode === 'login' ? 'btn-login' : 'btn-primary'} auth-submit`}
+            disabled={busy}
+          >
+            {busy
+              ? 'Working…'
+              : mode === 'login'
+                ? 'Log in'
+                : mode === 'register'
+                  ? 'Create account'
+                  : mode === 'reset'
+                    ? 'Send reset link'
+                    : 'Save new password'}
+          </button>
+        </form>
+
+        <div className="auth-switch">
+          {mode === 'login' && (
+            <>
+              <button type="button" className="auth-link" onClick={() => switchMode('reset')}>
+                Forgot password?
+              </button>
+              <p className="auth-switch-line">
+                New here?{' '}
+                <button type="button" className="auth-link" onClick={() => switchMode('register')}>
+                  Create an account
+                </button>
+              </p>
+            </>
+          )}
+          {mode === 'register' && (
+            <p className="auth-switch-line">
+              Already have an account?{' '}
+              <button type="button" className="auth-link" onClick={() => switchMode('login')}>
+                Log in
+              </button>
             </p>
           )}
-          <button type="submit" className="auth-modal-submit" disabled={state.pending}>
-            {submitLabel}
-          </button>
-          {belowSubmit}
-        </form>
-        {state.view !== 'forgot' && (
-          <SegmentedSwitch
-            view={state.view}
-            pending={state.pending}
-            onSelect={() => dispatch({ type: 'TOGGLE' })}
-          />
-        )}
+          {mode === 'reset' && (
+            <p className="auth-switch-line">
+              Remembered it?{' '}
+              <button type="button" className="auth-link" onClick={() => switchMode('login')}>
+                Back to log in
+              </button>
+            </p>
+          )}
+        </div>
       </div>
-      </div>
-    </div>,
-    document.body,
+    </div>
   )
 }

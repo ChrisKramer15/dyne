@@ -8,7 +8,6 @@ import {
   withTimeout,
   type AuthClientLike,
 } from './authService'
-import { authModalReducer, CLOSED_STATE, type AuthModalState } from './authModalReducer'
 import type { SwitchableStorage } from './switchableStorage'
 
 const RUNS = { numRuns: 100 }
@@ -26,6 +25,7 @@ function makeClient(opts: { available: boolean; signUp: SignUpReply }): AuthClie
     auth: {
       setSession: async () => ({ error: null }),
       signUp: async () => opts.signUp,
+      updateUser: async () => ({ error: null }),
       signOut: async () => ({ error: null }),
     },
     functions: { invoke: async () => ({ data: null, error: null }) },
@@ -33,27 +33,12 @@ function makeClient(opts: { available: boolean; signUp: SignUpReply }): AuthClie
   }
 }
 
-// Replays a failed sign-up through the modal reducer.
-function failedRegisterState(u: string, e: string, error: 'username_taken' | 'email_taken') {
-  let s: AuthModalState = authModalReducer(CLOSED_STATE, { type: 'OPEN', view: 'register' })
-  s = authModalReducer(s, { type: 'CHANGE', field: 'username', value: u })
-  s = authModalReducer(s, { type: 'CHANGE', field: 'email', value: e })
-  s = authModalReducer(s, { type: 'SUBMIT_START' })
-  return authModalReducer(s, { type: 'SUBMIT_FAILED', error })
-}
-
-function expectKept(s: AuthModalState, u: string, e: string, error: string) {
-  if (!s.open) throw new Error('modal closed')
-  expect(s.username).toBe(u)
-  expect(s.email).toBe(e)
-  expect(s.serviceError).toBe(error)
-  expect(s.pending).toBe(false)
-}
-
-// Feature: auth-modal, Property 17: Sign-up failures identify the conflicting value
-describe('Feature: auth-modal, Property 17: sign-up failures identify the conflicting value', () => {
+// Sign-up failures identify the conflicting value. (Previously these also
+// asserted the modal reducer preserved the form values; that reducer was
+// removed with the auth UI, so this now covers the service result only.)
+describe('sign-up failures identify the conflicting value', () => {
   /** **Validates: Requirements 6.10** */
-  it('taken username yields username_taken and the form keeps username and email', async () => {
+  it('taken username yields username_taken', async () => {
     await fc.assert(
       fc.asyncProperty(username, email, password, async (u, e, p) => {
         const svc = createAuthService(
@@ -62,14 +47,13 @@ describe('Feature: auth-modal, Property 17: sign-up failures identify the confli
         )
         const r = await svc.signUp({ username: u, email: e, password: p })
         expect(r).toEqual({ ok: false, error: 'username_taken' })
-        if (!r.ok) expectKept(failedRegisterState(u, e, r.error as 'username_taken'), u, e, 'username_taken')
       }),
       RUNS,
     )
   })
 
   /** **Validates: Requirements 6.10** */
-  it('taken email (error code or empty identities) yields email_taken and the form keeps values', async () => {
+  it('taken email (error code or empty identities) yields email_taken', async () => {
     const emailTakenReply = fc.oneof(
       fc.constantFrom('user_already_exists', 'email_exists').map(
         (code): SignUpReply => ({ data: { session: null, user: null }, error: { code, message: 'x' } }),
@@ -81,7 +65,6 @@ describe('Feature: auth-modal, Property 17: sign-up failures identify the confli
         const svc = createAuthService(makeClient({ available: true, signUp: reply }), storage)
         const r = await svc.signUp({ username: u, email: e, password: p })
         expect(r).toEqual({ ok: false, error: 'email_taken' })
-        if (!r.ok) expectKept(failedRegisterState(u, e, r.error as 'email_taken'), u, e, 'email_taken')
       }),
       RUNS,
     )
@@ -120,6 +103,7 @@ function makeUnitClient(over: {
   invoke?: AuthClientLike['functions']['invoke']
   setSession?: AuthClientLike['auth']['setSession']
   signUp?: AuthClientLike['auth']['signUp']
+  updateUser?: AuthClientLike['auth']['updateUser']
   signOut?: AuthClientLike['auth']['signOut']
   rpc?: AuthClientLike['rpc']
 }): AuthClientLike {
@@ -127,6 +111,7 @@ function makeUnitClient(over: {
     auth: {
       setSession: over.setSession ?? (async () => ({ error: null })),
       signUp: over.signUp ?? (async () => ({ data: { session: null, user: null }, error: null })),
+      updateUser: over.updateUser ?? (async () => ({ error: null })),
       signOut: over.signOut ?? (async () => ({ error: null })),
     },
     functions: { invoke: over.invoke ?? (async () => ({ data: null, error: null })) },

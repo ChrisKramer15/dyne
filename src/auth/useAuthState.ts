@@ -29,8 +29,8 @@ export function useAuthState(
   useEffect(() => {
     let cancelled = false
 
-    const { data } = client.auth.onAuthStateChange((_event, session) => {
-      if (!cancelled) dispatch({ type: 'AUTH_EVENT', session })
+    const { data } = client.auth.onAuthStateChange((event, session) => {
+      if (!cancelled) dispatch({ type: 'AUTH_EVENT', event, session })
     })
 
     const timer = setTimeout(() => {

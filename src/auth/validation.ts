@@ -8,12 +8,19 @@ export const LIMITS = {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-export type Field = 'username' | 'email' | 'password' | 'confirmPassword' | 'identifier'
+export type Field =
+  | 'username'
+  | 'email'
+  | 'password'
+  | 'confirmPassword'
+  | 'identifier'
+  | 'newPassword'
 export type FieldError =
   | { field: Field; code: 'required' }
   | { field: 'username'; code: 'format' }
   | { field: 'email'; code: 'invalid' }
   | { field: 'password'; code: 'too_short' }
+  | { field: 'newPassword'; code: 'too_short' }
   | { field: 'confirmPassword'; code: 'mismatch' }
 
 /** True when the value is empty or whitespace only. */
@@ -62,4 +69,27 @@ export function validateRegister(i: {
 
 export function validateIdentifier(identifier: string): FieldError[] {
   return isBlank(identifier) ? [{ field: 'identifier', code: 'required' }] : []
+}
+
+/**
+ * Setting a new password from a reset link: the same length floor as register,
+ * plus a confirmation that must match. Passwords are never trimmed.
+ */
+export function validateUpdatePassword(i: {
+  newPassword: string
+  confirmPassword: string
+}): FieldError[] {
+  const errors: FieldError[] = []
+
+  if (isBlank(i.newPassword)) errors.push({ field: 'newPassword', code: 'required' })
+  else if (i.newPassword.length < LIMITS.minPassword) {
+    errors.push({ field: 'newPassword', code: 'too_short' })
+  }
+
+  if (isBlank(i.confirmPassword)) errors.push({ field: 'confirmPassword', code: 'required' })
+  else if (i.confirmPassword !== i.newPassword) {
+    errors.push({ field: 'confirmPassword', code: 'mismatch' })
+  }
+
+  return errors
 }

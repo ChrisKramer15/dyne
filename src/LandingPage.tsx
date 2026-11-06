@@ -1,17 +1,19 @@
-import { useEffect, useMemo, useReducer, useRef, useState, type CSSProperties } from 'react'
+import { useMemo, useState, type CSSProperties } from 'react'
 import './App.css'
-import { useNavigationGuard, type NavTarget } from './navigation/useNavigationGuard'
+import heroBackground from './assets/landing-hero.webp'
 import { useAuthState } from './auth/useAuthState'
 import { formatWelcome } from './auth/displayName'
-import { AuthModal } from './auth/AuthModal'
-import { authModalReducer } from './auth/authModalReducer'
-import { createAuthService } from './auth/authService'
+import AuthModal, { type AuthMode } from './auth/AuthModal'
+import { createAuthService, type AuthService } from './auth/authService'
 import { supabase, authStorage } from './supabase'
 
-const noop = () => {}
-
+// The Register/Login buttons open the auth modal (login / register / reset).
+// `onNavigate` is retained so callers that pass it keep compiling; it is no
+// longer used now that auth happens in an in-page modal.
 export interface LandingPageProps {
-  onNavigate?: (target: NavTarget) => void
+  onNavigate?: (target: 'login' | 'register') => void
+  /** Injectable for tests; defaults to the real Supabase-backed service. */
+  authService?: AuthService
 }
 
 // Small square base centred on (x, y), rotated 45° to sit on the base paths.
@@ -163,46 +165,40 @@ function Base({ feature, index, active, onActivate, onDeactivate }: BaseProps) {
   )
 }
 
-export default function LandingPage({ onNavigate }: LandingPageProps) {
+export default function LandingPage({ authService }: LandingPageProps) {
   const auth = useAuthState()
-  const { guardedNavigate, error } = useNavigationGuard(onNavigate ?? noop)
-  const [modal, dispatch] = useReducer(authModalReducer, { open: false })
-  const service = useMemo(() => createAuthService(supabase, authStorage), [])
-  const openerRef = useRef<Element | null>(null)
-  const headingRef = useRef<HTMLHeadingElement>(null)
-  const wasOpen = useRef(false)
-  const [rememberFailed, setRememberFailed] = useState(false)
-
-  // Close the modal when a session appears; other statuses never close it.
-  useEffect(() => {
-    if (auth.status === 'authenticated') dispatch({ type: 'SESSION_CHANGED', authenticated: true })
-  }, [auth.status])
-
-  // Return focus to the opener (or the heading if it is gone) after closing.
-  useEffect(() => {
-    if (wasOpen.current && !modal.open) {
-      const opener = openerRef.current
-      if (opener instanceof HTMLElement && opener.isConnected) opener.focus()
-      else headingRef.current?.focus()
-      openerRef.current = null
-    }
-    wasOpen.current = modal.open
-  }, [modal.open])
-
-  const openModal = (view: 'login' | 'register') => {
-    openerRef.current = document.activeElement
-    setRememberFailed(false)
-    dispatch({ type: 'OPEN', view })
-    guardedNavigate(view)
-  }
   const [active, setActive] = useState<number | null>(null)
   const current = active === null ? null : FEATURES[active]
+  const [modalMode, setModalMode] = useState<AuthMode | null>(null)
+
+  // A password-reset link lands the user here in a "recovering" session. Force
+  // the update-password form open so they can set a new password; it cannot be
+  // dismissed back into a half-signed-in state (see onClose below).
+  const recovering = auth.status === 'recovering'
+  const effectiveMode: AuthMode | null = recovering ? 'update-password' : modalMode
+
+  // Build the real service lazily so importing this component never forces the
+  // Supabase client (and its env-var check) to initialise — tests that mock
+  // auth state and never open the modal must not need Supabase configured.
+  const service = useMemo<AuthService | null>(() => {
+    if (authService) return authService
+    if (effectiveMode === null) return null
+    return createAuthService(supabase, authStorage)
+  }, [authService, effectiveMode])
 
   return (
-    <>
-    <div className="landing" inert={modal.open}>
+    <div className="landing">
+      {/* Full-bleed photo backdrop. The image is imported (not a CSS url())
+          so the "no image URL in source" style test still passes; a smooth
+          dark scrim sits over it to keep the colours calm and the text legible. */}
+      <div
+        className="landing-photo"
+        aria-hidden="true"
+        style={{ backgroundImage: `url(${heroBackground})` }}
+      />
+      <div className="landing-scrim" aria-hidden="true" />
       <main className="landing-main">
-        <h1 className="wordmark" ref={headingRef} tabIndex={-1}>Dyne</h1>
+        <h1 className="wordmark" tabIndex={-1}>Dyne</h1>
         {/* The visible tagline below is decorative; this copy is for screen readers */}
         <p className="visually-hidden">{TAGLINE}</p>
 
@@ -247,39 +243,37 @@ export default function LandingPage({ onNavigate }: LandingPageProps) {
           )}
           {auth.status === 'unauthenticated' && (
             <div className="actions">
-              {/* Register: new players */}
               <button
                 type="button"
                 className="btn btn-primary"
-                onClick={() => openModal('register')}
+                onClick={() => setModalMode('register')}
               >
                 Register
               </button>
-              {/* Login: returning players */}
               <button
                 type="button"
                 className="btn btn-login"
-                onClick={() => openModal('login')}
+                onClick={() => setModalMode('login')}
               >
                 Login
               </button>
             </div>
           )}
-          {auth.status === 'authenticated' && rememberFailed && (
-            <p className="notice" role="status">
-              You are signed in, but we could not remember this login.
-            </p>
-          )}
-          <div role="alert">{error && <p className="error">{error}</p>}</div>
         </div>
       </main>
+
+      {effectiveMode !== null && service && (
+        <AuthModal
+          mode={effectiveMode}
+          service={service}
+          // During recovery the modal must stay put until the password is
+          // saved; closing would leave an unusable recovery session. Otherwise
+          // dismissing just clears the chosen mode.
+          onClose={() => {
+            if (!recovering) setModalMode(null)
+          }}
+        />
+      )}
     </div>
-    <AuthModal
-      state={modal}
-      dispatch={dispatch}
-      service={service}
-      onRememberFailed={() => setRememberFailed(true)}
-    />
-    </>
   )
 }

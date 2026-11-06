@@ -10,6 +10,44 @@
   background-color: var(--bg);
 }
 
+/* Full-bleed photo backdrop (image set inline from a JS import, see
+   LandingPage.tsx). Covers the viewport and sits above the gradient wash but
+   below the scrim and content. */
+.landing-photo {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  /* Settle the busy cityscape so it reads as mood, not detail */
+  filter: saturate(0.85) brightness(0.9);
+}
+
+/* Smooth scrim: a soft vertical darkening plus a faint cool tint. Keeps the
+   palette calm and guarantees text contrast over any part of the photo. */
+.landing-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      180deg,
+      hsl(228 45% 6% / 0.55) 0%,
+      hsl(228 45% 6% / 0.35) 32%,
+      hsl(228 45% 6% / 0.5) 68%,
+      hsl(228 45% 5% / 0.82) 100%
+    ),
+    radial-gradient(
+      ellipse 120% 80% at 50% 42%,
+      transparent 40%,
+      hsl(228 45% 5% / 0.4) 100%
+    );
+  -webkit-backdrop-filter: blur(1px);
+  backdrop-filter: blur(1px);
+}
+
 /* Fixed backdrop: two soft bands of colour on solid --bg.
    Top edge flows blue -> green; bottom edge flows purple -> pink.
    Each glow is a wide, flat ellipse centred on the edge itself, so it spreads
@@ -96,12 +134,12 @@
   line-height: 1;
   letter-spacing: 0.32em;
   text-transform: uppercase;
-  color: var(--text);
-  /* Subtle top-to-bottom sheen; falls back to solid --text */
-  background: linear-gradient(180deg, #ffffff 0%, #ffffff 45%, #c9d4ff 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  /* Clean white over the photo, with a soft shadow for legibility, instead of
+     a clipped gradient that muddies against the image */
+  color: #ffffff;
+  text-shadow:
+    0 1px 2px hsl(228 45% 5% / 0.5),
+    0 2px 18px hsl(228 45% 5% / 0.45);
   animation: rise-in 700ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
@@ -359,6 +397,8 @@
   text-align: center;
   text-wrap: balance;
   color: var(--text-muted);
+  /* Legible over the photo without a hard halo */
+  text-shadow: 0 1px 8px hsl(228 45% 5% / 0.6);
   transition: color 180ms ease-out;
 }
 
@@ -500,530 +540,240 @@
 }
 
 
-/* ---------- Auth modal (frosted glass card) ---------- */
+/* ---------- Auth modal ---------- */
 
-.auth-modal-backdrop {
+.auth-overlay {
   position: fixed;
   inset: 0;
   z-index: 100;
-  display: grid;
-  place-items: center;
-  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(12px, 4vw, 32px);
+  background: hsl(228 45% 3% / 0.72);
+  animation: auth-fade 160ms ease-out both;
+}
+
+.auth-dialog {
+  /* Accent pair drives the links, focus rings and glow. Defaults to the cool
+     cyan/green used by Register; login mode swaps in the warm orange/pink. */
+  --auth-accent: var(--neon-cyan);
+  --auth-accent-2: var(--neon-green);
+  --auth-glow: hsl(185 100% 60% / 0.12);
+  --auth-focus-ring: hsl(185 100% 60% / 0.25);
+
+  position: relative;
+  width: min(100%, 420px);
+  max-height: calc(100dvh - 32px);
   overflow-y: auto;
-  background: hsl(228 40% 4% / 0.6);
+  padding: clamp(20px, 4vw, 32px);
+  background: var(--surface);
+  border: 1px solid hsl(228 30% 24%);
+  border-radius: 16px;
+  box-shadow:
+    0 0 0 1px hsl(228 40% 10%),
+    0 24px 64px hsl(228 60% 2% / 0.7),
+    0 0 40px var(--auth-glow);
+  animation: auth-rise 200ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
-/* Presentational wrapper: the glow is a filter here because clip-path on the
-   card would clip its own box-shadow */
-.auth-modal-frame {
-  position: relative;
-  width: min(420px, calc(100vw - 32px));
-  max-height: 100%;
-  filter: drop-shadow(0 0 14px var(--diamond-glow-cyan))
-    drop-shadow(0 0 40px var(--diamond-glow-purple));
+/* Login mode: warm orange -> pink, matching the landing page Login button. */
+.auth-dialog-login {
+  --auth-accent: var(--neon-orange);
+  --auth-accent-2: var(--neon-magenta);
+  --auth-glow: hsl(315 100% 60% / 0.14);
+  --auth-focus-ring: hsl(25 100% 58% / 0.3);
 }
 
-.auth-modal {
-  position: relative;
-  box-sizing: border-box;
-  width: 100%;
-  max-height: 100%;
-  padding: 28px 24px 24px;
-  overflow-y: auto;
-  font-family: var(--display);
-  color: var(--text);
-  background: linear-gradient(180deg, var(--diamond-fill-top), var(--diamond-fill-bottom));
-  border: 0;
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
-  clip-path: polygon(
-    var(--diamond-cut) 0,
-    calc(100% - var(--diamond-cut)) 0,
-    100% var(--diamond-cut),
-    100% calc(100% - var(--diamond-cut)),
-    calc(100% - var(--diamond-cut)) 100%,
-    var(--diamond-cut) 100%,
-    0 calc(100% - var(--diamond-cut)),
-    0 var(--diamond-cut)
-  );
-  animation: rise-in 300ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
-}
-
-/* Dashed cyan outline, drawn in through a mask */
-.auth-modal-outline {
+.auth-close {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-}
-
-.auth-modal-outline-path,
-.auth-modal-outline-reveal {
-  x: 2px;
-  y: 2px;
-  width: calc(100% - 4px);
-  height: calc(100% - 4px);
-  fill: none;
-}
-
-.auth-modal-outline-path {
-  stroke: var(--neon-cyan);
-  stroke-width: 1.5;
-  stroke-dasharray: 6 7;
-  opacity: 0.75;
-}
-
-.auth-modal-outline-reveal {
-  stroke: #fff; /* mask only, never painted */
-  stroke-width: 8;
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-  animation: draw-auth-outline 1100ms cubic-bezier(0.45, 0, 0.2, 1) 100ms forwards;
-}
-
-@keyframes draw-auth-outline {
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
-.auth-modal-plate {
-  display: block;
-  width: 34px;
-  height: 34px;
-  margin: 0 auto 10px;
-  color: var(--neon-cyan);
-  filter: drop-shadow(0 0 8px var(--neon-cyan));
-}
-
-/* No backdrop-filter: swap the translucent fill for an opaque one */
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .auth-modal {
-    background: var(--surface);
-  }
-}
-
-.auth-modal-header {
-  margin-bottom: 20px;
-  text-align: center;
-}
-
-.auth-modal .auth-modal-title {
-  margin: 0;
-  padding: 0 48px;
-  font-size: 1.75rem;
-  font-weight: 700;
-  line-height: 1.2;
-  text-align: center;
-}
-
-.auth-modal-subtitle {
-  margin-top: 6px;
-  font-size: 0.875rem;
-  text-align: center;
-  color: var(--text-muted);
-}
-
-.auth-modal-form {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.auth-modal-field {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.auth-modal label {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 0.875rem;
-  color: var(--text-muted);
-}
-
-.auth-modal input,
-.auth-modal .auth-modal-input {
-  box-sizing: border-box;
-  width: 100%;
-  min-height: 44px;
-  padding: 10px 16px;
-  font: inherit;
-  font-size: 1rem;
-  color: var(--text);
-  background: var(--diamond-input-fill);
-  border: 1px solid var(--diamond-input-border);
-  border-radius: 4px;
-  clip-path: polygon(
-    var(--diamond-input-cut) 0,
-    100% 0,
-    100% calc(100% - var(--diamond-input-cut)),
-    calc(100% - var(--diamond-input-cut)) 100%,
-    0 100%,
-    0 var(--diamond-input-cut)
-  );
-}
-
-/* clip-path hides outlines: the focus indicator sits inside the border box */
-.auth-modal input:focus,
-.auth-modal input:focus-visible,
-.auth-modal .auth-modal-input:focus,
-.auth-modal .auth-modal-input:focus-visible {
-  outline: none;
-  border-color: var(--neon-cyan);
-  box-shadow: inset 0 0 0 2px var(--neon-cyan);
-}
-
-.auth-modal input::placeholder {
-  color: var(--text-muted);
-  opacity: 1;
-}
-
-/* Password field: input with the eye toggle inside its right edge */
-.auth-modal-password input {
-  padding-right: 52px;
-}
-
-.auth-modal .auth-modal-eye {
-  position: absolute;
-  top: 0;
-  right: 0;
+  top: 10px;
+  right: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   min-width: 44px;
   min-height: 44px;
-  width: 44px;
-  height: 44px;
-  padding: 0;
+  font-size: 1.5rem;
+  line-height: 1;
   color: var(--text-muted);
-  background: none;
-  border-radius: 14px;
-  transition: color 160ms ease-out;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition:
+    color 160ms ease-out,
+    background 160ms ease-out;
 }
 
-.auth-modal .auth-modal-eye:hover:not(:disabled) {
-  transform: none;
-  box-shadow: none;
+.auth-close:hover {
   color: var(--text);
+  background: hsl(228 30% 18%);
 }
 
-.auth-modal .auth-modal-eye[aria-pressed='true'] {
-  color: var(--neon-cyan);
-}
-
-.auth-modal .auth-modal-eye svg {
-  width: 22px;
-  height: 22px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-/* One focus ring for everything inside the card */
-.auth-modal :focus-visible {
-  outline: 2px solid var(--neon-cyan);
+.auth-close:focus-visible {
+  outline: 2px solid var(--auth-accent);
   outline-offset: 2px;
 }
 
-.auth-modal button {
-  min-height: 44px;
-  padding: 10px 20px;
-  font: inherit;
+.auth-title {
+  margin: 0 0 16px;
+  font-family: var(--display);
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.auth-banner {
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  border-radius: 10px;
+}
+
+.auth-banner-error {
+  color: var(--text);
+  background: hsl(315 60% 12%);
+  border: 1px solid var(--neon-magenta);
+}
+
+.auth-banner-success {
+  color: var(--text);
+  background: hsl(150 50% 10%);
+  border: 1px solid var(--neon-green);
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.auth-label {
+  margin-bottom: 6px;
+  font-size: 0.85rem;
   font-weight: 500;
-  letter-spacing: 0.04em;
-  color: var(--bg);
-  background: var(--neon-orange);
-  border: none;
-  border-radius: 999px;
-  cursor: pointer;
+  color: var(--text-muted);
+}
+
+.auth-input {
+  margin-bottom: 14px;
+  min-height: 44px;
+  padding: 10px 12px;
+  font-family: var(--sans);
+  font-size: 1rem;
+  color: var(--text);
+  background: hsl(228 30% 9%);
+  border: 1px solid hsl(228 28% 26%);
+  border-radius: 10px;
   transition:
-    transform 160ms ease-out,
+    border-color 160ms ease-out,
     box-shadow 160ms ease-out;
 }
 
-.auth-modal button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.auth-input::placeholder {
+  color: hsl(228 15% 55%);
 }
 
-/* Primary button: full width, orange-to-magenta gradient, home-plate shape.
-   The label sits above the taper; glow and focus ring are inset because
-   clip-path would clip anything drawn outside the shape. */
-.auth-modal .auth-modal-submit {
-  width: 100%;
-  min-height: 54px;
-  padding-bottom: 10px;
-  color: var(--bg);
-  background: linear-gradient(90deg, var(--neon-orange), var(--neon-magenta));
-  border: 0;
-  border-radius: 0;
-  clip-path: polygon(0 0, 100% 0, 100% 55%, calc(50% + 24px) 100%, calc(50% - 24px) 100%, 0 55%);
-}
-
-.auth-modal .auth-modal-submit:hover:not(:disabled) {
-  transform: none;
-  box-shadow: inset 0 0 18px hsl(0 0% 100% / 0.25);
-}
-
-.auth-modal .auth-modal-submit:focus-visible {
+.auth-input:focus-visible {
   outline: none;
-  box-shadow: inset 0 0 0 3px var(--bg);
+  border-color: var(--auth-accent);
+  box-shadow: 0 0 0 3px var(--auth-focus-ring);
 }
 
-/* Link-style buttons and anchors (forgot, back to log in, close) */
-.auth-modal a,
-.auth-modal .auth-modal-link,
-.auth-modal .auth-modal-close {
-  min-height: 0;
-  padding: 4px;
-  color: var(--neon-cyan);
-  background: none;
-  box-shadow: none;
-  text-decoration: underline;
+.auth-input[aria-invalid='true'] {
+  border-color: var(--neon-magenta);
+}
+
+.auth-field-error {
+  margin: -8px 0 14px;
+  font-size: 0.8rem;
+  color: var(--neon-magenta);
+}
+
+.auth-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+  color: var(--text-muted);
   cursor: pointer;
 }
 
-.auth-modal .auth-modal-link:hover:not(:disabled),
-.auth-modal .auth-modal-close:hover:not(:disabled) {
-  transform: none;
-  box-shadow: none;
-  color: var(--neon-green);
+.auth-check input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--auth-accent);
 }
 
-/* Forgot link: centred under the submit button */
-.auth-modal .auth-modal-forgot {
-  align-self: center;
-  min-height: 44px;
-  padding: 4px 12px;
-  color: var(--neon-cyan);
-  text-align: center;
-}
-
-.auth-modal .auth-modal-close {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  min-height: 44px;
-  padding: 0;
-  font-size: 1.5rem;
-  line-height: 1;
-  text-decoration: none;
-}
-
-.auth-modal-error {
-  margin: 0;
-  padding: 8px 12px;
-  font-size: 0.875rem;
-  color: var(--text);
-  background: var(--bg);
-  border: 1px solid var(--neon-magenta);
-  border-radius: 12px;
-}
-
-.auth-modal-error p {
-  margin: 0;
-}
-
-.auth-modal-error p + p {
+.auth-submit {
+  width: 100%;
   margin-top: 4px;
 }
 
-/* Always in the DOM as a live region; invisible while empty. */
-.auth-modal-error:empty {
-  padding: 0;
-  border: 0;
+.auth-submit:disabled {
+  cursor: progress;
+  opacity: 0.75;
 }
 
-.auth-modal-notice {
-  margin: 0;
-  padding: 8px 12px;
-  font-size: 0.875rem;
-  color: var(--text);
-  background: var(--bg);
-  border: 1px solid var(--neon-green);
-  border-radius: 12px;
-}
-
-/* Checkbox + label inline; overrides the stacked label/full-width input. */
-.auth-modal-remember {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-}
-
-.auth-modal .auth-modal-remember input {
-  flex: none;
-  width: auto;
-  min-width: 20px;
-  min-height: 20px;
-  height: 20px;
-  margin: 0;
-  padding: 0;
-  background: none;
-  border: 0;
-  clip-path: none;
-  accent-color: var(--neon-cyan);
-}
-
-/* The checkbox is not chamfered, so it keeps the shared outline ring */
-.auth-modal .auth-modal-remember input:focus-visible {
-  outline: 2px solid var(--neon-cyan);
-  outline-offset: 2px;
-  box-shadow: none;
-}
-
-.auth-modal .auth-modal-remember label {
-  flex-direction: row;
-  align-items: center;
-  min-height: 44px;
-  cursor: pointer;
-}
-
-/* Login | Register switch: two base markers above their labels */
-.auth-modal-switch {
-  display: flex;
-  justify-content: center;
-  gap: 56px;
-  margin-top: 20px;
-}
-
-.auth-modal .auth-modal-switch-option {
+.auth-switch {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  min-width: 44px;
-  min-height: 64px;
-  padding: 8px 12px;
-  font-weight: 400;
+  gap: 10px;
+  margin-top: 18px;
+  font-size: 0.9rem;
   color: var(--text-muted);
-  background: none;
-  border: 0;
-  border-radius: 0;
+  text-align: center;
+}
+
+.auth-switch-line {
+  margin: 0;
+}
+
+.auth-link {
+  padding: 2px 4px;
+  font-size: inherit;
+  font-weight: 500;
+  color: var(--auth-accent);
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
   transition: color 160ms ease-out;
 }
 
-.auth-modal .auth-modal-switch-option:hover:not(:disabled) {
-  transform: none;
-  box-shadow: none;
+.auth-link:hover {
+  color: var(--auth-accent-2);
 }
 
-.auth-modal-base {
-  display: block;
-  width: 18px;
-  height: 18px;
-  rotate: 45deg;
-  border: 2px solid currentColor;
-  border-radius: 3px;
-  transition:
-    background-color 160ms ease-out,
-    box-shadow 160ms ease-out;
+.auth-link:focus-visible {
+  outline: 2px solid var(--auth-accent);
+  outline-offset: 2px;
 }
 
-.auth-modal .auth-modal-switch-option[aria-pressed='true'] {
-  color: var(--neon-green);
-  font-weight: 700;
+@keyframes auth-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
-.auth-modal .auth-modal-switch-option[aria-pressed='true'] .auth-modal-base {
-  background: var(--neon-green);
-  box-shadow: 0 0 14px var(--neon-green);
-}
-
-.auth-modal .auth-modal-switch-option[aria-disabled='true'] {
-  cursor: not-allowed;
-  opacity: 0.7;
+@keyframes auth-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .auth-modal-outline-reveal {
+  .auth-overlay,
+  .auth-dialog {
     animation: none;
-    stroke-dashoffset: 0;
-  }
-
-  .auth-modal,
-  .auth-modal-frame,
-  .auth-modal button,
-  .auth-modal input,
-  .auth-modal .auth-modal-input,
-  .auth-modal .auth-modal-switch-option,
-  .auth-modal .auth-modal-base,
-  .auth-modal .auth-modal-eye,
-  .auth-modal .auth-modal-submit {
-    transition: none;
-    animation: none;
-  }
-
-  .auth-modal .auth-modal-submit:hover:not(:disabled) {
-    transform: none;
-  }
-}
-
-@media (forced-colors: active) {
-  .auth-modal-outline,
-  .auth-modal-plate {
-    display: none;
-  }
-
-  .auth-modal-frame {
-    filter: none;
-  }
-
-  .auth-modal {
-    clip-path: none;
-    border: 1px solid CanvasText;
-    background: Canvas;
-  }
-
-  .auth-modal input,
-  .auth-modal .auth-modal-input {
-    clip-path: none;
-    border: 1px solid CanvasText;
-  }
-
-  .auth-modal input:focus,
-  .auth-modal input:focus-visible,
-  .auth-modal .auth-modal-input:focus,
-  .auth-modal .auth-modal-input:focus-visible {
-    outline: 2px solid Highlight;
-    outline-offset: -2px;
-    box-shadow: none;
-  }
-
-  .auth-modal .auth-modal-submit {
-    clip-path: none;
-    border: 2px solid ButtonText;
-    background: ButtonFace;
-    color: ButtonText;
-  }
-
-  .auth-modal .auth-modal-submit:focus-visible {
-    outline: 2px solid Highlight;
-    outline-offset: 2px;
-    box-shadow: none;
-  }
-
-  .auth-modal .auth-modal-base {
-    border: 2px solid ButtonText;
-    background: none;
-    box-shadow: none;
-  }
-
-  .auth-modal .auth-modal-switch-option[aria-pressed='true'] .auth-modal-base {
-    background: Highlight;
-    border-color: Highlight;
   }
 }

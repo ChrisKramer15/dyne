@@ -17,7 +17,9 @@ const initialArb: fc.Arbitrary<AuthAction> = fc.oneof(
 
 const laterArb: fc.Arbitrary<AuthAction> = fc.oneof(
   initialArb,
-  sessionArb.map((session): AuthAction => ({ type: 'AUTH_EVENT', session })),
+  // Ordinary (non-recovery) events: the "latest session wins" property holds
+  // for these. PASSWORD_RECOVERY has its own dedicated tests below.
+  sessionArb.map((session): AuthAction => ({ type: 'AUTH_EVENT', event: 'SIGNED_IN', session })),
 )
 
 const run = (actions: AuthAction[]): AuthState =>
