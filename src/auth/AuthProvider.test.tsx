@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, act } from '@testing-library/react'
-import { AuthProvider, AuthContext, useAuth } from './AuthProvider'
+import { AuthProvider } from './AuthProvider'
+import { AuthContext, useAuth } from './authContext'
 import type { AuthClientLike } from './useAuthState'
 import type { AuthState } from './authReducer'
 

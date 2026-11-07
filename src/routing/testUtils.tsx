@@ -1,7 +1,7 @@
 import { vi } from 'vitest'
 import { render, act, type RenderResult } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
-import { AuthContext } from '../auth/AuthProvider'
+import { AuthContext } from '../auth/authContext'
 import type { AuthState } from '../auth/authReducer'
 import { appRoutes } from './routes'
 

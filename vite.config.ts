@@ -33,6 +33,8 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     // Async property tests render many times per case; the default 5s is too tight.
     testTimeout: 60000,
+    // Each file creates its own jsdom; too many parallel workers time out on startup.
+    maxWorkers: 4,
     include: [
       'src/**/*.test.{ts,tsx}',
       'supabase/functions/**/*.test.ts',

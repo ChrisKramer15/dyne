@@ -1,7 +1,7 @@
 import { useMemo, useState, type CSSProperties } from 'react'
 import './App.css'
 import Backdrop from './Backdrop'
-import { useAuth } from './auth/AuthProvider'
+import { useAuth } from './auth/authContext'
 import type { AuthState } from './auth/authReducer'
 import AuthModal, { type AuthMode } from './auth/AuthModal'
 import { createAuthService, type AuthService } from './auth/authService'

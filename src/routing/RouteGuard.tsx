@@ -1,5 +1,5 @@
 import { Navigate, Outlet, useMatches } from 'react-router'
-import { useAuth } from '../auth/AuthProvider'
+import { useAuth } from '../auth/authContext'
 import { LandingView } from '../LandingPage'
 import { decideRoute, type RouteAccess } from './decideRoute'
 import { LoadingView } from './LoadingView'

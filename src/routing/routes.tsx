@@ -1,26 +1,8 @@
 import { createBrowserRouter, type RouteObject } from 'react-router'
-import { useAuth } from '../auth/AuthProvider'
-import Homepage from '../Homepage'
-import LandingPage from '../LandingPage'
-import type { RouteAccess } from './decideRoute'
+import type { DyneRouteHandle } from './decideRoute'
 import NotFoundView from './NotFoundView'
+import { HomeRoute, LandingRoute } from './RouteViews'
 import { RouteGuard } from './RouteGuard'
-
-export interface DyneRouteHandle extends RouteAccess {
-  /** Used to build document.title. */
-  title: string
-}
-
-export function LandingRoute() {
-  return <LandingPage />
-}
-
-export function HomeRoute() {
-  const auth = useAuth()
-  // The guard already prevents any other status; this narrows the type.
-  if (auth.status !== 'authenticated') return null
-  return <Homepage userMetadata={auth.userMetadata} />
-}
 
 // No route exists for any Auth_Modal mode: the modal is state-driven.
 export const appRoutes: RouteObject[] = [
