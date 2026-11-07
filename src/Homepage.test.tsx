@@ -1,26 +1,34 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { render, cleanup, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router'
 import Homepage from './Homepage'
 import { ALERTS_PER_PAGE, SPORTS } from './homeData'
+
+const renderHome = () =>
+  render(
+    <MemoryRouter initialEntries={['/home']}>
+      <Homepage />
+    </MemoryRouter>,
+  )
 
 describe('Homepage structure and accessibility', () => {
   afterEach(() => cleanup())
 
   it('renders exactly one level-one heading named Dyne', () => {
-    render(<Homepage />)
+    renderHome()
     const headings = screen.getAllByRole('heading', { level: 1 })
     expect(headings).toHaveLength(1)
     expect(headings[0].textContent).toBe('Dyne')
   })
 
   it('renders exactly one main landmark', () => {
-    render(<Homepage />)
+    renderHome()
     expect(screen.getAllByRole('main')).toHaveLength(1)
   })
 
   it('gives every interactive control a non-empty accessible name', () => {
-    render(<Homepage />)
+    renderHome()
     const controls = screen.getAllByRole('button')
     expect(controls.length).toBeGreaterThan(0)
     for (const c of controls) {
@@ -29,32 +37,34 @@ describe('Homepage structure and accessibility', () => {
   })
 
   it('has no Sign out button (it moves to the profile page)', () => {
-    render(<Homepage />)
+    renderHome()
     expect(screen.queryByRole('button', { name: /sign out/i })).toBeNull()
   })
 
   it('has a bottom nav with Home, Leagues, Chat and Profile, in order', () => {
-    render(<Homepage />)
+    renderHome()
     const nav = screen.getByRole('navigation', { name: 'Primary' })
-    const buttons = within(nav).getAllByRole('button')
-    expect(buttons.map((b) => b.textContent)).toEqual(['Home', 'Leagues', 'Chat', 'Profile'])
-    expect(screen.getByRole('button', { name: 'Home' }).getAttribute('aria-current')).toBe('page')
+    const items = within(nav).getAllByRole('listitem').map((li) => li.textContent)
+    expect(items).toEqual(['Home', 'Leagues', 'Chat', 'Profile'])
+    expect(within(nav).getByRole('link', { name: 'Home' }).getAttribute('aria-current')).toBe('page')
+    expect(within(nav).getByRole('link', { name: 'Leagues' }).getAttribute('href')).toBe('/leagues')
+    expect(within(nav).getByRole('link', { name: 'Leagues' }).getAttribute('aria-current')).toBeNull()
   })
 
   it('nav buttons are keyboard focusable', async () => {
     const user = userEvent.setup()
-    render(<Homepage />)
+    renderHome()
     const profile = screen.getByRole('button', { name: 'Profile' })
     await user.tab({ shift: true })
     expect(document.activeElement).toBe(profile)
   })
   it('has no top-right icon buttons', () => {
-    render(<Homepage />)
+    renderHome()
     expect(screen.queryByRole('button', { name: 'Edit profile' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Settings' })).toBeNull()
   })
   it('shows no username and no leagues section', () => {
-    render(<Homepage />)
+    renderHome()
     expect(screen.queryByText(/welcome back/i)).toBeNull()
     expect(screen.queryByRole('heading', { name: 'Your leagues' })).toBeNull()
     expect(screen.getByRole('heading', { level: 2, name: 'Alerts' })).toBeTruthy()
@@ -63,7 +73,7 @@ describe('Homepage structure and accessibility', () => {
 
   it('caps alerts at 5 per page and paginates the rest', async () => {
     const user = userEvent.setup()
-    render(<Homepage />)
+    renderHome()
     const list = () => within(screen.getByRole('region', { name: 'Alerts' })).getAllByRole('listitem')
     expect(list()).toHaveLength(ALERTS_PER_PAGE)
     expect(ALERTS_PER_PAGE).toBe(3)
@@ -84,14 +94,14 @@ describe('Homepage structure and accessibility', () => {
   })
 
   it('has no season summary strip', () => {
-    render(<Homepage />)
+    renderHome()
     expect(screen.queryByText(/wallet/i)).toBeNull()
     expect(screen.queryByText(/active contests/i)).toBeNull()
     expect(screen.queryByText(/season points/i)).toBeNull()
   })
 
   it('shows a Create or join a league card for each of 10 sports', () => {
-    render(<Homepage />)
+    renderHome()
     const region = screen.getByRole('region', { name: 'Create or join a league' })
     const cards = within(region).getAllByRole('button')
     expect(SPORTS).toHaveLength(10)

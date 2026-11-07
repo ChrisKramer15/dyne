@@ -1080,3 +1080,157 @@
   outline: 3px solid var(--text);
   outline-offset: 2px;
 }
+/* Nav items can be links (routed) or buttons (placeholders) */
+a.nav-item {
+  text-decoration: none;
+}
+
+/* ---------- Leagues dashboard ---------- */
+
+.page-title {
+  font-size: 1.5rem;
+}
+
+.leagues-summary {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  min-height: 44px;
+  padding: 8px 16px;
+  font-family: var(--display);
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  background: var(--surface);
+  border: 1px solid hsl(228 30% 24%);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.chip[aria-pressed='true'] {
+  color: var(--bg);
+  background: var(--neon-cyan);
+  border-color: var(--neon-cyan);
+}
+
+.chip:focus-visible {
+  outline: 3px solid var(--text);
+  outline-offset: 3px;
+}
+
+.league-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.league-card {
+  --accent: var(--neon-cyan);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+  padding: 14px;
+  background: var(--surface);
+  border: 1px solid hsl(228 30% 24%);
+  border-top: 3px solid var(--accent);
+  border-radius: 14px;
+}
+
+.league-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.league-pic {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.league-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.league-name {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.league-meta {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.status-badge {
+  flex: none;
+  padding: 2px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+}
+
+.status-live {
+  color: var(--neon-green);
+}
+
+.status-upcoming {
+  color: var(--neon-cyan);
+}
+
+.status-final {
+  color: var(--text-muted);
+}
+
+.matchup {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: 2px 12px;
+  padding-top: 10px;
+  border-top: 1px solid hsl(228 30% 18%);
+}
+
+.matchup-label {
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.matchup-score {
+  font-family: var(--display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.matchup-score.is-winning {
+  color: var(--neon-green);
+}
+
+.matchup-note {
+  grid-column: 1 / -1;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.empty-state {
+  margin: 0;
+  color: var(--text-muted);
+}

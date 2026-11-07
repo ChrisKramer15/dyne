@@ -48,7 +48,7 @@ function mount(path = '/') {
 const pathOf = (r: ReturnType<typeof mount>) => r.state.location.pathname
 
 const hasRegister = () => screen.queryByRole('button', { name: 'Register' }) !== null
-const hasHomepage = () => screen.queryByRole('button', { name: 'Profile' }) !== null
+const hasHomepage = () => screen.queryByRole('heading', { level: 2, name: 'Alerts' }) !== null
 const hasDialog = () => screen.queryByRole('dialog') !== null
 
 beforeEach(() => {

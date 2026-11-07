@@ -10,7 +10,7 @@ const settledStatuses: AuthStatus[] = ['unauthenticated', 'authenticated', 'reco
 
 const unknownPath = fc
   .stringMatching(/^[a-z0-9]{1,12}$/)
-  .filter((s) => s !== 'home')
+  .filter((s) => s !== 'home' && s !== 'leagues')
   .map((s) => `/${s}`)
 
 const paths = fc.oneof(fc.constant('/'), fc.constant('/home'), unknownPath)

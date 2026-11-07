@@ -1,7 +1,7 @@
 import { createBrowserRouter, type RouteObject } from 'react-router'
 import type { DyneRouteHandle } from './decideRoute'
 import NotFoundView from './NotFoundView'
-import { HomeRoute, LandingRoute } from './RouteViews'
+import { HomeRoute, LandingRoute, LeaguesRoute } from './RouteViews'
 import { RouteGuard } from './RouteGuard'
 
 // No route exists for any Auth_Modal mode: the modal is state-driven.
@@ -22,6 +22,11 @@ export const appRoutes: RouteObject[] = [
         path: '/home',
         element: <HomeRoute />,
         handle: { access: 'protected', title: 'Home' } satisfies DyneRouteHandle,
+      },
+      {
+        path: '/leagues',
+        element: <LeaguesRoute />,
+        handle: { access: 'protected', title: 'Leagues' } satisfies DyneRouteHandle,
       },
       {
         path: '*',

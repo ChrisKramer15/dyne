@@ -5,7 +5,7 @@ import { renderApp, type RenderAppResult } from './testUtils'
 
 afterEach(cleanup)
 
-const homepage = () => screen.queryByRole('button', { name: 'Profile' })
+const homepage = () => screen.queryByRole('heading', { level: 2, name: 'Alerts' })
 const landing = () => (homepage() ? null : screen.queryByRole('heading', { name: 'Dyne' }))
 const pending = () => screen.queryByRole('status') && screen.queryAllByRole('heading').length === 0
 
