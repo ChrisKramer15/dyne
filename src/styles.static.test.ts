@@ -248,6 +248,78 @@ describe('target size and focus (Req 7.2, 7.4)', () => {
   })
 })
 
+describe('homepage styles (Req 8.1, 8.2, 8.6)', () => {
+  const declarations = (css: string) =>
+    [...css.matchAll(/(?:^|[;{\s])(--[\w-]+)\s*:/g)].map((m) => m[1])
+
+  it('design tokens are defined once in index.css and never redefined in App.css', () => {
+    const tokens = declarations(indexCss)
+    expect(tokens.length).toBeGreaterThan(0)
+    expect(new Set(tokens).size).toBe(tokens.length)
+    for (const t of declarations(appCss)) expect(tokens, t).not.toContain(t)
+  })
+
+  it('no rule declares the same custom property twice', () => {
+    for (const m of appCss.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      const names = declarations(m[2])
+      expect(new Set(names).size, m[1].trim()).toBe(names.length)
+    }
+  })
+
+  it('backdrop layers are defined once and the hero image is referenced only by Backdrop', () => {
+    for (const cls of ['.landing-photo', '.landing-scrim']) {
+      const count = [...appCss.matchAll(/(?:^|\})\s*([^{}]+)\{/g)].filter((m) =>
+        m[1].replace(/\/\*[\s\S]*?\*\//g, '').split(',').map((s) => s.trim()).includes(cls),
+      ).length
+      expect(count, cls).toBe(1)
+    }
+    const referrers: string[] = []
+    const walk = (dir: string) => {
+      for (const e of readdirSync(dir, { withFileTypes: true })) {
+        const p = join(dir, e.name)
+        if (e.isDirectory()) {
+          if (e.name !== 'assets') walk(p)
+        } else if (
+          ['.ts', '.tsx', '.css'].includes(extname(p)) &&
+          !e.name.includes('.test.') &&
+          /landing-hero/.test(readFileSync(p, 'utf8'))
+        )
+          referrers.push(e.name)
+      }
+    }
+    walk(join(root, 'src'))
+    expect(referrers).toEqual(['Backdrop.tsx'])
+  })
+
+  it('every visible focus outline is at least 2px', () => {
+    const outlines = [...appCss.matchAll(/outline:\s*([^;]+);/g)].map((m) => m[1].trim())
+    expect(outlines.length).toBeGreaterThan(0)
+    for (const o of outlines) {
+      if (o === 'none') continue
+      const px = o.match(/^(\d+(?:\.\d+)?)px\s+solid\b/)
+      expect(px, o).not.toBeNull()
+      expect(Number(px![1]), o).toBeGreaterThanOrEqual(2)
+    }
+  })
+
+  it('sign-out error text meets 4.5:1 on bg and surface', () => {
+    const color = rule(appCss, '.signout-error').match(/(?<!-)color:\s*var\(--([\w-]+)\)/)
+    expect(color).not.toBeNull()
+    const rgb = colorToRgb(cssVar(color![1]))
+    for (const base of [bg, surface]) {
+      expect(contrast(rgb, base)).toBeGreaterThanOrEqual(4.5)
+    }
+  })
+
+  it('welcome and wordmark text colours meet 4.5:1 on bg', () => {
+    for (const sel of ['.welcome', '.wordmark']) {
+      const m = rule(appCss, sel).match(/(?<!-)color:\s*var\(--([\w-]+)\)/)
+      if (!m) continue // inherits --text
+      expect(contrast(colorToRgb(cssVar(m[1])), bg), sel).toBeGreaterThanOrEqual(4.5)
+    }
+  })
+})
+
 describe('asset', () => {
   it('no external image URL appears in source', () => {
     const files: string[] = []

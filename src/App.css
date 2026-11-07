@@ -453,6 +453,40 @@
   border-radius: 8px;
 }
 
+/* ---------- Homepage (authenticated) ---------- */
+
+/* Mirrors .landing-main, but grows with content instead of locking to one
+   screen, so it never forces horizontal scroll or clips at high zoom. */
+.home-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(16px, 4dvh, 32px);
+  min-height: 100dvh;
+  max-width: 100%;
+  padding: clamp(12px, 3dvh, 40px) 16px;
+  overflow-x: clip;
+  text-align: center;
+}
+
+/* The heading takes programmatic focus on mount; no ring, as on Landing */
+.home-main .wordmark:focus {
+  outline: none;
+}
+
+/* Sign-out failure message */
+.signout-error {
+  max-width: min(100%, 40ch);
+  margin: 0;
+  font-family: var(--display);
+  font-size: 0.9375rem;
+  color: var(--neon-magenta);
+  text-align: center;
+  text-shadow: 0 1px 8px hsl(228 45% 5% / 0.6);
+  overflow-wrap: anywhere;
+}
+
 /* Register and Login side by side as equals, on every screen size */
 .actions {
   display: flex;

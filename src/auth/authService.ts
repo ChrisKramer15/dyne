@@ -189,10 +189,10 @@ export function createAuthService(client: AuthClientLike, storage: SwitchableSto
 
     async signOut() {
       try {
-        await withTimeout(client.auth.signOut({ scope: 'local' }))
-      } catch {
-        // Network failure must not leave persisted data behind.
+        const { error } = await withTimeout(client.auth.signOut({ scope: 'local' }))
+        if (error) throw error
       } finally {
+        // Persisted data is cleared even when sign-out fails; the error still propagates.
         storage.clearAll()
       }
     },

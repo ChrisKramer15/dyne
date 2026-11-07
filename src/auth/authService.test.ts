@@ -287,7 +287,7 @@ describe('auth service unit tests', () => {
       expect(st.clearAll).toHaveBeenCalledTimes(1)
     })
 
-    it('clears storage even when the network call rejects', async () => {
+    it('rejects and still clears storage when the network call rejects', async () => {
       const st = makeStorage()
       const svc = createAuthService(
         makeUnitClient({
@@ -297,17 +297,25 @@ describe('auth service unit tests', () => {
         }),
         st,
       )
-      await expect(svc.signOut()).resolves.toBeUndefined()
+      await expect(svc.signOut()).rejects.toBeInstanceOf(TypeError)
       expect(st.clearAll).toHaveBeenCalledTimes(1)
     })
 
-    it('clears storage even when the network call hangs past 10 s', async () => {
+    it('rejects and still clears storage when Supabase returns an error', async () => {
+      const st = makeStorage()
+      const failure = { message: 'boom' }
+      const svc = createAuthService(makeUnitClient({ signOut: async () => ({ error: failure }) }), st)
+      await expect(svc.signOut()).rejects.toBe(failure)
+      expect(st.clearAll).toHaveBeenCalledTimes(1)
+    })
+
+    it('rejects with TimeoutError and still clears storage when the call hangs past 10 s', async () => {
       vi.useFakeTimers()
       const st = makeStorage()
       const svc = createAuthService(makeUnitClient({ signOut: () => new Promise(() => {}) }), st)
-      const p = svc.signOut()
+      const assertion = expect(svc.signOut()).rejects.toBeInstanceOf(TimeoutError)
       await vi.advanceTimersByTimeAsync(SERVICE_TIMEOUT_MS)
-      await p
+      await assertion
       expect(st.clearAll).toHaveBeenCalledTimes(1)
     })
   })

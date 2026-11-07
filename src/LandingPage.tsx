@@ -1,8 +1,8 @@
 import { useMemo, useState, type CSSProperties } from 'react'
 import './App.css'
-import heroBackground from './assets/landing-hero.webp'
+import Backdrop from './Backdrop'
 import { useAuthState } from './auth/useAuthState'
-import { formatWelcome } from './auth/displayName'
+import type { AuthState } from './auth/authReducer'
 import AuthModal, { type AuthMode } from './auth/AuthModal'
 import { createAuthService, type AuthService } from './auth/authService'
 import { supabase, authStorage } from './supabase'
@@ -165,8 +165,13 @@ function Base({ feature, index, active, onActivate, onDeactivate }: BaseProps) {
   )
 }
 
-export default function LandingPage({ authService }: LandingPageProps) {
-  const auth = useAuthState()
+export interface LandingViewProps {
+  auth: AuthState
+  /** Injectable for tests; defaults to the real Supabase-backed service. */
+  authService?: AuthService
+}
+
+export function LandingView({ auth, authService }: LandingViewProps) {
   const [active, setActive] = useState<number | null>(null)
   const current = active === null ? null : FEATURES[active]
   const [modalMode, setModalMode] = useState<AuthMode | null>(null)
@@ -176,13 +181,11 @@ export default function LandingPage({ authService }: LandingPageProps) {
   // dismissed back into a half-signed-in state (see onClose below).
   const recovering = auth.status === 'recovering'
   const effectiveMode: AuthMode | null = recovering ? 'update-password' : modalMode
-  const [signingOut, setSigningOut] = useState(false)
 
   // Build the real service lazily so importing this component never forces the
-  // Supabase client (and its env-var check) to initialise — tests that mock
-  // auth state and never open the modal must not need Supabase configured.
-  // It is needed whenever a form is open or the user is signed in (sign out).
-  const needsService = effectiveMode !== null || auth.status === 'authenticated'
+  // Supabase client (and its env-var check) to initialise. It is only needed
+  // while a modal is open.
+  const needsService = effectiveMode !== null
   const service = useMemo<AuthService | null>(() => {
     if (authService) return authService
     if (!needsService) return null
@@ -191,15 +194,7 @@ export default function LandingPage({ authService }: LandingPageProps) {
 
   return (
     <div className="landing">
-      {/* Full-bleed photo backdrop. The image is imported (not a CSS url())
-          so the "no image URL in source" style test still passes; a smooth
-          dark scrim sits over it to keep the colours calm and the text legible. */}
-      <div
-        className="landing-photo"
-        aria-hidden="true"
-        style={{ backgroundImage: `url(${heroBackground})` }}
-      />
-      <div className="landing-scrim" aria-hidden="true" />
+      <Backdrop />
       <main className="landing-main">
         <h1 className="wordmark" tabIndex={-1}>Dyne</h1>
         {/* The visible tagline below is decorative; this copy is for screen readers */}
@@ -241,29 +236,6 @@ export default function LandingPage({ authService }: LandingPageProps) {
               Loading…
             </p>
           )}
-          {auth.status === 'authenticated' && (
-            <div className="signed-in">
-              <p className="welcome">{formatWelcome(auth.userMetadata)}</p>
-              <button
-                type="button"
-                className="btn btn-login"
-                disabled={signingOut || !service}
-                onClick={async () => {
-                  if (!service || signingOut) return
-                  setSigningOut(true)
-                  try {
-                    await service.signOut()
-                  } finally {
-                    // onAuthStateChange flips the UI back to unauthenticated;
-                    // reset the flag in case the component is still mounted.
-                    setSigningOut(false)
-                  }
-                }}
-              >
-                {signingOut ? 'Signing out…' : 'Sign out'}
-              </button>
-            </div>
-          )}
           {auth.status === 'unauthenticated' && (
             <div className="actions">
               <button
@@ -299,4 +271,9 @@ export default function LandingPage({ authService }: LandingPageProps) {
       )}
     </div>
   )
+}
+
+export default function LandingPage({ authService }: LandingPageProps) {
+  const auth = useAuthState()
+  return <LandingView auth={auth} authService={authService} />
 }

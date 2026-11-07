@@ -9,7 +9,7 @@ vi.mock('./auth/useAuthState', () => ({
   useAuthState: () => authMock.state as AuthState,
 }))
 
-import LandingPage from './LandingPage'
+import LandingPage, { LandingView } from './LandingPage'
 
 function setAuth(state: AuthState) {
   authMock.state = state
@@ -39,14 +39,32 @@ describe('LandingPage', () => {
     expect(container.querySelector('.counter, .hero, #next-steps')).toBeNull()
   })
 
-  it('retains an active session and shows the greeting (1.2)', () => {
-    setAuth({ status: 'authenticated', userMetadata: { username: 'Ada' } })
-    const onNavigate = vi.fn()
-    render(<LandingPage onNavigate={onNavigate} />)
-    expect(screen.getByText(/Welcome Back, Ada/)).toBeTruthy()
-    expect(screen.queryByRole('button', { name: 'Login' })).toBeNull()
-    expect(screen.queryByRole('button', { name: 'Register' })).toBeNull()
-    expect(onNavigate).not.toHaveBeenCalled()
+  // Validates: Requirements 6.1, 6.3, 6.4
+  it('unauthenticated view has exactly one Register and one Login button, no welcome or Sign out', async () => {
+    const user = userEvent.setup()
+    const { container } = render(
+      <LandingView
+        auth={{ status: 'unauthenticated' }}
+        authService={{
+          signIn: vi.fn(),
+          signUp: vi.fn(),
+          requestPasswordReset: vi.fn(),
+          updatePassword: vi.fn(),
+          signOut: vi.fn(),
+        }}
+      />,
+    )
+    expect(screen.getAllByRole('button', { name: 'Register' })).toHaveLength(1)
+    expect(screen.getAllByRole('button', { name: 'Login' })).toHaveLength(1)
+    expect(screen.queryByText(/welcome/i)).toBeNull()
+    expect(container.querySelector('.welcome')).toBeNull()
+    expect(screen.queryByRole('button', { name: /sign out/i })).toBeNull()
+
+    await user.click(screen.getByRole('button', { name: 'Register' }))
+    expect(screen.getByRole('heading', { name: 'Create your account' })).toBeTruthy()
+    await user.click(screen.getByRole('button', { name: 'Close' }))
+    await user.click(screen.getByRole('button', { name: 'Login' }))
+    expect(screen.getByRole('heading', { name: 'Log in' })).toBeTruthy()
   })
 
   // The Register/Login buttons now open the auth modal. A stub service keeps

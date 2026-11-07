@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render } from '@testing-library/react'
 import * as fc from 'fast-check'
 import type { AuthState } from './auth/authReducer'
-import { formatWelcome } from './auth/displayName'
 
 const mockState: { current: AuthState } = { current: { status: 'loading' } }
 
@@ -15,15 +14,6 @@ import LandingPage from './LandingPage'
 const authStateArb: fc.Arbitrary<AuthState> = fc.oneof(
   fc.constant<AuthState>({ status: 'loading' }),
   fc.constant<AuthState>({ status: 'unauthenticated' }),
-  fc
-    .oneof(
-      fc.record({ username: fc.string() }),
-      fc.constant({}),
-      fc.constant(null),
-      fc.constant(undefined),
-      fc.record({ username: fc.integer() }),
-    )
-    .map<AuthState>((userMetadata) => ({ status: 'authenticated', userMetadata })),
 )
 
 describe('LandingPage states', () => {
@@ -54,12 +44,6 @@ describe('LandingPage states', () => {
             expect(loading).not.toBeNull()
             expect(welcome).toBeNull()
             expect(buttons).toEqual([])
-          } else if (state.status === 'authenticated') {
-            expect(welcome).not.toBeNull()
-            expect(welcome!.textContent).toBe(formatWelcome(state.userMetadata))
-            expect(loading).toBeNull()
-            // Authenticated state offers exactly one control: sign out.
-            expect(buttons).toEqual(['Sign out'])
           } else {
             expect(buttons).toEqual(['Register', 'Login'])
             expect(welcome).toBeNull()
