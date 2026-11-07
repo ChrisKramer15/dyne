@@ -455,19 +455,41 @@
 
 /* ---------- Homepage (authenticated) ---------- */
 
-/* Mirrors .landing-main, but grows with content instead of locking to one
-   screen, so it never forces horizontal scroll or clips at high zoom. */
+/* Header, centred hero, cards pinned to the bottom. Grows with content so it
+   never forces horizontal scroll or clips at high zoom. */
 .home-main {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  align-items: stretch;
   gap: clamp(16px, 4dvh, 32px);
   min-height: 100dvh;
   max-width: 100%;
-  padding: clamp(12px, 3dvh, 40px) 16px;
+  /* Bottom padding clears the fixed nav bar */
+  padding: clamp(12px, 3dvh, 32px) clamp(12px, 3vw, 32px) 108px;
   overflow-x: clip;
-  text-align: center;
+}
+
+.home-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.home-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.home-logo {
+  width: 36px;
+  height: 36px;
+}
+
+.home-brand .wordmark {
+  font-size: 1.5rem;
+  margin-right: -0.32em;
 }
 
 /* The heading takes programmatic focus on mount; no ring, as on Landing */
@@ -475,18 +497,178 @@
   outline: none;
 }
 
-/* Sign-out failure message */
-.signout-error {
-  max-width: min(100%, 40ch);
-  margin: 0;
-  font-family: var(--display);
-  font-size: 0.9375rem;
-  color: var(--neon-magenta);
-  text-align: center;
-  text-shadow: 0 1px 8px hsl(228 45% 5% / 0.6);
-  overflow-wrap: anywhere;
+.dash-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
+.dash-heading {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.action-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.action-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.action-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 64px;
+  padding: 10px 14px;
+  font-family: var(--display);
+  color: var(--text);
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid hsl(228 30% 24%);
+  border-left: 4px solid var(--neon-cyan);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: box-shadow 160ms ease-out;
+}
+
+.action-item.is-urgent {
+  border-left-color: var(--neon-magenta);
+}
+
+.action-item:hover,
+.action-item:focus-visible {
+  box-shadow: 0 0 16px hsl(185 100% 60% / 0.35);
+}
+
+.action-item:focus-visible {
+  outline: 3px solid var(--text);
+  outline-offset: 3px;
+}
+
+.action-pic {
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+.action-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.action-title {
+  font-weight: 600;
+}
+
+.action-detail {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.action-cta {
+  flex: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--neon-green);
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pager-status {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.pager-btn {
+  min-width: 96px;
+  min-height: 44px;
+  padding: 8px 16px;
+  font-family: var(--display);
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--neon-cyan);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.pager-btn:disabled {
+  color: var(--text-muted);
+  border-color: hsl(228 30% 24%);
+  cursor: not-allowed;
+}
+
+.pager-btn:focus-visible {
+  outline: 3px solid var(--text);
+  outline-offset: 3px;
+}
+.sport-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sport-card {
+  --accent: var(--neon-cyan);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 110px;
+  padding: 12px 8px;
+  font-family: var(--display);
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: 14px;
+  cursor: pointer;
+  transition:
+    transform 160ms ease-out,
+    box-shadow 160ms ease-out;
+}
+
+.sport-card:hover,
+.sport-card:focus-visible {
+  transform: translateY(-3px);
+  box-shadow: 0 0 16px var(--accent);
+}
+
+.sport-card:focus-visible {
+  outline: 3px solid var(--text);
+  outline-offset: 3px;
+}
+
+.sport-pic {
+  font-size: 2.5rem;
+  line-height: 1;
+}
+
+.sport-name {
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-align: center;
+  text-wrap: balance;
+}
 /* Register and Login side by side as equals, on every screen size */
 .actions {
   display: flex;
@@ -818,4 +1000,83 @@
   .auth-dialog {
     animation: none;
   }
+}
+
+/* ---------- Bottom navigation ---------- */
+
+.bottom-nav {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 10;
+  padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+  background: var(--surface);
+  border-top: 1px solid hsl(228 30% 24%);
+}
+
+.bottom-nav ul {
+  display: flex;
+  justify-content: space-around;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 64px;
+  min-height: 44px;
+  padding: 2px 6px;
+  font-family: var(--display);
+  color: var(--text-muted);
+  background: none;
+  border: 0;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.nav-bubble {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: var(--bg);
+  border: 1px solid hsl(228 30% 24%);
+  border-radius: 50%;
+}
+
+.nav-bubble svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.nav-label {
+  font-size: 0.75rem;
+}
+
+.nav-item:hover,
+.nav-item[aria-current='page'] {
+  color: var(--neon-cyan);
+}
+
+.nav-item[aria-current='page'] .nav-bubble,
+.nav-item:hover .nav-bubble {
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 12px hsl(185 100% 60% / 0.45);
+}
+
+.nav-item:focus-visible {
+  outline: 3px solid var(--text);
+  outline-offset: 2px;
 }

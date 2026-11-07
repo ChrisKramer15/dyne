@@ -5,8 +5,8 @@ import { renderApp, type RenderAppResult } from './testUtils'
 
 afterEach(cleanup)
 
-const homepage = () => screen.queryByRole('heading', { name: 'Homepage' })
-const landing = () => screen.queryByRole('heading', { name: 'Dyne' })
+const homepage = () => screen.queryByRole('button', { name: 'Profile' })
+const landing = () => (homepage() ? null : screen.queryByRole('heading', { name: 'Dyne' }))
 const pending = () => screen.queryByRole('status') && screen.queryAllByRole('heading').length === 0
 
 async function back(app: RenderAppResult) {

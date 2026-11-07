@@ -18,7 +18,7 @@ const unknownPathArb = fc
 const pathArb = fc.oneof(fc.constant('/'), fc.constant('/home'), unknownPathArb)
 
 function currentView(): View {
-  if (screen.queryByRole('heading', { name: 'Homepage' })) return 'home'
+  if (screen.queryByRole('button', { name: 'Profile' })) return 'home'
   if (screen.queryByRole('heading', { name: 'Page not found' })) return 'notFound'
   if (screen.queryByRole('heading', { name: 'Dyne' })) return 'landing'
   if (screen.queryByRole('status') && screen.queryAllByRole('heading').length === 0) return 'pending'
@@ -81,7 +81,7 @@ describe('router properties (app-routing)', () => {
         try {
           await waitFor(() => expect(currentView()).toBe('landing'))
           expect(hasUpdatePasswordDialog()).toBe(true)
-          expect(screen.queryByRole('heading', { name: 'Homepage' })).toBeNull()
+          expect(screen.queryByRole('button', { name: 'Profile' })).toBeNull()
         } finally {
           app.unmount()
         }
@@ -110,7 +110,7 @@ describe('router properties (app-routing)', () => {
           await waitFor(() => expect(currentView()).not.toBe('none'))
           expect(unknownView).toBe(currentView())
           expect(unknownUrl).toBe(baseline.currentUrl())
-          expect(screen.queryByRole('heading', { name: 'Homepage' })).toBeNull()
+          expect(screen.queryByRole('button', { name: 'Profile' })).toBeNull()
         } finally {
           baseline.unmount()
         }
@@ -127,7 +127,7 @@ describe('router properties (app-routing)', () => {
         try {
           await waitFor(() => expect(app.location().pathname).toBe('/home'))
           expect(currentView()).toBe('home')
-          expect(screen.queryByRole('heading', { name: 'Dyne' })).toBeNull()
+          expect(screen.queryByRole('button', { name: 'Register' })).toBeNull()
         } finally {
           app.unmount()
         }

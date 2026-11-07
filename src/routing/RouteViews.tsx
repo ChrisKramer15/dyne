@@ -10,5 +10,5 @@ export function HomeRoute() {
   const auth = useAuth()
   // The guard already prevents any other status; this narrows the type.
   if (auth.status !== 'authenticated') return null
-  return <Homepage userMetadata={auth.userMetadata} />
+  return <Homepage />
 }

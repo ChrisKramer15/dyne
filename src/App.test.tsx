@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, act, fireEvent } from '@testing-library/react'
+import { render, screen, act } from '@testing-library/react'
 import { createMemoryRouter } from 'react-router'
 import type { AuthSessionLike } from './auth/authReducer'
 
@@ -48,7 +48,7 @@ function mount(path = '/') {
 const pathOf = (r: ReturnType<typeof mount>) => r.state.location.pathname
 
 const hasRegister = () => screen.queryByRole('button', { name: 'Register' }) !== null
-const hasHomepage = () => screen.queryByRole('button', { name: 'Sign out' }) !== null
+const hasHomepage = () => screen.queryByRole('button', { name: 'Profile' }) !== null
 const hasDialog = () => screen.queryByRole('dialog') !== null
 
 beforeEach(() => {
@@ -77,7 +77,6 @@ describe('App integration', () => {
     const router = mount()
     await settle()
     expect(hasHomepage()).toBe(true)
-    expect(screen.getByText(/Ada/)).toBeTruthy()
     expect(hasRegister()).toBe(false)
     expect(hasDialog()).toBe(false)
     expect(screen.queryByRole('status')).toBeNull()
@@ -164,19 +163,5 @@ describe('App integration', () => {
     expect(hasHomepage()).toBe(false)
     expect(pathOf(router)).toBe('/')
     expect(screen.getByText('Choose a new password')).toBeTruthy()
-  })
-
-  it('stays on /home with an alert when sign-out fails', async () => {
-    fake.getSessionImpl = resolveWith(session)
-    fake.signOutImpl = () => Promise.resolve({ error: new Error('nope') })
-    const router = mount('/home')
-    await settle()
-
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: 'Sign out' }))
-    })
-    expect(screen.getByRole('alert')).toBeTruthy()
-    expect(hasHomepage()).toBe(true)
-    expect(pathOf(router)).toBe('/home')
   })
 })

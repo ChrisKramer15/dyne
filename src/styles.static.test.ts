@@ -302,15 +302,6 @@ describe('homepage styles (Req 8.1, 8.2, 8.6)', () => {
     }
   })
 
-  it('sign-out error text meets 4.5:1 on bg and surface', () => {
-    const color = rule(appCss, '.signout-error').match(/(?<!-)color:\s*var\(--([\w-]+)\)/)
-    expect(color).not.toBeNull()
-    const rgb = colorToRgb(cssVar(color![1]))
-    for (const base of [bg, surface]) {
-      expect(contrast(rgb, base)).toBeGreaterThanOrEqual(4.5)
-    }
-  })
-
   it('welcome and wordmark text colours meet 4.5:1 on bg', () => {
     for (const sel of ['.welcome', '.wordmark']) {
       const m = rule(appCss, sel).match(/(?<!-)color:\s*var\(--([\w-]+)\)/)
