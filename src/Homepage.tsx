@@ -20,7 +20,6 @@ export default function Homepage({
   authService,
   signOutTimeoutMs = 10_000,
 }: HomepageProps) {
-  const headingRef = useRef<HTMLHeadingElement>(null)
   const inFlight = useRef(false)
   const mounted = useRef(true)
   const [signingOut, setSigningOut] = useState(false)
@@ -35,7 +34,6 @@ export default function Homepage({
 
   useEffect(() => {
     mounted.current = true
-    headingRef.current?.focus()
     return () => {
       mounted.current = false
     }
@@ -69,7 +67,7 @@ export default function Homepage({
     <div className="landing">
       <Backdrop />
       <main className="home-main">
-        <h1 className="wordmark" tabIndex={-1} ref={headingRef}>
+        <h1 className="wordmark" tabIndex={-1}>
           Homepage
         </h1>
         <p className="welcome">{formatWelcome(userMetadata)}</p>

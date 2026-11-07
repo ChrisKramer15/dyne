@@ -1,7 +1,7 @@
 import { useMemo, useState, type CSSProperties } from 'react'
 import './App.css'
 import Backdrop from './Backdrop'
-import { useAuthState } from './auth/useAuthState'
+import { useAuth } from './auth/AuthProvider'
 import type { AuthState } from './auth/authReducer'
 import AuthModal, { type AuthMode } from './auth/AuthModal'
 import { createAuthService, type AuthService } from './auth/authService'
@@ -274,6 +274,6 @@ export function LandingView({ auth, authService }: LandingViewProps) {
 }
 
 export default function LandingPage({ authService }: LandingPageProps) {
-  const auth = useAuthState()
+  const auth = useAuth()
   return <LandingView auth={auth} authService={authService} />
 }

@@ -117,12 +117,6 @@ describe('Homepage structure and accessibility', () => {
     expect(screen.getAllByRole('main')).toHaveLength(1)
   })
 
-  // **Validates: Requirements 2.4**
-  it('moves focus to the h1 on mount', () => {
-    render(<Homepage userMetadata={{}} authService={fakeService} />)
-    expect(document.activeElement).toBe(screen.getByRole('heading', { level: 1 }))
-  })
-
   // **Validates: Requirements 4.1, 8.8**
   it('gives every interactive control a non-empty accessible name', () => {
     render(<Homepage userMetadata={{}} authService={fakeService} />)

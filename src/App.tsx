@@ -1,32 +1,23 @@
+import { useState } from 'react'
+import { RouterProvider } from 'react-router'
 import './App.css'
-import Backdrop from './Backdrop'
-import Homepage from './Homepage'
-import { LandingView } from './LandingPage'
-import { useAuthState } from './auth/useAuthState'
-import { selectView } from './viewRouter'
+import { AuthProvider } from './auth/AuthProvider'
+import { createAppRouter } from './routing/routes'
 
-function LoadingView() {
-  return (
-    <div className="landing">
-      <Backdrop />
-      <main className="landing-main">
-        <p className="loading" role="status">
-          Loading…
-        </p>
-      </main>
-    </div>
-  )
+type AppProps = {
+  client?: React.ComponentProps<typeof AuthProvider>['client']
+  router?: ReturnType<typeof createAppRouter>
 }
 
-function App() {
-  const auth = useAuthState()
-  const view = selectView(auth)
+function App({ client, router }: AppProps = {}) {
+  // Created once per App instance so navigation state survives re-renders.
+  const [appRouter] = useState(() => router ?? createAppRouter())
 
-  if (view === 'loading') return <LoadingView />
-  if (view === 'home' && auth.status === 'authenticated') {
-    return <Homepage userMetadata={auth.userMetadata} />
-  }
-  return <LandingView auth={auth} />
+  return (
+    <AuthProvider client={client}>
+      <RouterProvider router={appRouter} />
+    </AuthProvider>
+  )
 }
 
 export default App

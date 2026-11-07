@@ -1,23 +1,20 @@
-import { act, fireEvent, render, screen } from '@testing-library/react'
+import type { ReactElement, ReactNode } from 'react'
+import { act, fireEvent, render as rtlRender, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+import { AuthContext } from './auth/AuthProvider'
 import type { AuthState } from './auth/authReducer'
-
-const authMock = vi.hoisted(() => ({ state: { status: 'unauthenticated' } as unknown }))
-
-vi.mock('./auth/useAuthState', () => ({
-  useAuthState: () => authMock.state as AuthState,
-}))
-
 import LandingPage, { LandingView } from './LandingPage'
 
-function setAuth(state: AuthState) {
-  authMock.state = state
+// The default LandingPage export reads auth via useAuth(), so render it inside
+// an AuthContext provider holding an unauthenticated state.
+const auth: AuthState = { status: 'unauthenticated' }
+function Wrapper({ children }: { children: ReactNode }) {
+  return <AuthContext.Provider value={auth}>{children}</AuthContext.Provider>
 }
-
-beforeEach(() => {
-  setAuth({ status: 'unauthenticated' })
-})
+function render(ui: ReactElement) {
+  return rtlRender(ui, { wrapper: Wrapper })
+}
 
 const BASES = [
   ['Own Draft Day', /live rankings/i],
