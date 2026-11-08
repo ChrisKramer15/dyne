@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { render } from '@testing-library/react'
 import * as fc from 'fast-check'
-import { AuthContext } from './auth/authContext'
-import type { AuthState } from './auth/authReducer'
+import { AuthContext } from '../../auth/authContext'
+import type { AuthState } from '../../auth/authReducer'
 import LandingPage from './LandingPage'
 
 const authStateArb: fc.Arbitrary<AuthState> = fc.oneof(

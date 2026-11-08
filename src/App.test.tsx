@@ -50,6 +50,8 @@ const pathOf = (r: ReturnType<typeof mount>) => r.state.location.pathname
 const hasRegister = () => screen.queryByRole('button', { name: 'Register' }) !== null
 const hasHomepage = () => screen.queryByRole('heading', { level: 2, name: 'Alerts' }) !== null
 const hasDialog = () => screen.queryByRole('dialog') !== null
+// The Homepage is lazy-loaded, so wait for it rather than asserting immediately.
+const homepageLoaded = () => screen.findByRole('heading', { level: 2, name: 'Alerts' })
 
 beforeEach(() => {
   fake.callback = () => {}
@@ -76,6 +78,7 @@ describe('App integration', () => {
     fake.getSessionImpl = resolveWith(session)
     const router = mount()
     await settle()
+    await homepageLoaded()
     expect(hasHomepage()).toBe(true)
     expect(hasRegister()).toBe(false)
     expect(hasDialog()).toBe(false)
@@ -124,6 +127,7 @@ describe('App integration', () => {
     expect(hasRegister()).toBe(true)
 
     await emit('SIGNED_IN', session)
+    await homepageLoaded()
     expect(hasHomepage()).toBe(true)
     expect(hasRegister()).toBe(false)
     expect(hasDialog()).toBe(false)
@@ -147,6 +151,7 @@ describe('App integration', () => {
     expect(pathOf(router)).toBe('/')
 
     await emit('USER_UPDATED', session)
+    await homepageLoaded()
     expect(hasHomepage()).toBe(true)
     expect(hasDialog()).toBe(false)
     expect(hasRegister()).toBe(false)

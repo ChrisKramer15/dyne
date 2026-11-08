@@ -1,4 +1,4 @@
-import heroBackground from './assets/landing-hero.webp'
+import heroBackground from '../assets/landing-hero.webp'
 
 /**
  * Full-bleed photo backdrop shared by the Landing, Loading and Home views.

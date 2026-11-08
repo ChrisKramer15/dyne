@@ -1,16 +1,16 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
-import { useAuthState, type AuthClientLike } from './useAuthState'
+import { useAuthState, type AuthStateClient } from './useAuthState'
 import type { AuthSessionLike } from './authReducer'
 
 type Callback = (event: string, session: AuthSessionLike | null) => void
-type SessionResult = Awaited<ReturnType<AuthClientLike['auth']['getSession']>>
+type SessionResult = Awaited<ReturnType<AuthStateClient['auth']['getSession']>>
 
 function makeClient(getSession: () => PromiseLike<SessionResult>) {
   const unsubscribe = vi.fn()
   let callback: Callback = () => {}
   const getSessionMock = vi.fn(getSession)
-  const client: AuthClientLike = {
+  const client: AuthStateClient = {
     auth: {
       getSession: getSessionMock,
       onAuthStateChange: (cb) => {

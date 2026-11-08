@@ -91,7 +91,7 @@ export function mapSignUpData(data: {
 }
 
 /** Structural subset of SupabaseClient used by the service. */
-export interface AuthClientLike {
+export interface AuthServiceClient {
   auth: {
     setSession(tokens: { access_token: string; refresh_token: string }): PromiseLike<{ error: unknown }>
     signUp(args: {
@@ -116,7 +116,7 @@ function httpStatus(err: unknown): number | undefined {
   return typeof status === 'number' ? status : undefined
 }
 
-export function createAuthService(client: AuthClientLike, storage: SwitchableStorage): AuthService {
+export function createAuthService(client: AuthServiceClient, storage: SwitchableStorage): AuthService {
   return {
     async signIn({ username, password, remember }) {
       storage.setMode(remember ? 'local' : 'session')

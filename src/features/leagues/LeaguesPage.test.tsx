@@ -3,7 +3,7 @@ import { render, cleanup, screen, within, waitFor } from '@testing-library/react
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 // testUtils must be imported before routes (it installs the Supabase mock).
-import { renderApp } from './routing/testUtils'
+import { renderApp } from '../../routing/testUtils'
 import LeaguesPage from './LeaguesPage'
 import { LEAGUES, LEAGUES_PER_PAGE, ordinal } from './leaguesData'
 
@@ -67,7 +67,7 @@ describe('Leagues routing', () => {
 
     await user.click(screen.getByRole('link', { name: 'Leagues' }))
     await waitFor(() => expect(app.location().pathname).toBe('/leagues'))
-    expect(screen.getByRole('heading', { level: 1, name: 'Leagues' })).toBeTruthy()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Leagues' })).toBeTruthy()
     await waitFor(() => expect(document.title).toBe('Leagues – Dyne'))
 
     await user.click(screen.getByRole('link', { name: 'Home' }))

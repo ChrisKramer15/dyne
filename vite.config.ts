@@ -28,6 +28,20 @@ function spaFallback(): Plugin {
 export default defineConfig({
   base: '/dyne/',
   plugins: [react(), spaFallback()],
+  build: {
+    rolldownOptions: {
+      output: {
+        // Third-party code changes far less often than app code; separate
+        // chunks let returning visitors keep them cached across deploys.
+        codeSplitting: {
+          groups: [
+            { name: 'supabase', test: /node_modules[\\/]@supabase[\\/]/ },
+            { name: 'react', test: /node_modules[\\/](react|react-dom|react-router|scheduler)[\\/]/ },
+          ],
+        },
+      },
+    },
+  },
   test: {
     environment: 'jsdom',
     // Placeholder credentials so src/supabase.ts can load without a real

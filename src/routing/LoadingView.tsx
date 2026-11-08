@@ -1,4 +1,4 @@
-import Backdrop from '../Backdrop'
+import Backdrop from '../shared/Backdrop'
 
 export function LoadingView() {
   return (

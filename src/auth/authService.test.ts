@@ -6,7 +6,7 @@ import {
   SERVICE_TIMEOUT_MS,
   TimeoutError,
   withTimeout,
-  type AuthClientLike,
+  type AuthServiceClient,
 } from './authService'
 import type { SwitchableStorage } from './switchableStorage'
 
@@ -18,9 +18,9 @@ const password = fc.string({ minLength: 8, maxLength: 20 })
 
 const storage = { degraded: false, setMode() {}, clearAll() {} } as unknown as SwitchableStorage
 
-type SignUpReply = Awaited<ReturnType<AuthClientLike['auth']['signUp']>>
+type SignUpReply = Awaited<ReturnType<AuthServiceClient['auth']['signUp']>>
 
-function makeClient(opts: { available: boolean; signUp: SignUpReply }): AuthClientLike {
+function makeClient(opts: { available: boolean; signUp: SignUpReply }): AuthServiceClient {
   return {
     auth: {
       setSession: async () => ({ error: null }),
@@ -100,13 +100,13 @@ function makeStorage(degraded = false) {
 }
 
 function makeUnitClient(over: {
-  invoke?: AuthClientLike['functions']['invoke']
-  setSession?: AuthClientLike['auth']['setSession']
-  signUp?: AuthClientLike['auth']['signUp']
-  updateUser?: AuthClientLike['auth']['updateUser']
-  signOut?: AuthClientLike['auth']['signOut']
-  rpc?: AuthClientLike['rpc']
-}): AuthClientLike {
+  invoke?: AuthServiceClient['functions']['invoke']
+  setSession?: AuthServiceClient['auth']['setSession']
+  signUp?: AuthServiceClient['auth']['signUp']
+  updateUser?: AuthServiceClient['auth']['updateUser']
+  signOut?: AuthServiceClient['auth']['signOut']
+  rpc?: AuthServiceClient['rpc']
+}): AuthServiceClient {
   return {
     auth: {
       setSession: over.setSession ?? (async () => ({ error: null })),

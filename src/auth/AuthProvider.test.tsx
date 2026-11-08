@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { render, screen, act } from '@testing-library/react'
 import { AuthProvider } from './AuthProvider'
 import { AuthContext, useAuth } from './authContext'
-import type { AuthClientLike } from './useAuthState'
+import type { AuthStateClient } from './useAuthState'
 import type { AuthState } from './authReducer'
 
 function makeClient() {
@@ -14,7 +14,7 @@ function makeClient() {
       getSession,
       onAuthStateChange: () => ({ data: { subscription: { unsubscribe: vi.fn() } } }),
     },
-  } as unknown as AuthClientLike
+  } as unknown as AuthStateClient
   return { client, getSession }
 }
 

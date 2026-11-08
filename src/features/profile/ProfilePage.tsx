@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import './App.css'
-import BottomNav from './BottomNav'
-import { useAuth } from './auth/authContext'
-import type { AuthService } from './auth/authService'
-import { getDefaultAuthService } from './auth/defaultAuthService'
-import { getDisplayName, truncateName } from './auth/displayName'
+import '../../App.css'
+import BottomNav from '../../shared/BottomNav'
+import { useAuth } from '../../auth/authContext'
+import type { AuthService } from '../../auth/authService'
+import { getDefaultAuthService } from '../../auth/defaultAuthService'
+import { getDisplayName, truncateName } from '../../auth/displayName'
 
 export interface ProfilePageProps {
   /** Injectable for tests; defaults to the real Supabase-backed service. */

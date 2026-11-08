@@ -1,13 +1,12 @@
-import { useState } from 'react'
-import './App.css'
-import BottomNav from './BottomNav'
+import '../../App.css'
+import BottomNav from '../../shared/BottomNav'
 import { ACTIONS, ALERTS_PER_PAGE, SPORTS } from './homeData'
+import { Pager } from '../../shared/Pager'
+import { usePagination } from '../../shared/usePagination'
 
 
 export default function Homepage() {
-  const [page, setPage] = useState(0)
-  const pageCount = Math.ceil(ACTIONS.length / ALERTS_PER_PAGE)
-  const visible = ACTIONS.slice(page * ALERTS_PER_PAGE, (page + 1) * ALERTS_PER_PAGE)
+  const { page, pageCount, visible, setPage } = usePagination(ACTIONS, ALERTS_PER_PAGE)
 
   return (
     <div className="app-shell">
@@ -47,29 +46,7 @@ export default function Homepage() {
               </li>
             ))}
           </ul>
-          {pageCount > 1 && (
-            <nav className="pager" aria-label="Alerts pages">
-              <button
-                type="button"
-                className="pager-btn"
-                disabled={page === 0}
-                onClick={() => setPage(page - 1)}
-              >
-                Previous
-              </button>
-              <span className="pager-status" aria-live="polite">
-                Page {page + 1} of {pageCount}
-              </span>
-              <button
-                type="button"
-                className="pager-btn"
-                disabled={page === pageCount - 1}
-                onClick={() => setPage(page + 1)}
-              >
-                Next
-              </button>
-            </nav>
-          )}
+          <Pager label="Alerts pages" page={page} pageCount={pageCount} onPageChange={setPage} />
         </section>
 
         <section className="dash-section" aria-labelledby="dash-join">

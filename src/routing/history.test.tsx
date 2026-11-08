@@ -25,7 +25,7 @@ describe('history behaviour', () => {
   it('Back after redirecting an authenticated user away from "/" does not show the Landing_Page (8.1)', async () => {
     const app = renderApp({ status: 'authenticated', path: '/' })
     await waitFor(() => expect(app.location().pathname).toBe('/home'))
-    expect(homepage()).not.toBeNull()
+    await waitFor(() => expect(homepage()).not.toBeNull())
 
     await back(app)
     expect(app.location().pathname).toBe('/home')
@@ -68,7 +68,7 @@ describe('history behaviour', () => {
     await act(async () => {
       await app.router.navigate('/home')
     })
-    expect(homepage()).not.toBeNull()
+    await waitFor(() => expect(homepage()).not.toBeNull())
 
     await back(app)
     expect(app.location().pathname).toBe('/nowhere')

@@ -1,5 +1,5 @@
 import { Link } from 'react-router'
-import Backdrop from '../Backdrop'
+import Backdrop from '../shared/Backdrop'
 
 /** Rendered for any unknown path. Reads no auth data. */
 export default function NotFoundView() {

@@ -4,7 +4,7 @@ import { authReducer } from './authReducer'
 import type { AuthSessionLike, AuthState } from './authReducer'
 
 /** Minimal slice of the Supabase client used by the hook (injectable for tests). */
-export interface AuthClientLike {
+export interface AuthStateClient {
   auth: {
     getSession(): PromiseLike<{
       data: { session: AuthSessionLike | null }
@@ -21,7 +21,7 @@ export const DEFAULT_AUTH_TIMEOUT_MS = 5_000
 const initialState: AuthState = { status: 'loading' }
 
 export function useAuthState(
-  client: AuthClientLike = supabase,
+  client: AuthStateClient = supabase,
   timeoutMs: number = DEFAULT_AUTH_TIMEOUT_MS,
 ): AuthState {
   const [state, dispatch] = useReducer(authReducer, initialState)

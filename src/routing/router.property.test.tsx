@@ -17,6 +17,16 @@ const unknownPathArb = fc
   .filter((p) => !['', '/home', '/leagues', '/profile'].includes(normalize(p)))
 const pathArb = fc.oneof(fc.constant('/'), fc.constant('/home'), unknownPathArb)
 
+/**
+ * True once the view has stopped changing on its own. `pending` is only final
+ * while auth is loading; for other statuses it is the Suspense fallback shown
+ * while a lazy-loaded page downloads.
+ */
+function isSettled(status: AuthStatus): boolean {
+  const view = currentView()
+  return status === 'loading' ? view !== 'none' : view !== 'none' && view !== 'pending'
+}
+
 function currentView(): View {
   if (screen.queryByRole('heading', { level: 2, name: 'Alerts' })) return 'home'
   if (screen.queryByRole('heading', { name: 'Page not found' })) return 'notFound'
@@ -58,7 +68,7 @@ describe('router properties (app-routing)', () => {
       fc.asyncProperty(statusArb, pathArb, async (status, path) => {
         const app = renderApp({ status, path })
         try {
-          await waitFor(() => expect(currentView()).not.toBe('none'))
+          await waitFor(() => expect(isSettled(status)).toBe(true))
           const homeShown = currentView() === 'home'
           expect(homeShown).toBe(status === 'authenticated' && app.location().pathname === '/home')
           // Authenticated at "/" is redirected to /home, so Home shows there too.
@@ -126,7 +136,7 @@ describe('router properties (app-routing)', () => {
         const app = renderApp({ status: 'authenticated', path })
         try {
           await waitFor(() => expect(app.location().pathname).toBe('/home'))
-          expect(currentView()).toBe('home')
+          await waitFor(() => expect(currentView()).toBe('home'))
           expect(screen.queryByRole('button', { name: 'Register' })).toBeNull()
         } finally {
           app.unmount()
@@ -144,7 +154,7 @@ describe('router properties (app-routing)', () => {
         for (let i = 0; i < 2; i++) {
           const app = renderApp({ status, path })
           try {
-            await waitFor(() => expect(currentView()).not.toBe('none'))
+            await waitFor(() => expect(isSettled(status)).toBe(true))
             results.push({
               view: currentView(),
               url: app.currentUrl(),

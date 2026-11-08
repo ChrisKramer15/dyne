@@ -1,11 +1,11 @@
 import { useState, type CSSProperties } from 'react'
-import './App.css'
-import Backdrop from './Backdrop'
-import { useAuth } from './auth/authContext'
-import type { AuthState } from './auth/authReducer'
-import AuthModal, { type AuthMode } from './auth/AuthModal'
-import type { AuthService } from './auth/authService'
-import { getDefaultAuthService } from './auth/defaultAuthService'
+import '../../App.css'
+import Backdrop from '../../shared/Backdrop'
+import { useAuth } from '../../auth/authContext'
+import type { AuthState } from '../../auth/authReducer'
+import AuthModal, { type AuthMode } from '../../auth/AuthModal'
+import type { AuthService } from '../../auth/authService'
+import { getDefaultAuthService } from '../../auth/defaultAuthService'
 
 // The Register/Login buttons open the auth modal (login / register / reset).
 export interface LandingPageProps {

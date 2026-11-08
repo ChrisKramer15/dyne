@@ -1,8 +1,12 @@
+import { lazy } from 'react'
 import { useAuth } from '../auth/authContext'
-import Homepage from '../Homepage'
-import LandingPage from '../LandingPage'
-import LeaguesPage from '../LeaguesPage'
-import ProfilePage from '../ProfilePage'
+import LandingPage from '../features/landing/LandingPage'
+
+// Signed-in pages load on demand so first-time visitors only download the
+// landing page. <RouteGuard> supplies the Suspense boundary.
+const Homepage = lazy(() => import('../features/home/Homepage'))
+const LeaguesPage = lazy(() => import('../features/leagues/LeaguesPage'))
+const ProfilePage = lazy(() => import('../features/profile/ProfilePage'))
 
 export function LandingRoute() {
   return <LandingPage />
@@ -14,6 +18,7 @@ export function HomeRoute() {
   if (auth.status !== 'authenticated') return null
   return <Homepage />
 }
+
 export function LeaguesRoute() {
   return <LeaguesPage />
 }

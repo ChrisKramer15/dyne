@@ -95,6 +95,51 @@ describe('AuthModal', () => {
     expect(await screen.findByText(/already taken/i)).toBeTruthy()
   })
 
+  it('explains taken usernames and emails without the format message', async () => {
+    const user = userEvent.setup()
+    const service = makeService({
+      signUp: vi.fn().mockResolvedValue({ ok: false, error: 'email_taken' }),
+    })
+    renderModal('register', service)
+    await user.type(screen.getByLabelText('Username'), 'ahenker')
+    await user.type(screen.getByLabelText('Email'), 'a@b.co')
+    await user.type(screen.getByLabelText('Password'), 'longenough1')
+    await user.type(screen.getByLabelText('Confirm password'), 'longenough1')
+    await user.click(screen.getByRole('button', { name: 'Create account' }))
+    expect(await screen.findByText('Use a different email address.')).toBeTruthy()
+    expect(screen.queryByText(/valid email/i)).toBeNull()
+  })
+
+  it('keeps the typed username when switching from login to register', async () => {
+    const user = userEvent.setup()
+    renderModal('login')
+    await user.type(screen.getByLabelText('Username'), 'ahenker')
+    await user.click(screen.getByRole('button', { name: /create an account/i }))
+    expect((screen.getByLabelText('Username') as HTMLInputElement).value).toBe('ahenker')
+  })
+
+  it('focuses the first field on open and after switching modes', async () => {
+    const user = userEvent.setup()
+    renderModal('login')
+    expect(document.activeElement).toBe(screen.getByLabelText('Username'))
+    await user.click(screen.getByRole('button', { name: /forgot password/i }))
+    expect(document.activeElement).toBe(screen.getByLabelText('Username or email'))
+  })
+
+  it('keeps the dialog open to show the notice when "remember me" could not be saved', async () => {
+    const user = userEvent.setup()
+    const service = makeService({
+      signIn: vi.fn().mockResolvedValue({ ok: true, rememberFailed: true }),
+    })
+    const { onClose, onAuthenticated } = renderModal('login', service)
+    await user.type(screen.getByLabelText('Username'), 'ahenker')
+    await user.type(screen.getByLabelText('Password'), 'secretpw12')
+    await user.click(screen.getByRole('button', { name: 'Log in' }))
+    expect(await screen.findByText(/couldn't keep you logged in/i)).toBeTruthy()
+    expect(onAuthenticated).toHaveBeenCalled()
+    expect(onClose).not.toHaveBeenCalled()
+  })
+
   it('shows a confirmation notice when signup requires email confirmation', async () => {
     const user = userEvent.setup()
     const service = makeService({

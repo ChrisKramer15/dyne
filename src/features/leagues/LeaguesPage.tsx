@@ -1,7 +1,8 @@
-import { useState } from 'react'
-import './App.css'
-import BottomNav from './BottomNav'
+import '../../App.css'
+import BottomNav from '../../shared/BottomNav'
 import { LEAGUES, LEAGUES_PER_PAGE, ordinal, type League } from './leaguesData'
+import { Pager } from '../../shared/Pager'
+import { usePagination } from '../../shared/usePagination'
 
 const STATUS_LABEL: Record<League['matchup']['status'], string> = {
   live: 'Live',
@@ -11,9 +12,10 @@ const STATUS_LABEL: Record<League['matchup']['status'], string> = {
 
 function LeagueCard({ league }: { league: League }) {
   const { matchup: m } = league
-  const hasScores = m.myScore !== null && m.theirScore !== null
-  const winning = hasScores && m.myScore! > m.theirScore!
-  const losing = hasScores && m.myScore! < m.theirScore!
+  const scores =
+    m.myScore !== null && m.theirScore !== null ? { mine: m.myScore, theirs: m.theirScore } : null
+  const winning = scores !== null && scores.mine > scores.theirs
+  const losing = scores !== null && scores.mine < scores.theirs
 
   return (
     <li>
@@ -35,9 +37,9 @@ function LeagueCard({ league }: { league: League }) {
 
         <div className="matchup">
           <span className="matchup-label">vs {m.opponent}</span>
-          {hasScores ? (
+          {scores ? (
             <span className={`matchup-score${winning ? ' is-winning' : ''}${losing ? ' is-losing' : ''}`}>
-              {m.myScore!.toFixed(1)} – {m.theirScore!.toFixed(1)}
+              {scores.mine.toFixed(1)} – {scores.theirs.toFixed(1)}
             </span>
           ) : (
             <span className="matchup-score">—</span>
@@ -50,9 +52,7 @@ function LeagueCard({ league }: { league: League }) {
 }
 
 export default function LeaguesPage() {
-  const [page, setPage] = useState(0)
-  const pageCount = Math.ceil(LEAGUES.length / LEAGUES_PER_PAGE)
-  const visible = LEAGUES.slice(page * LEAGUES_PER_PAGE, (page + 1) * LEAGUES_PER_PAGE)
+  const { page, pageCount, visible, setPage } = usePagination(LEAGUES, LEAGUES_PER_PAGE)
   const liveCount = LEAGUES.filter((l) => l.matchup.status === 'live').length
 
   return (
@@ -81,29 +81,7 @@ export default function LeaguesPage() {
           ) : (
             <p className="empty-state">No leagues yet.</p>
           )}
-          {pageCount > 1 && (
-            <nav className="pager" aria-label="Leagues pages">
-              <button
-                type="button"
-                className="pager-btn"
-                disabled={page === 0}
-                onClick={() => setPage(page - 1)}
-              >
-                Previous
-              </button>
-              <span className="pager-status" aria-live="polite">
-                Page {page + 1} of {pageCount}
-              </span>
-              <button
-                type="button"
-                className="pager-btn"
-                disabled={page === pageCount - 1}
-                onClick={() => setPage(page + 1)}
-              >
-                Next
-              </button>
-            </nav>
-          )}
+          <Pager label="Leagues pages" page={page} pageCount={pageCount} onPageChange={setPage} />
         </section>
       </main>
       <BottomNav />

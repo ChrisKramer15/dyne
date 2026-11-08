@@ -14,8 +14,8 @@ describe('auth transitions while mounted', () => {
     await app.setAuth('authenticated')
 
     expect(app.currentUrl()).toBe('/home')
+    expect(await screen.findByRole('heading', { level: 1 })).toBeInTheDocument()
     expect(screen.queryByRole('status')).not.toBeInTheDocument()
-    expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Login' })).not.toBeInTheDocument()
     app.router.dispose()
   })

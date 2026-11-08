@@ -3,10 +3,10 @@ import { render, cleanup, screen, within, waitFor } from '@testing-library/react
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 // testUtils must be imported before routes (it installs the Supabase mock).
-import { renderApp, authStateFor } from './routing/testUtils'
-import { AuthContext } from './auth/authContext'
-import type { AuthState } from './auth/authReducer'
-import type { AuthService } from './auth/authService'
+import { renderApp, authStateFor } from '../../routing/testUtils'
+import { AuthContext } from '../../auth/authContext'
+import type { AuthState } from '../../auth/authReducer'
+import type { AuthService } from '../../auth/authService'
 import ProfilePage from './ProfilePage'
 
 afterEach(cleanup)
@@ -97,7 +97,7 @@ describe('Profile routing', () => {
 
     await user.click(screen.getByRole('link', { name: 'Profile' }))
     await waitFor(() => expect(app.location().pathname).toBe('/profile'))
-    expect(screen.getByRole('heading', { level: 1, name: 'Profile' })).toBeTruthy()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Profile' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Sign out' })).toBeTruthy()
     await waitFor(() => expect(document.title).toBe('Profile – Dyne'))
 

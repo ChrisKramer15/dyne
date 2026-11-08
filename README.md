@@ -14,6 +14,22 @@ CI (`.github/workflows/deploy.yml`) runs lint, type-check and tests on every
 push and pull request to `main`, and only builds and deploys when they pass on a
 push to `main`.
 
+## Project layout
+
+```
+src/
+  auth/        session state, auth service, validation, login/register modal (forms/)
+  routing/     route table, guard (auth redirects, return-to), page-title/focus effects
+  features/    one folder per page: landing, home, leagues, profile (page, data, tests)
+  shared/      components used by several pages: Backdrop, BottomNav, Pager
+  supabase.ts  the browser Supabase client
+supabase/      migrations and Edge Functions
+```
+
+Signed-in pages are lazy-loaded from `routing/RouteViews.tsx`. Add a new page by
+creating `features/<name>/`, a route in `routing/routes.tsx` with an `access`
+handle, and a lazy view in `RouteViews.tsx`.
+
 ## Supabase
 
 The app connects to Supabase from the browser using the credentials in `.env`

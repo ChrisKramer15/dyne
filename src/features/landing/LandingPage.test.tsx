@@ -2,8 +2,8 @@ import type { ReactElement, ReactNode } from 'react'
 import { act, fireEvent, render as rtlRender, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
-import { AuthContext } from './auth/authContext'
-import type { AuthState } from './auth/authReducer'
+import { AuthContext } from '../../auth/authContext'
+import type { AuthState } from '../../auth/authReducer'
 import LandingPage, { LandingView } from './LandingPage'
 
 // The default LandingPage export reads auth via useAuth(), so render it inside
