@@ -13,5 +13,15 @@ export const ACTIONS = [
 export const ALERTS_PER_PAGE = 3
 /** Sports a user can start or join a league in. */
 export const SPORTS = [
-  { name: 'Baseball', emoji: '⚾', accent: 'cyan' },
+  {
+    name: 'Baseball',
+    emoji: '⚾',
+    formats: [
+      { name: 'Bestball', icon: 'bestball', accent: 'blue', tagline: 'Draft once. No lineups to set.' },
+      { name: 'Dynasty', icon: 'dynasty', accent: 'purple', tagline: 'Keep your whole roster, year after year.' },
+      { name: 'Guillotine', icon: 'guillotine', accent: 'magenta', tagline: 'Lowest score gets cut every week.' },
+      { name: 'Keeper', icon: 'keeper', accent: 'green', tagline: 'Hold onto a few stars each season.' },
+      { name: 'Redraft', icon: 'redraft', accent: 'orange', tagline: 'Fresh draft every season.' },
+    ],
+  },
 ] as const

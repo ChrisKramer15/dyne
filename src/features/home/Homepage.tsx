@@ -1,6 +1,7 @@
 import '../../App.css'
 import BottomNav from '../../shared/BottomNav'
 import { ACTIONS, ALERTS_PER_PAGE, SPORTS } from './homeData'
+import { SportIcon } from './SportIcon'
 import { Pager } from '../../shared/Pager'
 import { usePagination } from '../../shared/usePagination'
 
@@ -50,25 +51,38 @@ export default function Homepage() {
         </section>
 
         <section className="dash-section" aria-labelledby="dash-join">
-          <h2 id="dash-join" className="dash-heading">
-            Create or join a league
+          <h2 id="dash-join" className="dash-heading dash-heading-icon">
+            <span className="sport-heading-pic" aria-hidden="true">
+              {SPORTS[0].emoji}
+            </span>
+            Create league
           </h2>
-          <ul className="sport-grid">
-            {SPORTS.map((s) => (
-              <li key={s.name}>
-                <button
-                  type="button"
-                  className={`sport-card accent-${s.accent}`}
-                  aria-label={`Create or join a ${s.name} league`}
-                >
-                  <span className="sport-pic" aria-hidden="true">
-                    {s.emoji}
-                  </span>
-                  <span className="sport-name">{s.name}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
+          {SPORTS.map((s) => (
+            <div key={s.name} className="sport-group">
+              <ul className="sport-grid">
+                {s.formats.map((f) => (
+                  <li key={f.name}>
+                    <button
+                      type="button"
+                      className={`sport-card accent-${f.accent}`}
+                      aria-label={`Create a ${f.name} ${s.name} league`}
+                    >
+                      <span className="sport-icon-wrap">
+                        <SportIcon name={f.icon} className="sport-pic" />
+                      </span>
+                      <span className="sport-text">
+                        <span className="sport-name">{f.name}</span>
+                        <span className="sport-tagline">{f.tagline}</span>
+                      </span>
+                      <span className="sport-chevron" aria-hidden="true">
+                        ›
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </section>
       </main>
       <BottomNav />

@@ -103,14 +103,17 @@ describe('Homepage structure and accessibility', () => {
     expect(screen.queryByText(/season points/i)).toBeNull()
   })
 
-  it('shows a Create or join a league card for baseball only', () => {
+  it('shows a Create league header with one card per league format', () => {
     renderHome()
-    const region = screen.getByRole('region', { name: 'Create or join a league' })
-    const cards = within(region).getAllByRole('button')
+    const region = screen.getByRole('region', { name: 'Create league' })
     expect(SPORTS).toHaveLength(1)
-    expect(cards).toHaveLength(1)
-    for (const s of SPORTS) {
-      expect(within(region).getByRole('button', { name: `Create or join a ${s.name} league` })).toBeTruthy()
+    expect(within(region).getByRole('heading', { name: 'Create league' })).toBeTruthy()
+    expect(within(region).queryByRole('heading', { name: /Baseball/ })).toBeNull()
+    const names = SPORTS[0].formats.map((f) => f.name)
+    expect(names).toEqual(['Bestball', 'Dynasty', 'Guillotine', 'Keeper', 'Redraft'])
+    expect(within(region).getAllByRole('button')).toHaveLength(names.length)
+    for (const n of names) {
+      expect(within(region).getByRole('button', { name: `Create a ${n} Baseball league` })).toBeTruthy()
     }
   })
 })

@@ -236,6 +236,25 @@
   --accent: hsl(270 100% 72%);
 }
 
+.accent-blue {
+  --accent: hsl(220 100% 64%);
+}
+
+.accent-orange {
+  --accent: var(--neon-orange);
+}
+
+.dash-heading-icon {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sport-heading-pic {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
 .base {
   --marker: 5cqi;
   position: absolute;
@@ -603,38 +622,89 @@
 }
 .sport-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 12px;
+  grid-template-columns: 1fr;
+  gap: 8px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .sport-card {
-  --accent: var(--neon-cyan);
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
+  justify-content: flex-start;
+  gap: 14px;
   width: 100%;
-  min-height: 110px;
-  padding: 12px 8px;
+  min-height: 58px;
+  padding: 8px 14px;
   font-family: var(--display);
   color: var(--text);
-  background: var(--surface);
-  border: 1px solid var(--accent);
-  border-radius: 14px;
+  text-align: left;
+  /* Glass: a wash of the accent fading into the dark surface */
+  background: linear-gradient(
+    100deg,
+    color-mix(in srgb, var(--accent) 20%, transparent),
+    color-mix(in srgb, var(--surface) 60%, transparent) 70%
+  );
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  border-radius: 20px;
+  box-shadow:
+    0 6px 24px -10px var(--accent),
+    inset 0 1px 0 hsl(0 0% 100% / 0.07);
   cursor: pointer;
   transition:
     transform 160ms ease-out,
-    box-shadow 160ms ease-out;
+    box-shadow 160ms ease-out,
+    border-color 160ms ease-out;
 }
 
 .sport-card:hover,
 .sport-card:focus-visible {
   transform: translateY(-3px);
-  box-shadow: 0 0 16px var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 70%, transparent);
+  box-shadow:
+    0 10px 28px -8px var(--accent),
+    inset 0 1px 0 hsl(0 0% 100% / 0.1);
+}
+
+.sport-icon-wrap {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  box-shadow:
+    0 0 16px -2px var(--accent),
+    inset 0 0 0 1px color-mix(in srgb, var(--accent) 50%, transparent);
+}
+
+.sport-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.sport-tagline {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.sport-chevron {
+  margin-left: auto;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--accent);
+  text-shadow: 0 0 8px var(--accent);
+  transition: transform 160ms ease-out;
+}
+
+.sport-card:hover .sport-chevron,
+.sport-card:focus-visible .sport-chevron {
+  transform: translateX(3px);
 }
 
 .sport-card:focus-visible {
@@ -643,16 +713,40 @@
 }
 
 .sport-pic {
-  font-size: 2.5rem;
-  line-height: 1;
+  width: 1.4rem;
+  height: 1.4rem;
+  flex: none;
+  color: var(--accent);
+  filter: drop-shadow(0 0 4px var(--accent));
+}
+
+/* Neon-tube lettering: a white-hot core tinted by the accent, wrapped in a
+   layered glow of the same colour. */
+.sport-name {
+  font-family: 'Raleway', var(--display);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--accent) 22%, white);
+  text-shadow:
+    0 0 2px color-mix(in srgb, var(--accent) 60%, white),
+    0 0 7px var(--accent),
+    0 0 16px var(--accent),
+    0 0 30px color-mix(in srgb, var(--accent) 60%, transparent);
 }
 
 .sport-name {
   font-size: 0.95rem;
-  font-weight: 500;
-  text-align: center;
-  text-wrap: balance;
+  text-align: left;
 }
+
+
+
+.sport-card:hover .sport-name,
+.sport-card:focus-visible .sport-name {
+  animation: neon-flicker 450ms linear 1;
+}
+
 /* Register and Login side by side as equals, on every screen size */
 .actions {
   display: flex;
@@ -823,6 +917,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .sport-card:hover .sport-name,
+  .sport-card:focus-visible .sport-name,
   .wordmark,
   .mound,
   .base,
