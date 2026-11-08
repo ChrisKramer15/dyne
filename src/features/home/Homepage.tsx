@@ -21,35 +21,6 @@ export default function Homepage() {
           </div>
         </header>
 
-        <section className="dash-section" aria-labelledby="dash-actions">
-          <h2 id="dash-actions" className="dash-heading">
-            Alerts
-          </h2>
-          <ul className="action-list">
-            {visible.map((a) => (
-              <li key={a.id}>
-                <button
-                  type="button"
-                  className={`action-item${a.urgent ? ' is-urgent' : ''}`}
-                  aria-label={`${a.title}. ${a.detail}`}
-                >
-                  <span className="action-pic" aria-hidden="true">
-                    {a.emoji}
-                  </span>
-                  <span className="action-text">
-                    <span className="action-title">{a.title}</span>
-                    <span className="action-detail">{a.detail}</span>
-                  </span>
-                  <span className="action-cta" aria-hidden="true">
-                    {a.cta}
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
-          <Pager label="Alerts pages" page={page} pageCount={pageCount} onPageChange={setPage} />
-        </section>
-
         <section className="dash-section" aria-labelledby="dash-join">
           <h2 id="dash-join" className="dash-heading dash-heading-icon">
             <span className="sport-heading-pic" aria-hidden="true">
@@ -83,6 +54,35 @@ export default function Homepage() {
               </ul>
             </div>
           ))}
+        </section>
+
+        <section className="dash-section" aria-labelledby="dash-actions">
+          <h2 id="dash-actions" className="dash-heading">
+            Alerts
+          </h2>
+          <ul className="action-list">
+            {visible.map((a) => (
+              <li key={a.id}>
+                <button
+                  type="button"
+                  className={`action-item${a.urgent ? ' is-urgent' : ''}`}
+                  aria-label={`${a.title}. ${a.detail}`}
+                >
+                  <span className="action-pic" aria-hidden="true">
+                    {a.emoji}
+                  </span>
+                  <span className="action-text">
+                    <span className="action-title">{a.title}</span>
+                    <span className="action-detail">{a.detail}</span>
+                  </span>
+                  <span className="action-cta" aria-hidden="true">
+                    {a.cta}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+          <Pager label="Alerts pages" page={page} pageCount={pageCount} onPageChange={setPage} />
         </section>
       </main>
       <BottomNav />
