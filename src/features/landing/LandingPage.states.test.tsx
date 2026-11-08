@@ -38,7 +38,7 @@ describe('LandingPage states', () => {
             expect(welcome).toBeNull()
             expect(buttons).toEqual([])
           } else {
-            expect(buttons).toEqual(['Register', 'Login'])
+            expect(buttons).toEqual(['Play Ball'])
             expect(welcome).toBeNull()
             expect(loading).toBeNull()
           }

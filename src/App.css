@@ -10,70 +10,6 @@
   background-color: var(--bg);
 }
 
-/* Full-bleed photo backdrop (image set inline from a JS import, see
-   LandingPage.tsx). Covers the viewport and sits above the gradient wash but
-   below the scrim and content. */
-.landing-photo {
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  background-position: center;
-  /* cover on portrait screens; whole-image on landscape (set below) */
-  background-size: var(--photo-size, cover);
-  background-repeat: no-repeat;
-  /* Settle the busy cityscape so it reads as mood, not detail */
-  filter: saturate(0.85) brightness(0.9);
-}
-
-/* Only needed on landscape screens (below) */
-.landing-photo-fill {
-  display: none;
-}
-
-/* The photo is portrait (2:3). On landscape screens, cover would blow it up
-   and crop all but a thin strip, so show it whole at full height and fill the
-   sides with a blurred, darkened copy of the same image. */
-@media (min-aspect-ratio: 1/1) {
-  .landing-photo-fill {
-    display: block;
-    position: fixed;
-    /* Bleed past the edges so the blur has no light rim */
-    inset: -40px;
-    z-index: -1;
-    background-position: center;
-    background-size: cover;
-    filter: blur(32px) saturate(0.8) brightness(0.45);
-  }
-
-  .landing {
-    --photo-size: auto 100%;
-  }
-}
-
-/* Smooth scrim: a soft vertical darkening plus a faint cool tint. Keeps the
-   palette calm and guarantees text contrast over any part of the photo. */
-.landing-scrim {
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background:
-    linear-gradient(
-      180deg,
-      hsl(228 45% 6% / 0.55) 0%,
-      hsl(228 45% 6% / 0.35) 32%,
-      hsl(228 45% 6% / 0.5) 68%,
-      hsl(228 45% 5% / 0.82) 100%
-    ),
-    radial-gradient(
-      ellipse 120% 80% at 50% 42%,
-      transparent 40%,
-      hsl(228 45% 5% / 0.4) 100%
-    );
-  -webkit-backdrop-filter: blur(1px);
-  backdrop-filter: blur(1px);
-}
-
 /* Fixed backdrop: two soft bands of colour on solid --bg.
    Top edge flows blue -> green; bottom edge flows purple -> pink.
    Each glow is a wide, flat ellipse centred on the edge itself, so it spreads
@@ -541,7 +477,7 @@
 }
 
 /* The heading takes programmatic focus on mount; no ring, as on Landing */
-.home-main .wordmark:focus {
+.wordmark:focus {
   outline: none;
 }
 
@@ -785,12 +721,118 @@
     0 0 32px hsl(315 100% 60% / 0.45);
 }
 
+/* Play Ball: dark fill with a pink-to-blue neon gradient outline and label.
+   The border is transparent so the gradient layer (border-box) shows through
+   it, while the dark layer (padding-box) fills the inside. */
+.btn-play {
+  --play-gradient: linear-gradient(90deg, var(--neon-magenta), var(--neon-cyan));
+  color: var(--text);
+  background:
+    linear-gradient(var(--surface), var(--surface)) padding-box,
+    var(--play-gradient) border-box;
+  border: 2px solid transparent;
+  box-shadow:
+    -6px 0 14px hsl(315 100% 60% / 0.3),
+    6px 0 14px hsl(185 100% 60% / 0.3);
+  /* Room for the sheen below; isolation keeps it above the fill, under the label */
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transition:
+    transform 160ms ease-out,
+    box-shadow 160ms ease-out;
+}
+
+/* Gradient label: the same pink-to-blue gradient clipped to the text, with
+   a soft glow (drop-shadow, since text-shadow would show through the
+   transparent glyphs and muddy the gradient). */
+.btn-play-label {
+  color: transparent;
+  background: var(--play-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  filter: drop-shadow(0 0 6px hsl(250 100% 65% / 0.45));
+}
+
+/* Diagonal light sheen, parked off the left edge until hover */
+.btn-play::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    110deg,
+    transparent 30%,
+    hsl(0 0% 100% / 0.22) 50%,
+    transparent 70%
+  );
+  transform: translateX(-110%);
+}
+
+.btn-play:hover,
+.btn-play:focus-visible {
+  transform: translateY(-2px);
+  box-shadow:
+    -8px 0 18px hsl(315 100% 60% / 0.65),
+    8px 0 18px hsl(185 100% 60% / 0.65),
+    0 0 36px hsl(250 100% 65% / 0.35);
+  /* Neon sign buzzing on */
+  animation: neon-flicker 450ms linear 1;
+}
+
+.btn-play:hover::before,
+.btn-play:focus-visible::before {
+  animation: sheen-sweep 650ms ease-out 1 forwards;
+}
+
+/* Press: sink back down and flash a solid gradient fill with a dark label */
+.btn-play:active {
+  transform: translateY(0) scale(0.96);
+  background: var(--play-gradient) border-box;
+  box-shadow:
+    -10px 0 24px hsl(315 100% 60% / 0.9),
+    10px 0 24px hsl(185 100% 60% / 0.9);
+}
+
+.btn-play:active .btn-play-label {
+  color: var(--bg);
+  background: none;
+  filter: none;
+}
+
+@keyframes neon-flicker {
+  0%,
+  18%,
+  22%,
+  52%,
+  56%,
+  100% {
+    opacity: 1;
+  }
+  20%,
+  54% {
+    opacity: 0.55;
+  }
+}
+
+@keyframes sheen-sweep {
+  to {
+    transform: translateX(110%);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .wordmark,
   .mound,
   .base,
   .cta,
   .btn,
+  .btn-play,
+  .btn-play:hover,
+  .btn-play:focus-visible,
+  .btn-play:hover::before,
+  .btn-play:focus-visible::before,
   .base-marker,
   .base-label,
   .pitch {
@@ -806,8 +848,15 @@
   .btn-primary:hover,
   .btn-primary:focus-visible,
   .btn-login:hover,
-  .btn-login:focus-visible {
+  .btn-login:focus-visible,
+  .btn-play:hover,
+  .btn-play:focus-visible,
+  .btn-play:active {
     transform: none;
+  }
+
+  .btn-play::before {
+    display: none;
   }
 }
 

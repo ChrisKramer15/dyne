@@ -16,7 +16,7 @@ describe('auth transitions while mounted', () => {
     expect(app.currentUrl()).toBe('/home')
     expect(await screen.findByRole('heading', { level: 1 })).toBeInTheDocument()
     expect(screen.queryByRole('status')).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Login' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Play Ball' })).not.toBeInTheDocument()
     app.router.dispose()
   })
 
@@ -27,7 +27,7 @@ describe('auth transitions while mounted', () => {
     await app.setAuth('unauthenticated')
 
     await waitFor(() => expect(app.currentUrl()).toBe('/'))
-    expect(screen.getByRole('button', { name: 'Login' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Play Ball' })).toBeInTheDocument()
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     app.router.dispose()
   })
@@ -35,7 +35,7 @@ describe('auth transitions while mounted', () => {
   // Requirements 2.4, 6.4, 8.2
   it('unauthenticated -> authenticated on / goes to /home with the modal closed and one /home entry', async () => {
     const app = renderApp({ status: 'unauthenticated', path: '/' })
-    await userEvent.click(screen.getByRole('button', { name: 'Login' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Play Ball' }))
     expect(screen.getByRole('dialog')).toBeInTheDocument()
 
     const visited: string[] = []
@@ -46,7 +46,7 @@ describe('auth transitions while mounted', () => {
     unsubscribe()
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Login' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Play Ball' })).not.toBeInTheDocument()
     expect(visited.filter((p) => p === '/home')).toHaveLength(1)
 
     // Back must not reveal the Landing_Page.
@@ -65,7 +65,7 @@ describe('auth transitions while mounted', () => {
     await app.setAuth('unauthenticated')
 
     await waitFor(() => expect(app.currentUrl()).toBe('/'))
-    expect(screen.getByRole('button', { name: 'Login' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Play Ball' })).toBeInTheDocument()
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     app.router.dispose()
   })

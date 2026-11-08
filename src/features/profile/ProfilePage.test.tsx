@@ -119,6 +119,6 @@ describe('Profile routing', () => {
     // is simulated by swapping the auth state.
     await app.setAuth('unauthenticated')
     await waitFor(() => expect(app.location().pathname).toBe('/'))
-    expect(screen.getByRole('button', { name: 'Login' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Play Ball' })).toBeTruthy()
   })
 })

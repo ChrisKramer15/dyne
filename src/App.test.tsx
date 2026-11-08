@@ -47,7 +47,7 @@ function mount(path = '/') {
 }
 const pathOf = (r: ReturnType<typeof mount>) => r.state.location.pathname
 
-const hasRegister = () => screen.queryByRole('button', { name: 'Register' }) !== null
+const hasRegister = () => screen.queryByRole('button', { name: 'Play Ball' }) !== null
 const hasHomepage = () => screen.queryByRole('heading', { level: 2, name: 'Alerts' }) !== null
 const hasDialog = () => screen.queryByRole('dialog') !== null
 // The Homepage is lazy-loaded, so wait for it rather than asserting immediately.
@@ -69,7 +69,7 @@ describe('App integration', () => {
     const router = mount()
     expect(screen.getByRole('status')).toBeTruthy()
     expect(hasRegister()).toBe(false)
-    expect(screen.queryByRole('button', { name: 'Login' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Play Ball' })).toBeNull()
     expect(hasHomepage()).toBe(false)
     expect(pathOf(router)).toBe('/')
   })

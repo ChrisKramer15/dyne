@@ -137,7 +137,7 @@ describe('router properties (app-routing)', () => {
         try {
           await waitFor(() => expect(app.location().pathname).toBe('/home'))
           await waitFor(() => expect(currentView()).toBe('home'))
-          expect(screen.queryByRole('button', { name: 'Register' })).toBeNull()
+          expect(screen.queryByRole('button', { name: 'Play Ball' })).toBeNull()
         } finally {
           app.unmount()
         }

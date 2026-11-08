@@ -1,13 +1,12 @@
 import { useState, type CSSProperties } from 'react'
 import '../../App.css'
-import Backdrop from '../../shared/Backdrop'
 import { useAuth } from '../../auth/authContext'
 import type { AuthState } from '../../auth/authReducer'
 import AuthModal, { type AuthMode } from '../../auth/AuthModal'
 import type { AuthService } from '../../auth/authService'
 import { getDefaultAuthService } from '../../auth/defaultAuthService'
 
-// The Register/Login buttons open the auth modal (login / register / reset).
+// The Play Ball button opens the auth modal (login / register / reset).
 export interface LandingPageProps {
   /** Injectable for tests; defaults to the real Supabase-backed service. */
   authService?: AuthService
@@ -95,9 +94,6 @@ const FEATURES: readonly Feature[] = [
   },
 ]
 
-// Shown under the field when no base is selected.
-const TAGLINE = 'Fantasy baseball, played every pitch.'
-
 // Base positions as percentages of the square field, matching the SVG below
 // (viewBox 0 0 100 100).
 const BASE_POS: Record<BaseId, { x: number; y: number }> = {
@@ -184,11 +180,8 @@ export function LandingView({ auth, authService }: LandingViewProps) {
 
   return (
     <div className="landing">
-      <Backdrop />
       <main className="landing-main">
         <h1 className="wordmark" tabIndex={-1}>Dyne</h1>
-        {/* The visible tagline below is decorative; this copy is for screen readers */}
-        <p className="visually-hidden">{TAGLINE}</p>
 
         <section className="diamond" aria-label="Why Dyne">
           <FieldLines />
@@ -216,7 +209,7 @@ export function LandingView({ auth, authService }: LandingViewProps) {
           className={`pitch${current ? ` accent-${current.accent} has-feature` : ''}`}
           aria-hidden="true"
         >
-          {current ? current.text : TAGLINE}
+          {current ? current.text : null}
         </p>
 
         {/* Fixed-height slot so the page doesn't jump when auth resolves */}
@@ -230,17 +223,11 @@ export function LandingView({ auth, authService }: LandingViewProps) {
             <div className="actions">
               <button
                 type="button"
-                className="btn btn-primary"
-                onClick={() => setModalMode('register')}
-              >
-                Register
-              </button>
-              <button
-                type="button"
-                className="btn btn-login"
+                className="btn btn-play"
                 onClick={() => setModalMode('login')}
               >
-                Login
+                {/* Span carries the gradient text; the button paints the border */}
+                <span className="btn-play-label">Play Ball</span>
               </button>
             </div>
           )}

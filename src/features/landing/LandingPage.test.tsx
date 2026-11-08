@@ -23,8 +23,6 @@ const BASES = [
   ['Claim the Crown', /standings/i],
 ] as const
 
-const TAGLINE = 'Fantasy baseball, played every pitch.'
-
 describe('LandingPage', () => {
   it('renders the landing page with no Vite starter content (1.1, 1.4)', () => {
     const { container } = render(<LandingPage />)
@@ -37,7 +35,7 @@ describe('LandingPage', () => {
   })
 
   // Validates: Requirements 6.1, 6.3, 6.4
-  it('unauthenticated view has exactly one Register and one Login button, no welcome or Sign out', async () => {
+  it('unauthenticated view has exactly one Play Ball button, no welcome or Sign out', async () => {
     const user = userEvent.setup()
     const { container } = render(
       <LandingView
@@ -51,20 +49,18 @@ describe('LandingPage', () => {
         }}
       />,
     )
-    expect(screen.getAllByRole('button', { name: 'Register' })).toHaveLength(1)
-    expect(screen.getAllByRole('button', { name: 'Login' })).toHaveLength(1)
+    expect(screen.getAllByRole('button', { name: 'Play Ball' })).toHaveLength(1)
+    expect(screen.queryByRole('button', { name: 'Register' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Login' })).toBeNull()
     expect(screen.queryByText(/welcome/i)).toBeNull()
     expect(container.querySelector('.welcome')).toBeNull()
     expect(screen.queryByRole('button', { name: /sign out/i })).toBeNull()
 
-    await user.click(screen.getByRole('button', { name: 'Register' }))
-    expect(screen.getByRole('heading', { name: 'Create your account' })).toBeTruthy()
-    await user.click(screen.getByRole('button', { name: 'Close' }))
-    await user.click(screen.getByRole('button', { name: 'Login' }))
+    await user.click(screen.getByRole('button', { name: 'Play Ball' }))
     expect(screen.getByRole('heading', { name: 'Log in' })).toBeTruthy()
   })
 
-  // The Register/Login buttons now open the auth modal. A stub service keeps
+  // The Play Ball button opens the auth modal. A stub service keeps
   // these tests off the network.
   const stubService = () => ({
     signIn: vi.fn(),
@@ -74,28 +70,18 @@ describe('LandingPage', () => {
     signOut: vi.fn(),
   })
 
-  it('Login opens the auth modal in login mode', async () => {
+  it('Play Ball opens the auth modal in login mode', async () => {
     const user = userEvent.setup()
     render(<LandingPage authService={stubService()} />)
-    await user.click(screen.getByRole('button', { name: 'Login' }))
+    await user.click(screen.getByRole('button', { name: 'Play Ball' }))
     const dialog = screen.getByRole('dialog')
     expect(dialog).toBeTruthy()
     expect(screen.getByRole('heading', { name: 'Log in' })).toBeTruthy()
   })
 
-  it('Register opens the auth modal in register mode', async () => {
-    const user = userEvent.setup()
-    render(<LandingPage authService={stubService()} />)
-    await user.click(screen.getByRole('button', { name: 'Register' }))
-    expect(screen.getByRole('dialog')).toBeTruthy()
-    expect(screen.getByRole('heading', { name: 'Create your account' })).toBeTruthy()
-  })
-
   it.each([
-    ['Login', '{Enter}'],
-    ['Login', ' '],
-    ['Register', '{Enter}'],
-    ['Register', ' '],
+    ['Play Ball', '{Enter}'],
+    ['Play Ball', ' '],
   ])('%s opens the modal on keyboard %j', async (name, key) => {
     const user = userEvent.setup()
     render(<LandingPage authService={stubService()} />)
@@ -107,7 +93,7 @@ describe('LandingPage', () => {
   it('closing the modal returns focus to the page and removes the dialog', async () => {
     const user = userEvent.setup()
     render(<LandingPage authService={stubService()} />)
-    await user.click(screen.getByRole('button', { name: 'Login' }))
+    await user.click(screen.getByRole('button', { name: 'Play Ball' }))
     await user.click(screen.getByRole('button', { name: 'Close' }))
     expect(screen.queryByRole('dialog')).toBeNull()
   })
@@ -131,30 +117,30 @@ describe('LandingPage', () => {
     expect(screen.getByRole('button', { name: title })).toHaveAccessibleDescription(desc)
   })
 
-  it('shows the tagline until a base is selected', () => {
+  it('shows no description until a base is selected', () => {
     const { container } = render(<LandingPage />)
-    expect(container.querySelector('.pitch')?.textContent).toBe(TAGLINE)
+    expect(container.querySelector('.pitch')?.textContent).toBe('')
     expect(container.querySelector('.base.is-active')).toBeNull()
   })
 
-  it.each(BASES)('focusing "%s" shows its description, blurring restores the tagline', (title, desc) => {
+  it.each(BASES)('focusing "%s" shows its description, blurring clears the description', (title, desc) => {
     const { container } = render(<LandingPage />)
     const btn = screen.getByRole('button', { name: title })
     act(() => btn.focus())
     expect(container.querySelector('.pitch')?.textContent).toMatch(desc)
     expect(btn.closest('.base')).toHaveClass('is-active')
     act(() => btn.blur())
-    expect(container.querySelector('.pitch')?.textContent).toBe(TAGLINE)
+    expect(container.querySelector('.pitch')?.textContent).toBe('')
     expect(container.querySelector('.base.is-active')).toBeNull()
   })
 
-  it('mouse hover previews a base and leaving restores the tagline', () => {
+  it('mouse hover previews a base and leaving clears the description', () => {
     const { container } = render(<LandingPage />)
     const btn = screen.getByRole('button', { name: 'Work the Wire' })
     fireEvent.pointerEnter(btn, { pointerType: 'mouse' })
     expect(container.querySelector('.pitch')?.textContent).toMatch(/waivers/i)
     fireEvent.pointerLeave(btn, { pointerType: 'mouse' })
-    expect(container.querySelector('.pitch')?.textContent).toBe(TAGLINE)
+    expect(container.querySelector('.pitch')?.textContent).toBe('')
   })
 
   it('touch pointer events do not clear a tapped base', () => {
@@ -172,11 +158,11 @@ describe('LandingPage', () => {
     expect(screen.queryByRole('dialog')).toBeNull()
   })
 
-  it('tab order follows reading order: bases around the diamond, then Register, then Login (7.6)', async () => {
+  it('tab order follows reading order: bases around the diamond, then Play Ball (7.6)', async () => {
     const user = userEvent.setup()
     render(<LandingPage />)
     expect(screen.queryAllByRole('link')).toHaveLength(0)
-    for (const name of [...BASES.map(([title]) => title), 'Register', 'Login']) {
+    for (const name of [...BASES.map(([title]) => title), 'Play Ball']) {
       await user.tab()
       expect(document.activeElement).toBe(screen.getByRole('button', { name }))
     }

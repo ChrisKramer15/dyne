@@ -128,6 +128,25 @@ describe('contrast (Req 2.4, 3.8, 7.7)', () => {
     },
   )
 
+  it('.btn-play is dark with a pink-to-blue neon gradient border and label, >= 4.5:1 on its fill', () => {
+    const btn = rule(appCss, '.btn-play')
+    const gradient = btn.match(/--play-gradient:\s*([^;]+);/)![1]
+    const stops = [...gradient.matchAll(/var\(--(neon-[\w-]+)\)/g)].map((m) => m[1])
+    expect(stops).toEqual(['neon-magenta', 'neon-cyan'])
+    for (const n of stops) {
+      expect(contrast(neon[n], surface), n).toBeGreaterThanOrEqual(4.5)
+    }
+    // Dark inside, gradient showing through a transparent border
+    expect(btn).toMatch(/linear-gradient\(var\(--surface\), var\(--surface\)\) padding-box/)
+    expect(btn).toMatch(/var\(--play-gradient\) border-box/)
+    expect(btn).toMatch(/border:\s*2px solid transparent/)
+    // Label text is the same gradient
+    const label = rule(appCss, '.btn-play-label')
+    expect(label).toMatch(/background:\s*var\(--play-gradient\)/)
+    expect(label).toMatch(/(?<!-)background-clip:\s*text/)
+    expect(rule(appCss, '.btn-play:hover')).not.toMatch(/(?<!-)color:|background/)
+  })
+
   it('every base accent is a neon colour with >= 4.5:1 on the page background', () => {
     // Accents colour the active base label and the description line
     for (const name of ['cyan', 'green', 'magenta', 'purple']) {
@@ -146,7 +165,7 @@ describe('contrast (Req 2.4, 3.8, 7.7)', () => {
 })
 
 describe('glow and motion (Req 2.5, 2.7)', () => {
-  it.each(['.btn-primary', '.btn-login'])(
+  it.each(['.btn-primary', '.btn-login', '.btn-play'])(
     '%s hover/focus glow is a neon colour with blur >= 8px',
     (sel) => {
       const r = rule(appCss, `${sel}:focus-visible`)
@@ -264,31 +283,6 @@ describe('homepage styles (Req 8.1, 8.2, 8.6)', () => {
       const names = declarations(m[2])
       expect(new Set(names).size, m[1].trim()).toBe(names.length)
     }
-  })
-
-  it('backdrop layers are defined once and the hero image is referenced only by Backdrop', () => {
-    for (const cls of ['.landing-photo', '.landing-scrim']) {
-      const count = [...appCss.matchAll(/(?:^|\})\s*([^{}]+)\{/g)].filter((m) =>
-        m[1].replace(/\/\*[\s\S]*?\*\//g, '').split(',').map((s) => s.trim()).includes(cls),
-      ).length
-      expect(count, cls).toBe(1)
-    }
-    const referrers: string[] = []
-    const walk = (dir: string) => {
-      for (const e of readdirSync(dir, { withFileTypes: true })) {
-        const p = join(dir, e.name)
-        if (e.isDirectory()) {
-          if (e.name !== 'assets') walk(p)
-        } else if (
-          ['.ts', '.tsx', '.css'].includes(extname(p)) &&
-          !e.name.includes('.test.') &&
-          /landing-hero/.test(readFileSync(p, 'utf8'))
-        )
-          referrers.push(e.name)
-      }
-    }
-    walk(join(root, 'src'))
-    expect(referrers).toEqual(['Backdrop.tsx'])
   })
 
   it('every visible focus outline is at least 2px', () => {

@@ -8,6 +8,9 @@ import { RouteGuard } from './RouteGuard'
 export const appRoutes: RouteObject[] = [
   {
     element: <RouteGuard />,
+    // Catches URLs the router can't match at all (e.g. malformed percent
+    // encoding), which would otherwise show React Router's default error page.
+    errorElement: <NotFoundView />,
     children: [
       {
         path: '/',

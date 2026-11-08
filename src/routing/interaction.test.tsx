@@ -31,16 +31,13 @@ function countNavigations(app: RenderAppResult) {
 }
 
 describe('Auth modal does not touch the URL or history (Req 6.1, 6.2)', () => {
-  it.each([
-    ['Register', 'register'],
-    ['Login', 'login'],
-  ])('opening and closing the %s dialog leaves location and history unchanged', async (label) => {
+  it('opening and closing the login dialog leaves location and history unchanged', async () => {
     const app = renderApp({ status: 'unauthenticated', path: '/' })
     await waitFor(() => expect(h1()).not.toBeNull())
     const before = app.location()
     const navigations = countNavigations(app)
 
-    fireEvent.click(screen.getByRole('button', { name: label }))
+    fireEvent.click(screen.getByRole('button', { name: 'Play Ball' }))
     await waitFor(() => expect(dialog()).not.toBeNull())
     expect(app.location()).toBe(before)
 
