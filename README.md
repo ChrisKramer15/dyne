@@ -8,6 +8,11 @@ React + TypeScript app built with Vite.
 - `npm run dev` - start dev server
 - `npm run build` - type-check and build
 - `npm run lint` - lint
+- `npm test` - run the test suite once
+
+CI (`.github/workflows/deploy.yml`) runs lint, type-check and tests on every
+push and pull request to `main`, and only builds and deploys when they pass on a
+push to `main`.
 
 ## Supabase
 
@@ -30,6 +35,14 @@ The auth modal (login / register / password reset) depends on these, defined in
 The Edge Functions require the `SUPABASE_SERVICE_ROLE_KEY` secret or they return
 503. Set it with `supabase secrets set` (never commit it).
 
+`request-password-reset` also reads an optional `SITE_URL` secret for the reset
+link's redirect. Because the app is served from a sub-path on GitHub Pages, set it
+to the full app URL including the base path, for example
+`supabase secrets set SITE_URL=https://<user>.github.io/dyne/`. Without it the
+function falls back to the request `Origin` header, which has no `/dyne/` path, so
+reset links would land on the wrong page. The same URL must be allowed under
+**Authentication -> URL Configuration -> Redirect URLs**.
+
 ### Deploying behind a corporate VPN (Zscaler)
 
 Zscaler performs TLS inspection, which breaks the Supabase CLI (a Go binary that
@@ -50,6 +63,7 @@ use:
    through the dashboard SQL Editor instead, or run `db push` off the VPN. Edge
    Function deploys use HTTPS and work through the VPN: use
    `supabase functions deploy <name> --use-api` (`--use-api` avoids needing Docker).
+
 ## TODO
 
 ### Configure custom SMTP before launch

@@ -9,7 +9,7 @@ import { appRoutes } from './routes'
 // created. LandingView only builds an authService when a modal is open, and it
 // reads these two exports from the module; the stub below is inert.
 vi.mock('../supabase', () => ({
-  authStorage: {},
+  authStorage: { clearAll() {} },
   supabase: {
     auth: {
       getSession: () => Promise.resolve({ data: { session: null }, error: null }),

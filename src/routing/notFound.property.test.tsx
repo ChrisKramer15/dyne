@@ -8,7 +8,7 @@ afterEach(cleanup)
 // Paths that match a known route (ignoring trailing slashes / case) are excluded.
 const unknownPath = fc.webPath().filter((p) => {
   const normalized = p.replace(/\/+$/, '').toLowerCase()
-  return normalized !== '' && normalized !== '/home' && normalized !== '/leagues'
+  return !['', '/home', '/leagues', '/profile'].includes(normalized)
 })
 
 async function snapshot(status: AuthStatus, path: string) {

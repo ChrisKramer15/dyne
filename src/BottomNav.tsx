@@ -27,6 +27,7 @@ const NAV_ITEMS: readonly NavItem[] = [
   { label: 'Chat', icon: <path d="M4 5h16v11H9l-5 4z" /> },
   {
     label: 'Profile',
+    to: '/profile',
     icon: (
       <>
         <circle cx="12" cy="8" r="4" />

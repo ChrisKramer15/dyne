@@ -18,10 +18,36 @@
   inset: 0;
   z-index: -1;
   background-position: center;
-  background-size: cover;
+  /* cover on portrait screens; whole-image on landscape (set below) */
+  background-size: var(--photo-size, cover);
   background-repeat: no-repeat;
   /* Settle the busy cityscape so it reads as mood, not detail */
   filter: saturate(0.85) brightness(0.9);
+}
+
+/* Only needed on landscape screens (below) */
+.landing-photo-fill {
+  display: none;
+}
+
+/* The photo is portrait (2:3). On landscape screens, cover would blow it up
+   and crop all but a thin strip, so show it whole at full height and fill the
+   sides with a blurred, darkened copy of the same image. */
+@media (min-aspect-ratio: 1/1) {
+  .landing-photo-fill {
+    display: block;
+    position: fixed;
+    /* Bleed past the edges so the blur has no light rim */
+    inset: -40px;
+    z-index: -1;
+    background-position: center;
+    background-size: cover;
+    filter: blur(32px) saturate(0.8) brightness(0.45);
+  }
+
+  .landing {
+    --photo-size: auto 100%;
+  }
 }
 
 /* Smooth scrim: a soft vertical darkening plus a faint cool tint. Keeps the
@@ -54,7 +80,8 @@
    sideways along the edge rather than forming a ball. Neighbouring ellipses
    overlap by ~50% so their colours blend, and the extra mid-stop eases the
    falloff so there is no visible rim. The middle of the screen stays dark. */
-.landing::before {
+.landing::before,
+.app-shell::before {
   content: '';
   position: fixed;
   inset: 0;
@@ -128,7 +155,7 @@
   margin: 0;
   /* Offset the trailing letter-spacing so the word sits optically centred */
   margin-right: -0.32em;
-  font-family: var(--display);
+  font-family: var(--wordmark);
   font-size: clamp(1.75rem, min(6vw, 6.5dvh), 4rem);
   font-weight: 400;
   line-height: 1;
@@ -455,18 +482,39 @@
 
 /* ---------- Homepage (authenticated) ---------- */
 
-/* Header, centred hero, cards pinned to the bottom. Grows with content so it
-   never forces horizontal scroll or clips at high zoom. */
+/* Wrapper for signed-in pages. Unlike .landing (a single locked screen), this
+   grows with its content so the page scrolls normally. It shares the fixed
+   gradient backdrop (.app-shell::before) with .landing. */
+.app-shell {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  min-height: 100dvh;
+  background-color: var(--bg);
+}
+
+/* Mobile first: a single full-width column on phones. Wider screens get a
+   centred column (see the min-width query below) instead of stretching. */
 .home-main {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: clamp(16px, 4dvh, 32px);
+  gap: 20px;
+  width: 100%;
   min-height: 100dvh;
-  max-width: 100%;
-  /* Bottom padding clears the fixed nav bar */
-  padding: clamp(12px, 3dvh, 32px) clamp(12px, 3vw, 32px) 108px;
+  margin: 0 auto;
+  /* Bottom padding clears the fixed nav bar, plus the iPhone home indicator */
+  padding: 16px 16px calc(108px + env(safe-area-inset-bottom));
   overflow-x: clip;
+}
+
+@media (min-width: 768px) {
+  .home-main {
+    max-width: 960px;
+    gap: 28px;
+    padding-top: 32px;
+    padding-inline: 32px;
+  }
 }
 
 .home-header {
@@ -1097,39 +1145,10 @@ a.nav-item {
   color: var(--text-muted);
 }
 
-.filter-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.chip {
-  min-height: 44px;
-  padding: 8px 16px;
-  font-family: var(--display);
-  font-size: 0.875rem;
-  color: var(--text-muted);
-  background: var(--surface);
-  border: 1px solid hsl(228 30% 24%);
-  border-radius: 999px;
-  cursor: pointer;
-}
-
-.chip[aria-pressed='true'] {
-  color: var(--bg);
-  background: var(--neon-cyan);
-  border-color: var(--neon-cyan);
-}
-
-.chip:focus-visible {
-  outline: 3px solid var(--text);
-  outline-offset: 3px;
-}
-
 .league-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 12px;
+  gap: 8px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -1139,9 +1158,9 @@ a.nav-item {
   --accent: var(--neon-cyan);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 6px;
   height: 100%;
-  padding: 14px;
+  padding: 8px 12px;
   background: var(--surface);
   border: 1px solid hsl(228 30% 24%);
   border-top: 3px solid var(--accent);
@@ -1155,7 +1174,7 @@ a.nav-item {
 }
 
 .league-pic {
-  font-size: 2rem;
+  font-size: 1.5rem;
   line-height: 1;
 }
 
@@ -1167,14 +1186,15 @@ a.nav-item {
 .league-name {
   margin: 0;
   font-family: var(--display);
-  font-size: 1rem;
+  font-size: 0.95rem;
+  line-height: 1.2;
   font-weight: 600;
   color: var(--text);
 }
 
 .league-meta {
   margin: 0;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
 }
 
@@ -1204,24 +1224,28 @@ a.nav-item {
   grid-template-columns: 1fr auto;
   align-items: baseline;
   gap: 2px 12px;
-  padding-top: 10px;
+  padding-top: 6px;
   border-top: 1px solid hsl(228 30% 18%);
 }
 
 .matchup-label {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: var(--text);
 }
 
 .matchup-score {
   font-family: var(--display);
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--text);
 }
 
 .matchup-score.is-winning {
   color: var(--neon-green);
+}
+
+.matchup-score.is-losing {
+  color: hsl(0 90% 65%);
 }
 
 .matchup-note {
@@ -1233,4 +1257,44 @@ a.nav-item {
 .empty-state {
   margin: 0;
   color: var(--text-muted);
+}
+
+/* ---------- Profile ---------- */
+
+.profile-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid hsl(228 30% 24%);
+  border-radius: 14px;
+}
+
+.profile-details {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+}
+
+.profile-details dt {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.profile-details dd {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.profile-card .btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.profile-error {
+  margin: 0;
 }

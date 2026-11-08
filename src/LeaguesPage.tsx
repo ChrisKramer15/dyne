@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import './App.css'
 import BottomNav from './BottomNav'
-import { LEAGUES, ordinal, type League } from './leaguesData'
+import { LEAGUES, LEAGUES_PER_PAGE, ordinal, type League } from './leaguesData'
 
 const STATUS_LABEL: Record<League['matchup']['status'], string> = {
   live: 'Live',
@@ -13,6 +13,7 @@ function LeagueCard({ league }: { league: League }) {
   const { matchup: m } = league
   const hasScores = m.myScore !== null && m.theirScore !== null
   const winning = hasScores && m.myScore! > m.theirScore!
+  const losing = hasScores && m.myScore! < m.theirScore!
 
   return (
     <li>
@@ -35,13 +36,13 @@ function LeagueCard({ league }: { league: League }) {
         <div className="matchup">
           <span className="matchup-label">vs {m.opponent}</span>
           {hasScores ? (
-            <span className={`matchup-score${winning ? ' is-winning' : ''}`}>
+            <span className={`matchup-score${winning ? ' is-winning' : ''}${losing ? ' is-losing' : ''}`}>
               {m.myScore!.toFixed(1)} – {m.theirScore!.toFixed(1)}
             </span>
           ) : (
             <span className="matchup-score">—</span>
           )}
-          <span className="matchup-note">{m.note}</span>
+          {m.status === 'upcoming' && <span className="matchup-note">{m.note}</span>}
         </div>
       </article>
     </li>
@@ -49,13 +50,13 @@ function LeagueCard({ league }: { league: League }) {
 }
 
 export default function LeaguesPage() {
-  const sports = ['All', ...new Set(LEAGUES.map((l) => l.sport))]
-  const [filter, setFilter] = useState('All')
-  const shown = filter === 'All' ? LEAGUES : LEAGUES.filter((l) => l.sport === filter)
+  const [page, setPage] = useState(0)
+  const pageCount = Math.ceil(LEAGUES.length / LEAGUES_PER_PAGE)
+  const visible = LEAGUES.slice(page * LEAGUES_PER_PAGE, (page + 1) * LEAGUES_PER_PAGE)
   const liveCount = LEAGUES.filter((l) => l.matchup.status === 'live').length
 
   return (
-    <div className="landing">
+    <div className="app-shell">
       <main className="home-main">
         <header className="home-header">
           <h1 className="wordmark page-title" tabIndex={-1}>
@@ -67,32 +68,41 @@ export default function LeaguesPage() {
           {LEAGUES.length} leagues · {liveCount} live now
         </p>
 
-        <div className="filter-chips" role="group" aria-label="Filter by sport">
-          {sports.map((s) => (
-            <button
-              key={s}
-              type="button"
-              className="chip"
-              aria-pressed={filter === s}
-              onClick={() => setFilter(s)}
-            >
-              {s}
-            </button>
-          ))}
-        </div>
-
         <section className="dash-section" aria-labelledby="my-leagues">
           <h2 id="my-leagues" className="dash-heading">
             My leagues
           </h2>
-          {shown.length > 0 ? (
+          {LEAGUES.length > 0 ? (
             <ul className="league-list">
-              {shown.map((l) => (
+              {visible.map((l) => (
                 <LeagueCard key={l.id} league={l} />
               ))}
             </ul>
           ) : (
-            <p className="empty-state">No leagues for this sport yet.</p>
+            <p className="empty-state">No leagues yet.</p>
+          )}
+          {pageCount > 1 && (
+            <nav className="pager" aria-label="Leagues pages">
+              <button
+                type="button"
+                className="pager-btn"
+                disabled={page === 0}
+                onClick={() => setPage(page - 1)}
+              >
+                Previous
+              </button>
+              <span className="pager-status" aria-live="polite">
+                Page {page + 1} of {pageCount}
+              </span>
+              <button
+                type="button"
+                className="pager-btn"
+                disabled={page === pageCount - 1}
+                onClick={() => setPage(page + 1)}
+              >
+                Next
+              </button>
+            </nav>
           )}
         </section>
       </main>

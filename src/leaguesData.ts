@@ -22,6 +22,9 @@ export interface League {
   }
 }
 
+/** Leagues shown per page; more than this turns on pagination. */
+export const LEAGUES_PER_PAGE = 5
+
 export const LEAGUES: readonly League[] = [
   {
     id: 'sunday-slugger',
@@ -77,6 +80,50 @@ export const LEAGUES: readonly League[] = [
     rank: 3,
     teams: 6,
     matchup: { opponent: 'Pole Position', status: 'upcoming', myScore: null, theirScore: null, note: 'Race day Sun' },
+  },
+  {
+    id: 'diamond-dynasty',
+    name: 'Diamond Dynasty',
+    sport: 'Baseball',
+    emoji: '⚾',
+    accent: 'green',
+    record: '7-5',
+    rank: 4,
+    teams: 12,
+    matchup: { opponent: 'Bleacher Creatures', status: 'live', myScore: 66.0, theirScore: 66.0, note: 'Week 12' },
+  },
+  {
+    id: 'bullpen-brawl',
+    name: 'Bullpen Brawl',
+    sport: 'Baseball',
+    emoji: '⚾',
+    accent: 'magenta',
+    record: '10-2',
+    rank: 1,
+    teams: 10,
+    matchup: { opponent: 'Cleanup Crew', status: 'final', myScore: 91.4, theirScore: 58.9, note: 'Week 11' },
+  },
+  {
+    id: 'grand-slam-club',
+    name: 'Grand Slam Club',
+    sport: 'Baseball',
+    emoji: '⚾',
+    accent: 'purple',
+    record: '5-7',
+    rank: 8,
+    teams: 12,
+    matchup: { opponent: 'Walk-Off Wonders', status: 'upcoming', myScore: null, theirScore: null, note: 'Starts Mon 7:05 PM' },
+  },
+  {
+    id: 'pennant-chase',
+    name: 'Pennant Chase',
+    sport: 'Baseball',
+    emoji: '⚾',
+    accent: 'cyan',
+    record: '6-6',
+    rank: 6,
+    teams: 14,
+    matchup: { opponent: 'Seventh Inning Stretch', status: 'final', myScore: 70.2, theirScore: 88.6, note: 'Week 11' },
   },
 ]
 

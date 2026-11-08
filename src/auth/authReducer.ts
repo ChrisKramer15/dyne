@@ -25,6 +25,10 @@ function fromSession(session: AuthSessionLike | null): AuthState {
 export function authReducer(state: AuthState, action: AuthAction): AuthState {
   switch (action.type) {
     case 'SESSION_RESOLVED':
+      // getSession() and PASSWORD_RECOVERY race on page load. If the recovery
+      // event landed first, the initial lookup must not downgrade it to a
+      // normal signed-in session (that would skip the new-password prompt).
+      if (state.status === 'recovering') return state
       return fromSession(action.session)
     case 'AUTH_EVENT':
       // A recovery link yields a session, but it means "prove a new password",
@@ -32,9 +36,14 @@ export function authReducer(state: AuthState, action: AuthAction): AuthState {
       if (action.event === 'PASSWORD_RECOVERY' && action.session) {
         return { status: 'recovering', userMetadata: action.session.user?.user_metadata }
       }
-      // Stay in recovery until the password is actually updated. Supabase emits
-      // a USER_UPDATED event on success, which moves us on to authenticated.
-      if (state.status === 'recovering' && action.event !== 'USER_UPDATED') {
+      // Stay in recovery until the password is actually updated (USER_UPDATED
+      // moves us on to authenticated) or the session ends (SIGNED_OUT, e.g. the
+      // recovery token expired), which must not leave the user stuck.
+      if (
+        state.status === 'recovering' &&
+        action.event !== 'USER_UPDATED' &&
+        action.event !== 'SIGNED_OUT'
+      ) {
         return state
       }
       return fromSession(action.session)

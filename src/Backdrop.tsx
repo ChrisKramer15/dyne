@@ -9,6 +9,13 @@ import heroBackground from './assets/landing-hero.webp'
 export default function Backdrop() {
   return (
     <>
+      {/* Blurred copy that fills the sides on landscape screens, where the
+          portrait photo is shown whole instead of cropped (see App.css). */}
+      <div
+        className="landing-photo-fill"
+        aria-hidden="true"
+        style={{ backgroundImage: `url(${heroBackground})` }}
+      />
       <div
         className="landing-photo"
         aria-hidden="true"

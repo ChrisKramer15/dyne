@@ -1,7 +1,5 @@
 export const USERNAME_RE = /^[A-Za-z0-9_]{3,20}$/
 export const LIMITS = {
-  loginUsername: 64,
-  loginPassword: 128,
   email: 254,
   minPassword: 8,
 }
@@ -17,8 +15,8 @@ export type Field =
   | 'newPassword'
 export type FieldError =
   | { field: Field; code: 'required' }
-  | { field: 'username'; code: 'format' }
-  | { field: 'email'; code: 'invalid' }
+  | { field: 'username'; code: 'format' | 'taken' }
+  | { field: 'email'; code: 'invalid' | 'taken' }
   | { field: 'password'; code: 'too_short' }
   | { field: 'newPassword'; code: 'too_short' }
   | { field: 'confirmPassword'; code: 'mismatch' }

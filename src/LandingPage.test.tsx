@@ -27,7 +27,7 @@ const TAGLINE = 'Fantasy baseball, played every pitch.'
 
 describe('LandingPage', () => {
   it('renders the landing page with no Vite starter content (1.1, 1.4)', () => {
-    const { container } = render(<LandingPage onNavigate={vi.fn()} />)
+    const { container } = render(<LandingPage />)
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1)
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Dyne')
     expect(screen.queryByText(/get started/i)).toBeNull()
@@ -113,7 +113,7 @@ describe('LandingPage', () => {
   })
 
   it('places the four features on the bases in run order: first, second, third, home', () => {
-    const { container } = render(<LandingPage onNavigate={vi.fn()} />)
+    const { container } = render(<LandingPage />)
     const bases = Array.from(container.querySelectorAll('.base'))
     expect(bases.map((b) => b.className.match(/base-(first|second|third|home)/)?.[1])).toEqual([
       'first',
@@ -127,18 +127,18 @@ describe('LandingPage', () => {
   })
 
   it.each(BASES)('base "%s" exposes its description to assistive tech', (title, desc) => {
-    render(<LandingPage onNavigate={vi.fn()} />)
+    render(<LandingPage />)
     expect(screen.getByRole('button', { name: title })).toHaveAccessibleDescription(desc)
   })
 
   it('shows the tagline until a base is selected', () => {
-    const { container } = render(<LandingPage onNavigate={vi.fn()} />)
+    const { container } = render(<LandingPage />)
     expect(container.querySelector('.pitch')?.textContent).toBe(TAGLINE)
     expect(container.querySelector('.base.is-active')).toBeNull()
   })
 
   it.each(BASES)('focusing "%s" shows its description, blurring restores the tagline', (title, desc) => {
-    const { container } = render(<LandingPage onNavigate={vi.fn()} />)
+    const { container } = render(<LandingPage />)
     const btn = screen.getByRole('button', { name: title })
     act(() => btn.focus())
     expect(container.querySelector('.pitch')?.textContent).toMatch(desc)
@@ -149,7 +149,7 @@ describe('LandingPage', () => {
   })
 
   it('mouse hover previews a base and leaving restores the tagline', () => {
-    const { container } = render(<LandingPage onNavigate={vi.fn()} />)
+    const { container } = render(<LandingPage />)
     const btn = screen.getByRole('button', { name: 'Work the Wire' })
     fireEvent.pointerEnter(btn, { pointerType: 'mouse' })
     expect(container.querySelector('.pitch')?.textContent).toMatch(/waivers/i)
@@ -158,24 +158,23 @@ describe('LandingPage', () => {
   })
 
   it('touch pointer events do not clear a tapped base', () => {
-    const { container } = render(<LandingPage onNavigate={vi.fn()} />)
+    const { container } = render(<LandingPage />)
     const btn = screen.getByRole('button', { name: 'Own Draft Day' })
     fireEvent.click(btn)
     fireEvent.pointerLeave(btn, { pointerType: 'touch' })
     expect(container.querySelector('.pitch')?.textContent).toMatch(/live rankings/i)
   })
 
-  it('selecting a base never navigates', async () => {
-    const onNavigate = vi.fn()
+  it('selecting a base never opens the auth dialog', async () => {
     const user = userEvent.setup()
-    render(<LandingPage onNavigate={onNavigate} />)
+    render(<LandingPage />)
     for (const [title] of BASES) await user.click(screen.getByRole('button', { name: title }))
-    expect(onNavigate).not.toHaveBeenCalled()
+    expect(screen.queryByRole('dialog')).toBeNull()
   })
 
   it('tab order follows reading order: bases around the diamond, then Register, then Login (7.6)', async () => {
     const user = userEvent.setup()
-    render(<LandingPage onNavigate={vi.fn()} />)
+    render(<LandingPage />)
     expect(screen.queryAllByRole('link')).toHaveLength(0)
     for (const name of [...BASES.map(([title]) => title), 'Register', 'Login']) {
       await user.tab()

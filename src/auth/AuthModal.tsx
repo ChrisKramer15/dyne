@@ -27,8 +27,10 @@ export interface AuthModalProps {
 const FIELD_MESSAGES: Record<string, string> = {
   'username:required': 'Enter your username.',
   'username:format': 'Use 3–20 letters, numbers or underscores.',
+  'username:taken': 'Pick a different username.',
   'email:required': 'Enter your email.',
   'email:invalid': 'Enter a valid email address.',
+  'email:taken': 'Use a different email address.',
   'password:required': 'Enter your password.',
   'password:too_short': 'Use at least 8 characters.',
   'confirmPassword:required': 'Re-enter your password.',
@@ -124,10 +126,13 @@ export default function AuthModal({ mode: initialMode, service, onClose, onAuthe
       const result = await service.signIn({ username, password, remember })
       setBusy(false)
       if (result.ok) {
-        if (result.rememberFailed) {
-          setBanner({ kind: 'success', text: "Signed in. We couldn't keep you logged in on this device." })
-        }
         onAuthenticated?.()
+        if (result.rememberFailed) {
+          // Stay open so the notice can be read; the auth state change moves
+          // the app to /home, which unmounts this dialog.
+          setBanner({ kind: 'success', text: "Signed in. We couldn't keep you logged in on this device." })
+          return
+        }
         onClose()
         return
       }
@@ -158,10 +163,10 @@ export default function AuthModal({ mode: initialMode, service, onClose, onAuthe
         return
       }
       if (result.error === 'username_taken') {
-        setFieldErrors([{ field: 'username', code: 'format' }])
+        setFieldErrors([{ field: 'username', code: 'taken' }])
         setBanner({ kind: 'error', text: 'That username is already taken.' })
       } else if (result.error === 'email_taken') {
-        setFieldErrors([{ field: 'email', code: 'invalid' }])
+        setFieldErrors([{ field: 'email', code: 'taken' }])
         setBanner({ kind: 'error', text: 'That email is already registered.' })
       } else {
         setBanner({ kind: 'error', text: 'Something went wrong. Please try again.' })

@@ -1,17 +1,14 @@
-import { useMemo, useState, type CSSProperties } from 'react'
+import { useState, type CSSProperties } from 'react'
 import './App.css'
 import Backdrop from './Backdrop'
 import { useAuth } from './auth/authContext'
 import type { AuthState } from './auth/authReducer'
 import AuthModal, { type AuthMode } from './auth/AuthModal'
-import { createAuthService, type AuthService } from './auth/authService'
-import { supabase, authStorage } from './supabase'
+import type { AuthService } from './auth/authService'
+import { getDefaultAuthService } from './auth/defaultAuthService'
 
 // The Register/Login buttons open the auth modal (login / register / reset).
-// `onNavigate` is retained so callers that pass it keep compiling; it is no
-// longer used now that auth happens in an in-page modal.
 export interface LandingPageProps {
-  onNavigate?: (target: 'login' | 'register') => void
   /** Injectable for tests; defaults to the real Supabase-backed service. */
   authService?: AuthService
 }
@@ -182,15 +179,8 @@ export function LandingView({ auth, authService }: LandingViewProps) {
   const recovering = auth.status === 'recovering'
   const effectiveMode: AuthMode | null = recovering ? 'update-password' : modalMode
 
-  // Build the real service lazily so importing this component never forces the
-  // Supabase client (and its env-var check) to initialise. It is only needed
-  // while a modal is open.
-  const needsService = effectiveMode !== null
-  const service = useMemo<AuthService | null>(() => {
-    if (authService) return authService
-    if (!needsService) return null
-    return createAuthService(supabase, authStorage)
-  }, [authService, needsService])
+  // Resolve the service only while a modal is open.
+  const service = effectiveMode === null ? null : (authService ?? getDefaultAuthService())
 
   return (
     <div className="landing">

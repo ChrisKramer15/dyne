@@ -2,6 +2,7 @@ import { useAuth } from '../auth/authContext'
 import Homepage from '../Homepage'
 import LandingPage from '../LandingPage'
 import LeaguesPage from '../LeaguesPage'
+import ProfilePage from '../ProfilePage'
 
 export function LandingRoute() {
   return <LandingPage />
@@ -15,4 +16,8 @@ export function HomeRoute() {
 }
 export function LeaguesRoute() {
   return <LeaguesPage />
+}
+
+export function ProfileRoute() {
+  return <ProfilePage />
 }

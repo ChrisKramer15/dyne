@@ -5,7 +5,7 @@ import { MemoryRouter } from 'react-router'
 // testUtils must be imported before routes (it installs the Supabase mock).
 import { renderApp } from './routing/testUtils'
 import LeaguesPage from './LeaguesPage'
-import { LEAGUES, ordinal } from './leaguesData'
+import { LEAGUES, LEAGUES_PER_PAGE, ordinal } from './leaguesData'
 
 afterEach(cleanup)
 
@@ -30,8 +30,9 @@ describe('LeaguesPage', () => {
 
   it('shows a card for every league with record, rank and opponent', () => {
     renderLeagues()
-    expect(cards()).toHaveLength(LEAGUES.length)
-    for (const l of LEAGUES) {
+    const firstPage = LEAGUES.slice(0, LEAGUES_PER_PAGE)
+    expect(cards()).toHaveLength(firstPage.length)
+    for (const l of firstPage) {
       const card = screen.getByRole('article', { name: l.name })
       expect(card.textContent).toContain(l.record)
       expect(card.textContent).toContain(`${ordinal(l.rank)} of ${l.teams}`)
@@ -39,20 +40,9 @@ describe('LeaguesPage', () => {
     }
   })
 
-  it('filters by sport with toggle chips', async () => {
-    const user = userEvent.setup()
+  it('has no sport filter', () => {
     renderLeagues()
-    const all = screen.getByRole('button', { name: 'All' })
-    expect(all.getAttribute('aria-pressed')).toBe('true')
-
-    const sport = LEAGUES[0].sport
-    await user.click(screen.getByRole('button', { name: sport }))
-    expect(screen.getByRole('button', { name: sport }).getAttribute('aria-pressed')).toBe('true')
-    expect(all.getAttribute('aria-pressed')).toBe('false')
-    expect(cards()).toHaveLength(LEAGUES.filter((l) => l.sport === sport).length)
-
-    await user.click(all)
-    expect(cards()).toHaveLength(LEAGUES.length)
+    expect(screen.queryByRole('group', { name: 'Filter by sport' })).toBeNull()
   })
 
   it('marks Leagues as the current page in the bottom nav', () => {

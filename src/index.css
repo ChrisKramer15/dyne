@@ -14,6 +14,8 @@
 
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --display: 'Sora', system-ui, 'Segoe UI', Roboto, sans-serif;
+  /* Wordmark only */
+  --wordmark: 'Raleway', system-ui, 'Segoe UI', Roboto, sans-serif;
 
   font: 18px/145% var(--sans);
   color-scheme: dark;

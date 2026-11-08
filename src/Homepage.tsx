@@ -10,7 +10,7 @@ export default function Homepage() {
   const visible = ACTIONS.slice(page * ALERTS_PER_PAGE, (page + 1) * ALERTS_PER_PAGE)
 
   return (
-    <div className="landing">
+    <div className="app-shell">
       <main className="home-main">
         <header className="home-header">
           <div className="home-brand">

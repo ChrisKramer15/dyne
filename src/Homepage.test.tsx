@@ -51,12 +51,15 @@ describe('Homepage structure and accessibility', () => {
     expect(within(nav).getByRole('link', { name: 'Leagues' }).getAttribute('aria-current')).toBeNull()
   })
 
-  it('nav buttons are keyboard focusable', async () => {
+  it('nav items are keyboard focusable', async () => {
     const user = userEvent.setup()
     renderHome()
-    const profile = screen.getByRole('button', { name: 'Profile' })
+    const profile = screen.getByRole('link', { name: 'Profile' })
+    expect(profile.getAttribute('href')).toBe('/profile')
     await user.tab({ shift: true })
     expect(document.activeElement).toBe(profile)
+    await user.tab({ shift: true })
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Chat' }))
   })
   it('has no top-right icon buttons', () => {
     renderHome()
@@ -100,12 +103,12 @@ describe('Homepage structure and accessibility', () => {
     expect(screen.queryByText(/season points/i)).toBeNull()
   })
 
-  it('shows a Create or join a league card for each of 10 sports', () => {
+  it('shows a Create or join a league card for baseball only', () => {
     renderHome()
     const region = screen.getByRole('region', { name: 'Create or join a league' })
     const cards = within(region).getAllByRole('button')
-    expect(SPORTS).toHaveLength(10)
-    expect(cards).toHaveLength(10)
+    expect(SPORTS).toHaveLength(1)
+    expect(cards).toHaveLength(1)
     for (const s of SPORTS) {
       expect(within(region).getByRole('button', { name: `Create or join a ${s.name} league` })).toBeTruthy()
     }

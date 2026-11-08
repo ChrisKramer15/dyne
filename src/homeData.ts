@@ -14,13 +14,4 @@ export const ALERTS_PER_PAGE = 3
 /** Sports a user can start or join a league in. */
 export const SPORTS = [
   { name: 'Baseball', emoji: '⚾', accent: 'cyan' },
-  { name: 'Football', emoji: '🏈', accent: 'green' },
-  { name: 'Basketball', emoji: '🏀', accent: 'magenta' },
-  { name: 'Hockey', emoji: '🏒', accent: 'purple' },
-  { name: 'Soccer', emoji: '⚽', accent: 'cyan' },
-  { name: 'Golf', emoji: '⛳', accent: 'green' },
-  { name: 'NASCAR', emoji: '🏎️', accent: 'magenta' },
-  { name: 'College Football', emoji: '🏈', accent: 'purple' },
-  { name: 'College Basketball', emoji: '🏀', accent: 'cyan' },
-  { name: 'MMA', emoji: '🥊', accent: 'green' },
 ] as const

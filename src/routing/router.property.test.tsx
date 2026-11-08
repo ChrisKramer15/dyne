@@ -14,7 +14,7 @@ const normalize = (p: string) => p.replace(/\/+$/, '').toLowerCase()
 const unknownPathArb = fc
   .webPath()
   .map((p) => (p.startsWith('/') ? p : `/${p}`))
-  .filter((p) => !['', '/home', '/leagues'].includes(normalize(p)))
+  .filter((p) => !['', '/home', '/leagues', '/profile'].includes(normalize(p)))
 const pathArb = fc.oneof(fc.constant('/'), fc.constant('/home'), unknownPathArb)
 
 function currentView(): View {

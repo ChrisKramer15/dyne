@@ -30,6 +30,13 @@ export default defineConfig({
   plugins: [react(), spaFallback()],
   test: {
     environment: 'jsdom',
+    // Placeholder credentials so src/supabase.ts can load without a real
+    // project (CI has no .env). Tests inject or mock clients; none should
+    // reach a real backend.
+    env: {
+      VITE_SUPABASE_URL: 'http://127.0.0.1:54321',
+      VITE_SUPABASE_ANON_KEY: 'test-anon-key',
+    },
     setupFiles: ['./src/test/setup.ts'],
     // Async property tests render many times per case; the default 5s is too tight.
     testTimeout: 60000,
