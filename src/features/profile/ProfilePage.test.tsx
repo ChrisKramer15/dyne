@@ -41,7 +41,9 @@ describe('ProfilePage', () => {
 
   it('shows the username when known and omits it otherwise', () => {
     renderProfile(serviceWith(vi.fn()))
-    expect(screen.getByText('Ada')).toBeTruthy()
+    // Shown on the player card and in the account details.
+    expect(within(screen.getByRole('region', { name: 'Player card' })).getByText('Ada')).toBeTruthy()
+    expect(screen.getByText('Username').nextElementSibling?.textContent).toBe('Ada')
     cleanup()
     renderProfile(serviceWith(vi.fn()), { status: 'authenticated', userMetadata: {} })
     expect(screen.queryByText('Username')).toBeNull()

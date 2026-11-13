@@ -17,11 +17,11 @@ export const SPORTS = [
     name: 'Baseball',
     emoji: '⚾',
     formats: [
-      { name: 'Bestball', icon: 'bestball', accent: 'blue', tagline: 'Draft once. No lineups to set.' },
-      { name: 'Dynasty', icon: 'dynasty', accent: 'purple', tagline: 'Keep your whole roster, year after year.' },
+      { name: 'Bestball', icon: 'bestball', accent: 'orange', tagline: 'Draft once. No lineups to set.' },
+      { name: 'Dynasty', icon: 'dynasty', accent: 'green', tagline: 'Keep your whole roster, year after year.' },
       { name: 'Guillotine', icon: 'guillotine', accent: 'magenta', tagline: 'Lowest score gets cut every week.' },
-      { name: 'Keeper', icon: 'keeper', accent: 'green', tagline: 'Hold onto a few stars each season.' },
-      { name: 'Redraft', icon: 'redraft', accent: 'orange', tagline: 'Fresh draft every season.' },
+      { name: 'Keeper', icon: 'keeper', accent: 'purple', tagline: 'Hold onto a few stars each season.' },
+      { name: 'Redraft', icon: 'redraft', accent: 'blue', tagline: 'Fresh draft every season.' },
     ],
   },
 ] as const

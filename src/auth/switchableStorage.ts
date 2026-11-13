@@ -127,7 +127,11 @@ export function createSwitchableStorage(
 
     removeItem(key) {
       removeEverywhere(key)
-      safeRemove(local, PERSISTED_AT_KEY)
+      // The marker is shared by all persisted keys. Supabase removes auxiliary
+      // keys (e.g. "-user", "-code-verifier") during sign-in; dropping the marker
+      // then would invalidate the session key and silently defeat "remember me".
+      const stillPersisted = [...knownKeys].some((k) => safeGet(local, k) !== null)
+      if (!stillPersisted) safeRemove(local, PERSISTED_AT_KEY)
     },
 
     clearAll() {

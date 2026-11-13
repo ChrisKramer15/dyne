@@ -1,14 +1,14 @@
 export type AuthState =
   | { status: 'loading' }
   | { status: 'unauthenticated' }
-  | { status: 'authenticated'; userMetadata: unknown }
+  | { status: 'authenticated'; userMetadata: unknown; email?: string; createdAt?: string }
   // Reached only via a password-reset link. A session exists, but the user has
   // not proved they know a password yet, so the app must prompt for a new one
   // rather than treat them as fully signed in.
   | { status: 'recovering'; userMetadata: unknown }
 
 export interface AuthSessionLike {
-  user: { user_metadata?: unknown }
+  user: { user_metadata?: unknown; email?: string; created_at?: string }
 }
 
 export type AuthAction =
@@ -18,7 +18,12 @@ export type AuthAction =
 
 function fromSession(session: AuthSessionLike | null): AuthState {
   return session
-    ? { status: 'authenticated', userMetadata: session.user?.user_metadata }
+    ? {
+        status: 'authenticated',
+        userMetadata: session.user?.user_metadata,
+        ...(session.user?.email ? { email: session.user.email } : {}),
+        ...(session.user?.created_at ? { createdAt: session.user.created_at } : {}),
+      }
     : { status: 'unauthenticated' }
 }
 

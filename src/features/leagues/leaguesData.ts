@@ -2,12 +2,23 @@
 
 export type MatchupStatus = 'live' | 'upcoming' | 'final'
 
+export type LeagueType = 'Bestball' | 'Dynasty' | 'Guillotine' | 'Keeper' | 'Redraft'
+
+/** Card colour per league type; matches the accents on the home page formats. */
+export const LEAGUE_TYPE_ACCENT: Record<LeagueType, 'blue' | 'purple' | 'magenta' | 'green' | 'orange'> = {
+  Bestball: 'orange',
+  Dynasty: 'green',
+  Guillotine: 'magenta',
+  Keeper: 'purple',
+  Redraft: 'blue',
+}
+
 export interface League {
   id: string
   name: string
   sport: string
   emoji: string
-  accent: 'cyan' | 'green' | 'magenta' | 'purple'
+  leagueType: LeagueType
   record: string
   rank: number
   teams: number
@@ -31,7 +42,7 @@ export const LEAGUES: readonly League[] = [
     name: 'Sunday Slugger',
     sport: 'Baseball',
     emoji: '⚾',
-    accent: 'cyan',
+    leagueType: 'Redraft',
     record: '8-4',
     rank: 2,
     teams: 12,
@@ -42,7 +53,7 @@ export const LEAGUES: readonly League[] = [
     name: 'Gridiron Gang',
     sport: 'Football',
     emoji: '🏈',
-    accent: 'green',
+    leagueType: 'Keeper',
     record: '6-6',
     rank: 5,
     teams: 10,
@@ -53,7 +64,7 @@ export const LEAGUES: readonly League[] = [
     name: 'Ice Cold League',
     sport: 'Hockey',
     emoji: '🏒',
-    accent: 'magenta',
+    leagueType: 'Guillotine',
     record: '9-3',
     rank: 1,
     teams: 8,
@@ -64,7 +75,7 @@ export const LEAGUES: readonly League[] = [
     name: 'Hardwood Heroes',
     sport: 'Basketball',
     emoji: '🏀',
-    accent: 'purple',
+    leagueType: 'Bestball',
     record: '4-8',
     rank: 9,
     teams: 12,
@@ -75,7 +86,7 @@ export const LEAGUES: readonly League[] = [
     name: 'Pit Crew Fantasy',
     sport: 'NASCAR',
     emoji: '🏎️',
-    accent: 'cyan',
+    leagueType: 'Redraft',
     record: '3-2',
     rank: 3,
     teams: 6,
@@ -86,7 +97,7 @@ export const LEAGUES: readonly League[] = [
     name: 'Diamond Dynasty',
     sport: 'Baseball',
     emoji: '⚾',
-    accent: 'green',
+    leagueType: 'Dynasty',
     record: '7-5',
     rank: 4,
     teams: 12,
@@ -97,7 +108,7 @@ export const LEAGUES: readonly League[] = [
     name: 'Bullpen Brawl',
     sport: 'Baseball',
     emoji: '⚾',
-    accent: 'magenta',
+    leagueType: 'Guillotine',
     record: '10-2',
     rank: 1,
     teams: 10,
@@ -108,7 +119,7 @@ export const LEAGUES: readonly League[] = [
     name: 'Grand Slam Club',
     sport: 'Baseball',
     emoji: '⚾',
-    accent: 'purple',
+    leagueType: 'Keeper',
     record: '5-7',
     rank: 8,
     teams: 12,
@@ -119,7 +130,7 @@ export const LEAGUES: readonly League[] = [
     name: 'Pennant Chase',
     sport: 'Baseball',
     emoji: '⚾',
-    accent: 'cyan',
+    leagueType: 'Bestball',
     record: '6-6',
     rank: 6,
     teams: 14,

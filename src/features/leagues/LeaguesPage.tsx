@@ -1,6 +1,6 @@
 import '../../App.css'
 import BottomNav from '../../shared/BottomNav'
-import { LEAGUES, LEAGUES_PER_PAGE, ordinal, type League } from './leaguesData'
+import { LEAGUES, LEAGUES_PER_PAGE, LEAGUE_TYPE_ACCENT, ordinal, type League } from './leaguesData'
 import { Pager } from '../../shared/Pager'
 import { usePagination } from '../../shared/usePagination'
 
@@ -19,7 +19,7 @@ function LeagueCard({ league }: { league: League }) {
 
   return (
     <li>
-      <article className={`league-card accent-${league.accent}`} aria-labelledby={`league-${league.id}`}>
+      <article className={`league-card accent-${LEAGUE_TYPE_ACCENT[league.leagueType]}`} aria-labelledby={`league-${league.id}`}>
         <div className="league-top">
           <span className="league-pic" aria-hidden="true">
             {league.emoji}
