@@ -22,7 +22,7 @@ function makeClient(getSession: () => PromiseLike<SessionResult>) {
   return { client, getSession: getSessionMock, unsubscribe, emit: (e: string, s: AuthSessionLike | null) => callback(e, s) }
 }
 
-const session: AuthSessionLike = { user: { user_metadata: { name: 'Ada' } } }
+const session: AuthSessionLike = { user: { id: 'user-1', user_metadata: { name: 'Ada' } } }
 const ok = (s: AuthSessionLike | null): Promise<SessionResult> =>
   Promise.resolve({ data: { session: s }, error: null })
 
@@ -41,6 +41,7 @@ describe('useAuthState', () => {
     expect(result.current).toEqual({
       status: 'authenticated',
       userMetadata: { name: 'Ada' },
+      userId: 'user-1',
     })
   })
 
@@ -91,6 +92,7 @@ describe('useAuthState', () => {
     expect(result.current).toEqual({
       status: 'authenticated',
       userMetadata: { name: 'Ada' },
+      userId: 'user-1',
     })
     act(() => emit('SIGNED_OUT', null))
     expect(result.current).toEqual({ status: 'unauthenticated' })

@@ -6,7 +6,7 @@ import { authReducer, type AuthAction, type AuthState } from './authReducer'
 // **Validates: Requirements 5.7, 6.3, 6.4, 6.5, 6.6**
 
 const sessionArb = fc.option(
-  fc.record({ user: fc.record({ user_metadata: fc.anything() }) }),
+  fc.record({ user: fc.record({ id: fc.uuid(), user_metadata: fc.anything() }) }),
   { nil: null },
 )
 
@@ -39,6 +39,7 @@ describe('authReducer Property 4: latest auth event determines state', () => {
           expect(final).toEqual({
             status: 'authenticated',
             userMetadata: bearing.session.user.user_metadata,
+            userId: bearing.session.user.id,
           })
         } else {
           expect(final).toEqual({ status: 'unauthenticated' })
@@ -75,7 +76,7 @@ describe('authReducer Property 4: latest auth event determines state', () => {
 })
 
 describe('authReducer password recovery', () => {
-  const session = { user: { user_metadata: { username: 'Ada' } } }
+  const session = { user: { id: 'user-1', user_metadata: { username: 'Ada' } } }
   const recovering: AuthState = { status: 'recovering', userMetadata: { username: 'Ada' } }
 
   it('PASSWORD_RECOVERY with a session enters recovering', () => {
@@ -99,6 +100,7 @@ describe('authReducer password recovery', () => {
     expect(authReducer(recovering, { type: 'AUTH_EVENT', event: 'USER_UPDATED', session })).toEqual({
       status: 'authenticated',
       userMetadata: { username: 'Ada' },
+      userId: 'user-1',
     })
   })
 

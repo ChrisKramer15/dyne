@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Unread icon preview (dev only)</title>
+<style>
+  /* Values copied from src/index.css (:root) */
+  :root {
+    --bg: #05060a;
+    --surface: #0b0d14;
+    --text: #f2f5ff;
+    --text-muted: #c4cbe0;
+    --neon-cyan: hsl(185 100% 60%);
+    --neon-magenta: hsl(315 100% 60%);
+    font: 18px/145% system-ui, 'Segoe UI', Roboto, sans-serif;
+    color-scheme: dark;
+    color: var(--text);
+    background-color: var(--bg);
+  }
+  body { margin: 0; padding: 16px; display: grid; gap: 24px; max-width: 480px; }
+  h1 { font-size: 1.2rem; margin: 0; }
+  h2 { font-size: 1rem; margin: 0 0 8px; color: var(--text-muted); }
+
+  /* Copied from src/App.css (.unread-alert) */
+  .unread-alert {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    padding: 0 0.35rem;
+    border-radius: 0.625rem;
+    background: var(--neon-magenta);
+    color: var(--bg);
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Mock containers (not the real app styles) */
+  .nav, .list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+  .nav-item, .row {
+    display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 12px;
+    background: var(--surface); border: 1px solid hsl(228 30% 24%); border-radius: 12px;
+  }
+  .row { justify-content: space-between; }
+  .row .preview { color: var(--text-muted); font-size: 0.85rem; }
+  .row .preview.unread { color: var(--text); font-weight: 700; }
+  .count { color: var(--text-muted); font-size: 0.8rem; min-width: 3.5rem; }
+</style>
+</head>
+<body>
+  <h1>Unread icon preview</h1>
+  <p style="margin:0"><a href="chat-examples.html" style="color:var(--neon-cyan)">Chat examples with the real app styles</a></p>
+
+  <section>
+    <h2>Chat nav item</h2>
+    <ul class="nav">
+      <li class="nav-item"><span class="count">1</span> Chat <span class="unread-alert">1</span></li>
+      <li class="nav-item"><span class="count">9</span> Chat <span class="unread-alert">9</span></li>
+      <li class="nav-item"><span class="count">42</span> Chat <span class="unread-alert">42</span></li>
+      <li class="nav-item"><span class="count">99</span> Chat <span class="unread-alert">99</span></li>
+      <li class="nav-item"><span class="count">100</span> Chat <span class="unread-alert">99+</span></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Conversation list entries</h2>
+    <ul class="list">
+      <li class="row"><div><strong>Ann</strong><div class="preview unread">See you at 7?</div></div><span class="unread-alert">1</span></li>
+      <li class="row"><div><strong>Weekend crew</strong><div class="preview unread">Bob: booked the court</div></div><span class="unread-alert">9</span></li>
+      <li class="row"><div><strong>Cal</strong><div class="preview unread">Ok!</div></div><span class="unread-alert">42</span></li>
+      <li class="row"><div><strong>Team</strong><div class="preview unread">Ann: results are in</div></div><span class="unread-alert">99</span></li>
+      <li class="row"><div><strong>Club news</strong><div class="preview unread">New schedule posted</div></div><span class="unread-alert">99+</span></li>
+      <li class="row"><div><strong>Dee</strong><div class="preview">Thanks (read, no badge)</div></div></li>
+    </ul>
+  </section>
+</body>
+</html>

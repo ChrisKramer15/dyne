@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Chat examples preview (dev only)</title>
+<!-- Real app styles, linked by relative path (open this file from the repo; no server needed). -->
+<link rel="stylesheet" href="../src/index.css" />
+<link rel="stylesheet" href="../src/App.css" />
+<style>
+  /* Preview-only layout. Everything else comes from the real CSS. */
+  body { padding: 16px; }
+  #root { min-height: 0; }
+  .preview-nav { margin: 0 0 16px; font-size: 0.9rem; }
+  .preview-nav a { color: var(--neon-cyan); }
+  .screens { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+  .screen h2 { margin: 0 0 8px; font-size: 1rem; color: var(--text-muted); }
+  /* A transformed ancestor becomes the containing block of the fixed bottom nav,
+     so the nav sits at the bottom of the phone frame instead of the browser window. */
+  .frame {
+    position: relative;
+    transform: translateZ(0);
+    width: 390px;
+    height: 760px;
+    overflow: hidden;
+    border: 1px solid hsl(228 30% 24%);
+    border-radius: 16px;
+  }
+  .frame .scroll { height: 100%; overflow-y: auto; }
+  .frame .app-shell { min-height: 100%; }
+  .frame .home-main { min-height: 100%; }
+  .frame .app-shell::before { position: absolute; }
+</style>
+</head>
+<body>
+<p class="preview-nav">
+  Chat examples (static mock of the real markup) ·
+  <a href="unread-icon.html">Unread icon preview</a>
+</p>
+
+<div class="screens">
+
+<!-- 1 + 2: ConversationListPage.tsx + BottomNav.tsx. Total unread = 1+5+42+150 = 198 -> 99+ -->
+<section class="screen">
+  <h2>Conversation list + bottom nav</h2>
+  <div class="frame"><div class="scroll"><div class="app-shell">
+    <main class="home-main">
+      <header class="home-header">
+        <h1 class="wordmark page-title" tabindex="-1">Chat</h1>
+        <button type="button" class="conversation-new">New conversation</button>
+      </header>
+
+      <section class="dash-section" aria-label="Conversations">
+        <ul class="conversation-list">
+          <li class="conversation-item">
+            <a href="#" class="conversation-link is-unread" aria-label="Ann, 1 unread message">
+              <span class="conversation-main">
+                <span class="conversation-name" style="font-weight:700">
+                  Ann
+                </span>
+                <span class="conversation-preview" style="font-weight:700">See you at 7?</span>
+              </span>
+              <span class="conversation-side">
+                <time class="conversation-time" datetime="2025-06-12T18:42:00Z">6/12/25, 6:42 PM</time>
+                <span class="unread-alert" aria-hidden="true">1</span>
+              </span>
+            </a>
+          </li>
+          <li class="conversation-item">
+            <a href="#" class="conversation-link is-unread" aria-label="Weekend crew, 5 unread messages">
+              <span class="conversation-main">
+                <span class="conversation-name" style="font-weight:700">
+                  <span class="group-indicator" data-testid="group-indicator">Group</span>
+                  Weekend crew
+                </span>
+                <span class="conversation-preview" style="font-weight:700">Bob: booked the court for Saturday</span>
+              </span>
+              <span class="conversation-side">
+                <time class="conversation-time" datetime="2025-06-12T17:10:00Z">6/12/25, 5:10 PM</time>
+                <span class="unread-alert" aria-hidden="true">5</span>
+              </span>
+            </a>
+          </li>
+          <li class="conversation-item">
+            <a href="#" class="conversation-link is-unread" aria-label="Cal, 42 unread messages">
+              <span class="conversation-main">
+                <span class="conversation-name" style="font-weight:700">
+                  Cal
+                </span>
+                <span class="conversation-preview" style="font-weight:700">Ok!</span>
+              </span>
+              <span class="conversation-side">
+                <time class="conversation-time" datetime="2025-06-12T15:03:00Z">6/12/25, 3:03 PM</time>
+                <span class="unread-alert" aria-hidden="true">42</span>
+              </span>
+            </a>
+          </li>
+          <li class="conversation-item">
+            <a href="#" class="conversation-link is-unread" aria-label="Club news, 150 unread messages">
+              <span class="conversation-main">
+                <span class="conversation-name" style="font-weight:700">
+                  <span class="group-indicator" data-testid="group-indicator">Group</span>
+                  Club news
+                </span>
+                <span class="conversation-preview" style="font-weight:700">New schedule posted for the autumn season</span>
+              </span>
+              <span class="conversation-side">
+                <time class="conversation-time" datetime="2025-06-11T20:00:00Z">6/11/25, 8:00 PM</time>
+                <span class="unread-alert" aria-hidden="true">99+</span>
+              </span>
+            </a>
+          </li>
+          <li class="conversation-item">
+            <a href="#" class="conversation-link" aria-label="Dee, no unread messages">
+              <span class="conversation-main">
+                <span class="conversation-name" style="font-weight:400">
+                  Dee
+                </span>
+                <span class="conversation-preview" style="font-weight:400">Thanks, that works for me</span>
+              </span>
+              <span class="conversation-side">
+                <time class="conversation-time" datetime="2025-06-10T09:15:00Z">6/10/25, 9:15 AM</time>
+              </span>
+            </a>
+          </li>
+        </ul>
+        <!-- Page 2 of the real list (5 per page) shown here as a continuation -->
+        <ul class="conversation-list">
+          <li class="conversation-item">
+            <a href="#" class="conversation-link is-unread" aria-label="Tuesday league, 2 unread messages">
+              <span class="conversation-main">
+                <span class="conversation-name" style="font-weight:700">
+                  <span class="group-indicator" data-testid="group-indicator">Group</span>
+                  Tuesday league
+                </span>
+                <span class="conversation-preview" style="font-weight:700">Eve joined the group</span>
+              </span>
+              <span class="conversation-side">
+                <time class="conversation-time" datetime="2025-06-09T12:30:00Z">6/9/25, 12:30 PM</time>
+                <span class="unread-alert" aria-hidden="true">2</span>
+              </span>
+            </a>
+          </li>
+          <li class="conversation-item">
+            <a href="#" class="conversation-link" aria-label="Old team, no unread messages">
+              <span class="conversation-main">
+                <span class="conversation-name" style="font-weight:400">
+                  <span class="group-indicator" data-testid="group-indicator">Group</span>
+                  Old team
+                </span>
+                <span class="conversation-preview" style="font-weight:400">Fay left the group</span>
+              </span>
+              <span class="conversation-side">
+                <time class="conversation-time" datetime="2025-06-08T08:00:00Z">6/8/25, 8:00 AM</time>
+              </span>
+            </a>
+          </li>
+        </ul>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Primary">
+      <ul>
+        <li><a href="#" class="nav-item">
+          <span class="nav-bubble" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z" /></svg></span>
+          <span class="nav-label">Home</span></a></li>
+        <li><a href="#" class="nav-item">
+          <span class="nav-bubble" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M8 4h8v5a4 4 0 0 1-8 0z" /><path d="M8 6H5v1a3 3 0 0 0 3 3M16 6h3v1a3 3 0 0 1-3 3M12 13v4M9 20h6" /></svg></span>
+          <span class="nav-label">Leagues</span></a></li>
+        <li><a href="#" class="nav-item" aria-current="page" aria-label="Chat, 198 unread messages">
+          <span class="nav-bubble" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M4 5h16v11H9l-5 4z" /></svg></span>
+          <span class="nav-label">Chat</span>
+          <span class="unread-alert" aria-hidden="true">99+</span></a></li>
+        <li><a href="#" class="nav-item">
+          <span class="nav-bubble" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" /></svg></span>
+          <span class="nav-label">Profile</span></a></li>
+      </ul>
+    </nav>
+  </div></div></div>
+</section>
+
+<!-- 3: ConversationViewPage.tsx + MessageList.tsx + MessageComposer.tsx -->
+<section class="screen">
+  <h2>Open conversation (Weekend crew)</h2>
+  <div class="frame"><div class="scroll"><div class="app-shell">
+    <main class="home-main conversation-view">
+      <header class="home-header conversation-view-header">
+        <a href="#" class="conversation-back">Back to chat</a>
+        <h1 class="page-title" tabindex="-1">Weekend crew</h1>
+        <button type="button" class="conversation-leave">Leave group</button>
+      </header>
+
+      <div class="message-list-wrap">
+        <div class="message-list" tabindex="0" role="region" aria-label="Messages">
+          <button type="button" class="message-load-earlier">Load earlier messages</button>
+          <ul class="message-items">
+            <li class="message-item">
+              <span class="message-sender">Bob</span>
+              <time class="message-time" datetime="2025-06-12T16:50:00Z">6/12/25, 4:50 PM</time>
+              <p class="message-text">Who is in for Saturday?</p>
+            </li>
+            <li class="message-item">
+              <span class="message-sender">You</span>
+              <time class="message-time" datetime="2025-06-12T16:52:00Z">6/12/25, 4:52 PM</time>
+              <p class="message-text">Count me in.</p>
+            </li>
+            <li class="message-notice">Eve joined <time datetime="2025-06-12T16:55:00Z">6/12/25, 4:55 PM</time></li>
+            <li class="message-item">
+              <span class="message-sender">Eve</span>
+              <time class="message-time" datetime="2025-06-12T16:58:00Z">6/12/25, 4:58 PM</time>
+              <p class="message-text">Thanks for adding me! What time?</p>
+            </li>
+            <li class="message-notice">Fay left <time datetime="2025-06-12T17:02:00Z">6/12/25, 5:02 PM</time></li>
+            <li class="message-item">
+              <span class="message-sender">Bob</span>
+              <time class="message-time" datetime="2025-06-12T17:10:00Z">6/12/25, 5:10 PM</time>
+              <p class="message-text">Booked the court for Saturday at 10.</p>
+            </li>
+            <li class="message-item message-sending">
+              <span class="message-sender">You</span>
+              <time class="message-time" datetime="2025-06-12T17:12:00Z">6/12/25, 5:12 PM</time>
+              <p class="message-text">Great, see you there.</p>
+              <span class="message-status">Sending…</span>
+            </li>
+            <li class="message-item message-failed">
+              <span class="message-sender">You</span>
+              <time class="message-time" datetime="2025-06-12T17:13:00Z">6/12/25, 5:13 PM</time>
+              <p class="message-text">I'll bring the balls.</p>
+              <span class="message-status" role="alert">Failed to send. <button type="button">Retry</button></span>
+            </li>
+          </ul>
+        </div>
+        <button type="button" class="message-jump">Jump to latest</button>
+      </div>
+
+      <form class="chat-composer" novalidate>
+        <label class="chat-composer-label" for="preview-composer">Message</label>
+        <textarea id="preview-composer" class="chat-composer-input" rows="2"></textarea>
+        <button type="submit" class="chat-composer-send">Send</button>
+      </form>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Primary">
+      <ul>
+        <li><a href="#" class="nav-item">
+          <span class="nav-bubble" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z" /></svg></span>
+          <span class="nav-label">Home</span></a></li>
+        <li><a href="#" class="nav-item">
+          <span class="nav-bubble" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M8 4h8v5a4 4 0 0 1-8 0z" /><path d="M8 6H5v1a3 3 0 0 0 3 3M16 6h3v1a3 3 0 0 1-3 3M12 13v4M9 20h6" /></svg></span>
+          <span class="nav-label">Leagues</span></a></li>
+        <li><a href="#" class="nav-item" aria-current="page" aria-label="Chat, 193 unread messages">
+          <span class="nav-bubble" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M4 5h16v11H9l-5 4z" /></svg></span>
+          <span class="nav-label">Chat</span>
+          <span class="unread-alert" aria-hidden="true">99+</span></a></li>
+        <li><a href="#" class="nav-item">
+          <span class="nav-bubble" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" /></svg></span>
+          <span class="nav-label">Profile</span></a></li>
+      </ul>
+    </nav>
+  </div></div></div>
+</section>
+
+<!-- Extra: New conversation panel (mode-toggle), from NewConversationPanel.tsx -->
+<section class="screen">
+  <h2>New conversation panel (mode-toggle)</h2>
+  <div class="frame"><div class="scroll"><div class="app-shell">
+    <main class="home-main">
+      <header class="home-header">
+        <h1 class="wordmark page-title" tabindex="-1">Chat</h1>
+      </header>
+      <section class="new-conversation" aria-label="New conversation">
+        <div class="new-conversation-header">
+          <h2>New conversation</h2>
+          <button type="button">Close</button>
+        </div>
+        <div class="mode-toggle" role="group" aria-label="Conversation type">
+          <button type="button" aria-pressed="true">Direct message</button>
+          <button type="button" aria-pressed="false">Group chat</button>
+        </div>
+        <div class="new-conversation-search">
+          <label for="preview-user-search">Find a user</label>
+          <input id="preview-user-search" type="search" autocomplete="off" value="a" />
+          <ul class="user-results">
+            <li><span>Ann</span> <button type="button" aria-label="Message Ann">Message</button></li>
+            <li><span>Abe</span> <button type="button" aria-label="Message Abe">Message</button></li>
+          </ul>
+        </div>
+      </section>
+    </main>
+  </div></div></div>
+</section>
+
+</div>
+</body>
+</html>

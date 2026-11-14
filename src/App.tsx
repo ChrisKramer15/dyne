@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { RouterProvider } from 'react-router'
 import './App.css'
 import { AuthProvider } from './auth/AuthProvider'
+import { ChatProvider } from './features/chat/ChatProvider'
 import { createAppRouter } from './routing/routes'
 
 type AppProps = {
@@ -15,7 +16,9 @@ function App({ client, router }: AppProps = {}) {
 
   return (
     <AuthProvider client={client}>
-      <RouterProvider router={appRouter} />
+      <ChatProvider>
+        <RouterProvider router={appRouter} />
+      </ChatProvider>
     </AuthProvider>
   )
 }

@@ -325,3 +325,36 @@ describe('asset', () => {
     }
   })
 })
+
+describe('chat styles (Req 11.7, 11.8)', () => {
+  const chatSelector =
+    /^\.(conversation-|message-|chat-composer|new-conversation|new-group-form|user-results|group-members|unread-alert|group-indicator)/
+
+  it('Alert_Icon text/background pair is >= 4.5:1', () => {
+    const body = rule(appCss, '.unread-alert')
+    const fg = body.match(/(?<!-)color:\s*var\(--([\w-]+)\)/)![1]
+    const bgVar = body.match(/background:\s*var\(--([\w-]+)\)/)![1]
+    expect(contrast(colorToRgb(cssVar(fg)), colorToRgb(cssVar(bgVar)))).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it('no chat layout rule uses a fixed width above 320px', () => {
+    let checked = 0
+    for (const m of appCss.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      const sels = m[1].replace(/\/\*[\s\S]*?\*\//g, '').split(',').map((s) => s.trim())
+      if (!sels.some((s) => chatSelector.test(s))) continue
+      checked++
+      for (const d of m[2].matchAll(/(?:^|[;\s])(width|min-width|flex-basis|flex):\s*([^;]+);/g)) {
+        for (const px of d[2].matchAll(/(\d+(?:\.\d+)?)px/g)) {
+          expect(Number(px[1]), `${m[1].trim()} ${d[1]}`).toBeLessThanOrEqual(320)
+        }
+      }
+    }
+    expect(checked).toBeGreaterThan(10)
+  })
+
+  it('chat message and list text wraps instead of overflowing', () => {
+    expect(rule(appCss, '.message-text')).toMatch(/overflow-wrap:\s*anywhere/)
+    expect(rule(appCss, '.message-list')).toMatch(/overflow-x:\s*hidden/)
+    expect(rule(appCss, '.chat-composer')).toMatch(/flex-wrap:\s*wrap/)
+  })
+})

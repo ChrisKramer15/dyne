@@ -1,5 +1,8 @@
 import type { ReactNode } from 'react'
 import { NavLink } from 'react-router'
+import { useChatUnread } from '../features/chat/chatContext'
+import UnreadAlertIcon from '../features/chat/UnreadAlertIcon'
+import { chatNavLabel } from '../features/chat/unreadBadge'
 
 interface NavItem {
   label: string
@@ -24,7 +27,7 @@ const NAV_ITEMS: readonly NavItem[] = [
       </>
     ),
   },
-  { label: 'Chat', icon: <path d="M4 5h16v11H9l-5 4z" /> },
+  { label: 'Chat', to: '/chat', icon: <path d="M4 5h16v11H9l-5 4z" /> },
   {
     label: 'Profile',
     to: '/profile',
@@ -52,6 +55,7 @@ function Bubble({ icon, label }: { icon: ReactNode; label: string }) {
 
 /** Fixed bottom navigation shared by the signed-in pages. */
 export default function BottomNav() {
+  const { total } = useChatUnread()
   return (
     <nav className="bottom-nav" aria-label="Primary">
       <ul>
@@ -59,9 +63,21 @@ export default function BottomNav() {
           <li key={item.label}>
             {item.to ? (
               // NavLink sets aria-current="page" on the active route.
-              <NavLink to={item.to} end className="nav-item">
-                <Bubble icon={item.icon} label={item.label} />
-              </NavLink>
+              item.label === 'Chat' ? (
+                <NavLink
+                  to={item.to}
+                  end={false}
+                  className="nav-item"
+                  aria-label={chatNavLabel(total)}
+                >
+                  <Bubble icon={item.icon} label={item.label} />
+                  <UnreadAlertIcon count={total} />
+                </NavLink>
+              ) : (
+                <NavLink to={item.to} end className="nav-item">
+                  <Bubble icon={item.icon} label={item.label} />
+                </NavLink>
+              )
             ) : (
               <button type="button" className="nav-item">
                 <Bubble icon={item.icon} label={item.label} />

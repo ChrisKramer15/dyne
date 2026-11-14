@@ -1536,3 +1536,355 @@ a.nav-item {
   gap: 2px;
   margin-bottom: 10px;
 }
+
+/* Unread alert badge: dark text on neon magenta. #05060a on hsl(315 100% 60%)
+   is well above the 4.5:1 minimum. */
+.unread-alert {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.35rem;
+  border-radius: 0.625rem;
+  background: var(--neon-magenta);
+  color: var(--bg);
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Chat ---------- */
+/* Layout is fluid: no fixed widths, so nothing overflows at 320px. */
+
+.conversation-new {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 16px;
+  font-family: var(--display);
+  color: var(--bg);
+  background: linear-gradient(90deg, var(--neon-cyan), var(--neon-green));
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.conversation-list,
+.message-items,
+.user-results,
+.group-members {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.conversation-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-sizing: border-box;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  color: var(--text);
+  text-decoration: none;
+  background: var(--surface);
+  border: 1px solid hsl(228 30% 24%);
+  border-radius: 14px;
+}
+
+.conversation-link:hover {
+  border-color: var(--neon-cyan);
+}
+
+.conversation-link:focus-visible {
+  outline: 3px solid var(--text);
+  outline-offset: 2px;
+}
+
+.conversation-link.is-unread {
+  border-color: var(--neon-magenta);
+}
+
+.conversation-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+}
+
+.conversation-name,
+.conversation-preview {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.conversation-name {
+  font-family: var(--display);
+}
+
+.conversation-preview,
+.conversation-time,
+.group-indicator {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.conversation-side {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.conversation-error {
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.message-list-wrap {
+  position: relative;
+  min-width: 0;
+}
+
+.message-list {
+  box-sizing: border-box;
+  max-width: 100%;
+  max-height: 60vh;
+  padding: 8px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid hsl(228 30% 24%);
+  border-radius: 14px;
+}
+
+.message-item {
+  padding: 8px 12px;
+  background: var(--bg);
+  border: 1px solid hsl(228 30% 24%);
+  border-radius: 12px;
+  overflow-wrap: anywhere;
+}
+
+.message-sender {
+  font-family: var(--display);
+  font-weight: 600;
+  color: var(--neon-cyan);
+}
+
+.message-time,
+.message-status {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.message-text {
+  margin: 4px 0 0;
+  color: var(--text);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.message-failed {
+  border-color: hsl(0 90% 65%);
+}
+
+.message-failed .message-status {
+  color: hsl(0 90% 65%);
+}
+
+.message-notice {
+  font-size: 0.85rem;
+  text-align: center;
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+.message-load-earlier,
+.message-jump {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 16px;
+  font-family: var(--display);
+  color: var(--bg);
+  background: var(--neon-cyan);
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.message-jump {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  max-width: calc(100% - 24px);
+}
+
+.message-load-earlier:focus-visible,
+.message-jump:focus-visible,
+.conversation-new:focus-visible,
+.chat-composer-send:focus-visible,
+.chat-composer-input:focus-visible {
+  outline: 3px solid var(--text);
+  outline-offset: 2px;
+}
+
+.chat-composer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.chat-composer-label {
+  flex-basis: 100%;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.chat-composer-input {
+  flex: 1 1 160px;
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px 12px;
+  font: inherit;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--neon-cyan);
+  border-radius: 12px;
+  resize: vertical;
+}
+
+.chat-composer-send {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 16px;
+  font-family: var(--display);
+  color: var(--bg);
+  background: linear-gradient(90deg, var(--neon-cyan), var(--neon-green));
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.chat-composer-send[aria-disabled='true'] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.chat-composer-error {
+  flex-basis: 100%;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.new-conversation {
+  display: grid;
+  gap: 16px;
+  box-sizing: border-box;
+  max-width: 100%;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid hsl(228 30% 24%);
+  border-radius: 14px;
+}
+
+.new-conversation-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mode-toggle {
+  display: flex;
+  gap: 8px;
+}
+
+.new-conversation .mode-toggle button {
+  flex: 1 1 0;
+}
+
+.new-conversation .mode-toggle button[aria-pressed='true'] {
+  color: var(--bg);
+  font-weight: 700;
+  background: linear-gradient(90deg, var(--neon-cyan), var(--neon-green));
+  border-color: transparent;
+}
+
+.new-conversation-search,
+.new-group-form {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.new-conversation input {
+  box-sizing: border-box;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  font: inherit;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--neon-cyan);
+  border-radius: 12px;
+}
+
+.new-conversation button {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 12px;
+  font: inherit;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--neon-cyan);
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.new-conversation button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.new-conversation button:focus-visible,
+.new-conversation input:focus-visible {
+  outline: 3px solid var(--text);
+  outline-offset: 2px;
+}
+
+.user-results li,
+.group-members li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  overflow-wrap: anywhere;
+}
+
+/* Content available to assistive technology only. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}

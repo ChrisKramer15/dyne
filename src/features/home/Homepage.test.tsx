@@ -59,7 +59,7 @@ describe('Homepage structure and accessibility', () => {
     await user.tab({ shift: true })
     expect(document.activeElement).toBe(profile)
     await user.tab({ shift: true })
-    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Chat' }))
+    expect(document.activeElement).toBe(screen.getByRole('link', { name: 'Chat' }))
   })
   it('has no top-right icon buttons', () => {
     renderHome()
