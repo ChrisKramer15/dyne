@@ -46,7 +46,7 @@ export interface ChatMessage {
 export interface ConversationEvent {
   id: string
   conversationId: string
-  kind: 'joined' | 'left'
+  kind: 'joined' | 'left' | 'removed'
   userId: string
   userName: string
   createdAt: string
@@ -65,6 +65,8 @@ export interface UnreadEntry {
   lastReadAt: string
   /** DM or group; lets the nav badge split unread counts. Missing is treated as a DM. */
   kind?: ConversationKind
+  /** The other person's username for a DM; used to apply blocks to unread counts. */
+  otherUserName?: string | null
 }
 
 export type Unsubscribe = () => void
@@ -123,6 +125,16 @@ export interface ChatEventHandlers {
   onStatus(status: 'connected' | 'disconnected'): void
 }
 
+export type GroupRole = 'admin' | 'moderator' | 'member'
+
+export type ManageMemberResult =
+  | { ok: true }
+  | { ok: false; error: 'not_allowed' | 'last_admin' | 'not_a_member' | 'already_member' | 'group_full' | 'unavailable' }
+
+export type ListMembersResult =
+  | { ok: true; members: { userId: string; username: string; role?: GroupRole }[] }
+  | { ok: false; error: 'unavailable' }
+
 export interface ChatService {
   listConversations(): Promise<ListConversationsResult>
   getConversation(id: string): Promise<GetConversationResult>
@@ -139,5 +151,17 @@ export interface ChatService {
   createGroup(i: { name: string; memberIds: string[] }): Promise<CreateGroupResult>
   leaveGroup(conversationId: string): Promise<LeaveGroupResult>
   loadUnreadTotal(): Promise<UnreadTotalResult>
+  /** People who can be tagged in a conversation. Optional so older services still work. */
+  listMembers?(conversationId: string): Promise<ListMembersResult>
+  /** Any participant can add a registered user. Optional so older services still work. */
+  addMember?(i: { conversationId: string; userId: string }): Promise<ManageMemberResult>
+  /** Admins only. Optional so older services still work. */
+  setMemberRole?(i: {
+    conversationId: string
+    userId: string
+    role: GroupRole
+  }): Promise<ManageMemberResult>
+  /** Admins, and moderators for plain members. */
+  removeMember?(i: { conversationId: string; userId: string }): Promise<ManageMemberResult>
   subscribe(handlers: ChatEventHandlers): Unsubscribe
 }

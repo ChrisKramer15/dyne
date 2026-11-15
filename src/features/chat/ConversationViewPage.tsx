@@ -8,7 +8,11 @@ import { useChat } from './chatContext'
 import { MESSAGE_PAGE_SIZE } from './chatService'
 import type { ChatMessage, ConversationEvent, ConversationSummary } from './chatService'
 import { displayName } from './conversationList'
+import { DirectActions, GroupActions } from './ConversationActions'
 import { MessageComposer } from './MessageComposer'
+import { useUserList } from './userLists'
+import type { GroupMember } from './ConversationActions'
+import type { GroupRole } from './chatService'
 import { MessageList } from './MessageList'
 import type { PendingMessage } from './MessageList'
 import { mergeMessages, oldestCursor } from './messageState'
@@ -53,8 +57,11 @@ export function ConversationView({ conversationId }: ConversationViewProps) {
   const [leaving, setLeaving] = useState(false)
   const [leaveError, setLeaveError] = useState<string | null>(null)
   const [announcement, setAnnouncement] = useState('')
+  const [members, setMembers] = useState<GroupMember[]>([])
   const [storedByRetry, setStoredByRetry] = useState<{ text: string } | null>(null)
 
+  const favorites = useUserList('favorites', selfId)
+  const blocked = useUserList('blocked', selfId)
   const mountedRef = useRef(true)
   const requestRef = useRef({ value: 0 })
   const messagesRef = useRef<ChatMessage[]>([])
@@ -124,6 +131,47 @@ export function ConversationView({ conversationId }: ConversationViewProps) {
       setStatus((s) => (s === 'loaded' || conv.ok ? 'loaded' : 'error'))
     }
   }, [service, conversationId, markLatestRead])
+
+  // Who can be tagged. Failure just turns tagging off.
+  const loadMembers = useCallback(async () => {
+    const r = await service.listMembers?.(conversationId)
+    if (r?.ok && mountedRef.current) setMembers(r.members)
+  }, [service, conversationId])
+  useEffect(() => {
+    // oxlint-disable-next-line react/set-state-in-effect -- fetch on mount/conversation change
+    void loadMembers()
+  }, [loadMembers])
+
+  const manageMessage = (error: string): string =>
+    error === 'not_allowed'
+      ? 'You do not have permission to do that.'
+      : error === 'last_admin'
+        ? 'A group needs at least one admin. Make someone else an admin first.'
+        : error === 'not_a_member'
+          ? 'That person is no longer in the group.'
+          : error === 'already_member'
+            ? 'That person is already in the group.'
+            : error === 'group_full'
+              ? 'This group is full.'
+              : 'That did not work. Try again.'
+
+  const setRole = async (userId: string, role: GroupRole): Promise<string | null> => {
+    const r = await service.setMemberRole?.({ conversationId, userId, role })
+    await loadMembers()
+    return !r || r.ok ? null : manageMessage(r.error)
+  }
+
+  const addMember = async (userId: string): Promise<string | null> => {
+    const r = await service.addMember?.({ conversationId, userId })
+    await loadMembers()
+    return !r || r.ok ? null : manageMessage(r.error)
+  }
+
+  const removeMember = async (userId: string): Promise<string | null> => {
+    const r = await service.removeMember?.({ conversationId, userId })
+    await loadMembers()
+    return !r || r.ok ? null : manageMessage(r.error)
+  }
 
   // Load and register as the open conversation.
   useEffect(() => {
@@ -274,27 +322,76 @@ export function ConversationView({ conversationId }: ConversationViewProps) {
   if (status === 'not_found') return <NotFoundView />
 
   const title = conversation ? displayName(conversation) : 'Conversation'
+  const other = members.find((m) => m.userId !== selfId) ?? null
+  // A DM with a blocked person doesn't exist as far as the user is concerned.
+  const dmBlocked =
+    conversation?.kind === 'personal' &&
+    blocked.list.some((u) => u.username.toLowerCase() === (conversation.otherUserName ?? '').toLowerCase())
+  if (dmBlocked) return <NotFoundView />
+  // In groups, messages from blocked people are hidden and they can't be tagged.
+  const visibleMessages = messages.filter((m) => !blocked.has(m.senderId))
 
   return (
-    <div className="app-shell">
+    <div
+      className={`app-shell conversation-shell chat-tab-${conversation?.kind === 'group' ? 'group' : 'personal'}`}
+    >
       <main className="home-main conversation-view">
-        <header className="home-header conversation-view-header">
-          <Link to="/chat" className="conversation-back">
-            Back to chat
-          </Link>
-          <h1 className="page-title" tabIndex={-1}>
-            {title}
-          </h1>
-          {conversation?.kind === 'group' && (
-            <button
-              type="button"
-              className="conversation-leave"
-              onClick={() => void handleLeave()}
-              aria-disabled={leaving || undefined}
-            >
-              Leave group
-            </button>
-          )}
+        <header className="conversation-view-header">
+          <div className="conversation-actions">
+            <Link to="/chat" className="conversation-back">
+              Back to chat
+            </Link>
+            {conversation?.kind === 'group' && (
+              <button
+                type="button"
+                className="conversation-leave"
+                onClick={() => void handleLeave()}
+                aria-disabled={leaving || undefined}
+              >
+                Leave group
+              </button>
+            )}
+          </div>
+          <div className="conversation-title">
+            <span className="conversation-avatar" aria-hidden="true">
+              {Array.from(title.trim())[0]?.toUpperCase() ?? '?'}
+            </span>
+            <h1 className="page-title" tabIndex={-1}>
+              {title}
+            </h1>
+            {conversation?.kind === 'personal' && (
+              <DirectActions
+                other={other}
+                isFavorite={other !== null && favorites.has(other.userId)}
+                onToggleFavorite={() => {
+                  if (!other) return
+                  if (favorites.has(other.userId)) favorites.remove(other.userId)
+                  else favorites.add(other)
+                }}
+                onBlock={() => {
+                  if (!other) return
+                  blocked.add(other)
+                  navigate('/chat')
+                }}
+              />
+            )}
+            {conversation?.kind === 'group' && (
+              <GroupActions
+                groupName={title}
+                members={members}
+                selfId={selfId}
+                onOpen={() => void loadMembers()}
+                onSetRole={service.setMemberRole ? setRole : undefined}
+                onAdd={service.addMember ? addMember : undefined}
+                onSearch={async (q) => {
+                  const r = await service.searchUsers(q)
+                  return r.ok ? r.users : null
+                }}
+                blockedIds={new Set(blocked.list.map((u) => u.userId))}
+                onRemove={service.removeMember ? removeMember : undefined}
+              />
+            )}
+          </div>
         </header>
 
         {leaveError && (
@@ -323,7 +420,10 @@ export function ConversationView({ conversationId }: ConversationViewProps) {
 
         {(status === 'loaded' || messages.length > 0) && (
           <MessageList
-            messages={messages}
+            selfId={selfId}
+            showSenderNames={conversation?.kind === 'group'}
+            memberNames={members.map((m) => m.username)}
+            messages={visibleMessages}
             events={events}
             pending={pending}
             hasMore={hasMore}
@@ -344,6 +444,7 @@ export function ConversationView({ conversationId }: ConversationViewProps) {
           <MessageComposer onSend={handleSend} autoFocus
             textareaRef={textareaRef}
             storedElsewhere={storedByRetry}
+            members={members.filter((m) => m.userId !== selfId && !blocked.has(m.userId))}
           />
         )}
       </main>

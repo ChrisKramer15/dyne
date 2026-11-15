@@ -50,7 +50,7 @@ const messagesArb: fc.Arbitrary<ChatMessage[]> = fc
   )
 
 function expectedTime(iso: string): string {
-  return new Date(iso).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })
+  return new Date(iso).toLocaleTimeString([], { timeStyle: 'short' })
 }
 
 describe('Property 9: Message rendering is complete and plain text', () => {

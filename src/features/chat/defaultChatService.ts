@@ -31,7 +31,7 @@ interface MessageRow {
 interface EventRow {
   id: string
   conversation_id: string
-  kind: 'joined' | 'left'
+  kind: 'joined' | 'left' | 'removed'
   user_id: string
   created_at: string
 }
@@ -59,6 +59,19 @@ function toSummary(r: ConversationRow): ConversationSummary {
     latestMessageAt: r.latest_message_at,
     unread: r.unread === null || r.unread === undefined ? null : Number(r.unread),
   }
+}
+
+/** Maps the database's exception names to the errors the UI understands. */
+function manageError(
+  e: DbError,
+): 'not_allowed' | 'last_admin' | 'not_a_member' | 'already_member' | 'group_full' | 'unavailable' {
+  const text = errorText(e)
+  if (text.includes('already_member')) return 'already_member'
+  if (text.includes('too_many_members')) return 'group_full'
+  if (text.includes('last_admin')) return 'last_admin'
+  if (text.includes('not_a_member')) return 'not_a_member'
+  if (text.includes('not_allowed') || e.code === '42501') return 'not_allowed'
+  return 'unavailable'
 }
 
 function errorText(e: DbError | null | undefined): string {
@@ -338,6 +351,64 @@ export function createChatService(client: SupabaseClient): ChatService {
       }
     },
 
+    async listMembers(conversationId) {
+      try {
+        const { data, error } = await withTimeout(
+          client.rpc('conversation_members', { conv: conversationId }),
+        )
+        if (error) return { ok: false, error: 'unavailable' }
+        const rows = (data ?? []) as { user_id: string; username: string; role?: string }[]
+        for (const m of rows) names.set(m.user_id, m.username)
+        return {
+          ok: true,
+          members: rows.map((m) => ({
+            userId: m.user_id,
+            username: m.username,
+            // Absent until the group-roles migration is applied.
+            role:
+              m.role === 'admin' || m.role === 'moderator' || m.role === 'member'
+                ? m.role
+                : undefined,
+          })),
+        }
+      } catch {
+        return { ok: false, error: 'unavailable' }
+      }
+    },
+
+    async addMember({ conversationId, userId }) {
+      try {
+        const { error } = await withTimeout(
+          client.rpc('add_group_member', { conv: conversationId, target: userId }),
+        )
+        return error ? { ok: false, error: manageError(error) } : { ok: true }
+      } catch {
+        return { ok: false, error: 'unavailable' }
+      }
+    },
+
+    async setMemberRole({ conversationId, userId, role }) {
+      try {
+        const { error } = await withTimeout(
+          client.rpc('set_member_role', { conv: conversationId, target: userId, new_role: role }),
+        )
+        return error ? { ok: false, error: manageError(error) } : { ok: true }
+      } catch {
+        return { ok: false, error: 'unavailable' }
+      }
+    },
+
+    async removeMember({ conversationId, userId }) {
+      try {
+        const { error } = await withTimeout(
+          client.rpc('remove_group_member', { conv: conversationId, target: userId }),
+        )
+        return error ? { ok: false, error: manageError(error) } : { ok: true }
+      } catch {
+        return { ok: false, error: 'unavailable' }
+      }
+    },
+
     async loadUnreadTotal() {
       try {
         const rows = await fetchConversations()
@@ -349,6 +420,7 @@ export function createChatService(client: SupabaseClient): ChatService {
             unread: Number(r.unread ?? 0),
             lastReadAt: r.last_read_at,
             kind: r.kind,
+            otherUserName: r.other_user_name,
           })),
         }
       } catch {

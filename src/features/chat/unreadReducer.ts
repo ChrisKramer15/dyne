@@ -8,6 +8,8 @@ export interface UnreadState {
   markers: Record<string, string>
   /** Conversation kind per id, from the last full load. */
   kinds: Record<string, ConversationKind>
+  /** DM partner's username per id (null for groups). */
+  others: Record<string, string | null>
   status: 'idle' | 'loaded' | 'failed'
 }
 
@@ -26,7 +28,7 @@ export type UnreadAction =
   | { type: 'CONVERSATION_REMOVED'; conversationId: string }
   | { type: 'RESET' }
 
-export const initialUnreadState: UnreadState = { counts: {}, markers: {}, kinds: {}, status: 'idle' }
+export const initialUnreadState: UnreadState = { counts: {}, markers: {}, kinds: {}, others: {}, status: 'idle' }
 
 /** Compares two ISO timestamps by instant; falls back to string order if unparsable. */
 function compareTime(a: string, b: string): number {
@@ -42,12 +44,14 @@ export function unreadReducer(state: UnreadState, action: UnreadAction): UnreadS
       const counts: Record<string, UnreadCount> = {}
       const markers: Record<string, string> = {}
       const kinds: Record<string, ConversationKind> = {}
+      const others: Record<string, string | null> = {}
       for (const e of action.entries) {
         counts[e.conversationId] = e.unread
         markers[e.conversationId] = e.lastReadAt
         kinds[e.conversationId] = e.kind ?? 'personal'
+        others[e.conversationId] = e.otherUserName ?? null
       }
-      return { counts, markers, kinds, status: 'loaded' }
+      return { counts, markers, kinds, others, status: 'loaded' }
     }
     case 'LOAD_FAILED':
       return state.status === 'failed' ? state : { ...state, status: 'failed' }
@@ -84,10 +88,12 @@ export function unreadReducer(state: UnreadState, action: UnreadAction): UnreadS
       const counts = { ...state.counts }
       const markers = { ...state.markers }
       const kinds = { ...state.kinds }
+      const others = { ...state.others }
       delete counts[id]
       delete markers[id]
       delete kinds[id]
-      return { ...state, counts, markers, kinds }
+      delete others[id]
+      return { ...state, counts, markers, kinds, others }
     }
     case 'RESET':
       return initialUnreadState
@@ -103,12 +109,26 @@ export function totalUnread(state: UnreadState): number {
   return total
 }
 
-/** Sum of known unread counts for one conversation kind. Entries with no known kind count as DMs. */
-export function unreadByKind(state: UnreadState, kind: ConversationKind): number {
+/** Sum of known unread counts for one conversation kind, skipping excluded ids. Entries with no known kind count as DMs. */
+export function unreadByKind(
+  state: UnreadState,
+  kind: ConversationKind,
+  exclude?: ReadonlySet<string>,
+): number {
   let total = 0
   for (const [id, c] of Object.entries(state.counts)) {
-    if (typeof c !== 'number') continue
+    if (typeof c !== 'number' || exclude?.has(id)) continue
     if ((state.kinds[id] ?? 'personal') === kind) total += c
   }
   return total
+}
+
+/** DM conversation ids whose other person is in blockedNames (lowercase usernames). */
+export function blockedDmIds(state: UnreadState, blockedNames: ReadonlySet<string>): Set<string> {
+  const ids = new Set<string>()
+  if (blockedNames.size === 0) return ids
+  for (const [id, name] of Object.entries(state.others)) {
+    if (state.kinds[id] !== 'group' && name && blockedNames.has(name.toLowerCase())) ids.add(id)
+  }
+  return ids
 }

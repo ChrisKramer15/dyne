@@ -1,6 +1,7 @@
 import { useCallback, useLayoutEffect, useRef, useState } from 'react'
 import type { ChatMessage, ConversationEvent } from './chatService'
 import { mergeTimeline } from './messageState'
+import { splitMentions } from './mentions'
 
 /** Distance from the latest message within which the list counts as "at the bottom". */
 export const NEAR_BOTTOM_PX = 50
@@ -20,6 +21,12 @@ export interface MessageListProps {
   pending?: readonly PendingMessage[]
   /** Label for pending messages' sender. */
   selfName?: string
+  /** Signed-in user; their messages render as right-aligned bubbles. */
+  selfId?: string
+  /** Usernames in the conversation; '@name' tags of these are highlighted. */
+  memberNames?: readonly string[]
+  /** Show the sender's name on other people's messages (group chats). */
+  showSenderNames?: boolean
   hasMore?: boolean
   loadingEarlier?: boolean
   onLoadEarlier?: () => void
@@ -34,6 +41,29 @@ function formatTime(iso: string): string {
   return d.toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })
 }
 
+function dayKey(iso: string): string {
+  const d = new Date(iso)
+  return Number.isNaN(d.getTime()) ? '' : d.toDateString()
+}
+
+/** Full date for the divider, e.g. "Tuesday, June 3"; the year is added for other years. */
+function dayLabel(iso: string): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  const sameYear = d.getFullYear() === new Date().getFullYear()
+  return d.toLocaleDateString([], {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    ...(sameYear ? {} : { year: 'numeric' }),
+  })
+}
+
+function timeOnly(iso: string): string {
+  const d = new Date(iso)
+  return Number.isNaN(d.getTime()) ? '' : d.toLocaleTimeString([], { timeStyle: 'short' })
+}
+
 function isNearBottom(el: HTMLElement): boolean {
   return el.scrollHeight - el.scrollTop - el.clientHeight <= NEAR_BOTTOM_PX
 }
@@ -43,6 +73,9 @@ export function MessageList({
   events,
   pending = [],
   selfName = 'You',
+  selfId,
+  memberNames = [],
+  showSenderNames = true,
   hasMore = false,
   loadingEarlier = false,
   onLoadEarlier,
@@ -55,6 +88,17 @@ export function MessageList({
   const [showJump, setShowJump] = useState(false)
 
   const timeline = mergeTimeline(messages, events)
+  const names = new Set(memberNames.map((n) => n.toLowerCase()))
+  const renderText = (text: string) =>
+    splitMentions(text, names).map((p, i) =>
+      p.type === 'mention' ? (
+        <span key={i} className="mention">
+          {p.value}
+        </span>
+      ) : (
+        p.value
+      ),
+    )
   const firstId = timeline[0]?.id
   const lastId = pending.length ? pending[pending.length - 1].id : timeline[timeline.length - 1]?.id
 
@@ -119,42 +163,68 @@ export function MessageList({
           </button>
         )}
         <ul className="message-items">
-          {timeline.map((item) =>
-            item.type === 'event' ? (
-              <li key={`e-${item.id}`} className="message-notice">
-                {item.event.userName} {item.event.kind}
-                {' '}
-                <time dateTime={item.createdAt}>{formatTime(item.createdAt)}</time>
+          {timeline.map((item, i) => {
+            const prev = timeline[i - 1]
+            const newDay = !prev || dayKey(prev.createdAt) !== dayKey(item.createdAt)
+            const divider = newDay ? (
+              <li key={`d-${item.type}-${item.id}`} className="message-day">
+                <span>{dayLabel(item.createdAt)}</span>
               </li>
-            ) : (
-              <li key={`m-${item.id}`} className="message-item">
-                <span className="message-sender">{item.message.senderName}</span>{' '}
-                <time className="message-time" dateTime={item.message.createdAt}>
-                  {formatTime(item.message.createdAt)}
-                </time>
-                <p className="message-text">{item.message.text}</p>
-              </li>
-            ),
-          )}
+            ) : null
+            if (item.type === 'event') {
+              return [
+                divider,
+                <li key={`e-${item.id}`} className="message-notice">
+                  {item.event.userName} {item.event.kind === 'removed' ? 'was removed' : item.event.kind}{' '}
+                  <time dateTime={item.createdAt}>{formatTime(item.createdAt)}</time>
+                </li>,
+              ]
+            }
+            const mine = selfId !== undefined && item.message.senderId === selfId
+            return [
+              divider,
+              <li key={`m-${item.id}`} className={`message-item ${mine ? 'is-mine' : 'is-theirs'}`}>
+                <div className="message-body">
+                  <div className="message-bubble">
+                    <span
+                      className={
+                        mine || !showSenderNames ? 'message-sender visually-hidden' : 'message-sender'
+                      }
+                    >
+                      {item.message.senderName}
+                    </span>
+                    <p className="message-text">{renderText(item.message.text)}</p>
+                  </div>
+                  <time className="message-time" dateTime={item.message.createdAt}>
+                    {timeOnly(item.message.createdAt)}
+                  </time>
+                </div>
+              </li>,
+            ]
+          })}
           {pending.map((p) => (
-            <li key={`p-${p.id}`} className={`message-item message-${p.status}`}>
-              <span className="message-sender">{selfName}</span>{' '}
-              {p.createdAt && (
-                <time className="message-time" dateTime={p.createdAt}>
-                  {formatTime(p.createdAt)}
-                </time>
-              )}
-              <p className="message-text">{p.text}</p>
-              {p.status === 'sending' ? (
-                <span className="message-status">Sending…</span>
-              ) : (
-                <span className="message-status" role="alert">
-                  Failed to send.{' '}
-                  <button type="button" onClick={() => onRetry?.(p.id)}>
-                    Retry
-                  </button>
-                </span>
-              )}
+            <li key={`p-${p.id}`} className={`message-item is-mine message-${p.status}`}>
+              <div className="message-body">
+                <div className="message-bubble">
+                  <span className="message-sender visually-hidden">{selfName}</span>
+                  <p className="message-text">{renderText(p.text)}</p>
+                </div>
+                {p.createdAt && (
+                  <time className="message-time" dateTime={p.createdAt}>
+                    {timeOnly(p.createdAt)}
+                  </time>
+                )}
+                {p.status === 'sending' ? (
+                  <span className="message-status">Sending…</span>
+                ) : (
+                  <span className="message-status" role="alert">
+                    Failed to send.{' '}
+                    <button type="button" onClick={() => onRetry?.(p.id)}>
+                      Retry
+                    </button>
+                  </span>
+                )}
+              </div>
             </li>
           ))}
         </ul>

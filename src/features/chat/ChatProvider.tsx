@@ -12,8 +12,9 @@ import type { ChatService, LeaveGroupResult } from './chatService'
 import { getDefaultChatService } from './defaultChatService'
 import { ChatContext } from './chatContext'
 import type { ChatContextValue, ChatListener } from './chatContext'
-import { initialUnreadState, totalUnread, unreadByKind, unreadReducer } from './unreadReducer'
+import { blockedDmIds, initialUnreadState, unreadByKind, unreadReducer } from './unreadReducer'
 import type { UnreadState } from './unreadReducer'
+import { useUserList } from './userLists'
 
 function compareTime(a: string, b: string): number {
   const x = Date.parse(a)
@@ -34,6 +35,7 @@ export function ChatProvider({
   const svc = useMemo(() => service ?? getDefaultChatService(), [service])
 
   const [state, dispatch] = useReducer(unreadReducer, initialUnreadState)
+  const blocked = useUserList('blocked', userId)
   const stateRef = useRef<UnreadState>(state)
   const userIdRef = useRef(userId)
   const svcRef = useRef(svc)
@@ -268,19 +270,27 @@ export function ChatProvider({
     }
   }, [])
 
+  // DMs from blocked people never count as unread.
+  const blockedKey = blocked.list.map((u) => u.username.toLowerCase()).join('|')
+  const hiddenIds = useMemo(
+    () => blockedDmIds(state, new Set(blockedKey ? blockedKey.split('|') : [])),
+    [state, blockedKey],
+  )
+
   const unreadFor = useCallback(
     (conversationId: string): number | null => {
+      if (hiddenIds.has(conversationId)) return 0
       const c = state.counts[conversationId]
       if (c === 'unknown') return null
       if (c === undefined) return state.status === 'failed' ? null : 0
       return c
     },
-    [state.counts, state.status],
+    [state.counts, state.status, hiddenIds],
   )
 
-  const total = totalUnread(state)
-  const totalDms = unreadByKind(state, 'personal')
-  const totalGroups = unreadByKind(state, 'group')
+  const totalDms = unreadByKind(state, 'personal', hiddenIds)
+  const totalGroups = unreadByKind(state, 'group', hiddenIds)
+  const total = totalDms + totalGroups
 
   const value = useMemo<ChatContextValue>(
     () => ({

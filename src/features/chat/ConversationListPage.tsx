@@ -4,7 +4,9 @@ import '../../App.css'
 import BottomNav from '../../shared/BottomNav'
 import { Pager } from '../../shared/Pager'
 import { usePagination } from '../../shared/usePagination'
+import { useAuth } from '../../auth/authContext'
 import { useChat } from './chatContext'
+import { useUserList } from './userLists'
 import type { ConversationKind, ConversationSummary } from './chatService'
 import {
   CONVERSATIONS_PER_PAGE,
@@ -73,6 +75,10 @@ function ConversationEntry({
 
 export default function ConversationListPage() {
   const chat = useChat()
+  const auth = useAuth()
+  const blocked = useUserList('blocked', auth.status === 'authenticated' ? auth.userId : undefined)
+  const blockedKey = blocked.list.map((u) => u.username.toLowerCase()).join('|')
+  const blockedNames = useMemo(() => new Set(blockedKey ? blockedKey.split('|') : []), [blockedKey])
   const { service, unreadFor, addListener } = chat
   const [state, setState] = useState<LoadState>({ status: 'loading' })
   const [showPanel, setShowPanel] = useState(false)
@@ -110,9 +116,15 @@ export default function ConversationListPage() {
     }
   }, [load, addListener])
 
+  // DMs with blocked people are left out entirely, as if they didn't exist.
   const sorted = useMemo(
-    () => (state.status === 'loaded' ? sortConversations(state.conversations) : []),
-    [state],
+    () =>
+      state.status === 'loaded'
+        ? sortConversations(state.conversations).filter(
+            (c) => c.kind !== 'personal' || !blockedNames.has((c.otherUserName ?? '').toLowerCase()),
+          )
+        : [],
+    [state, blockedNames],
   )
   const shown = useMemo(() => sorted.filter((c) => c.kind === tab), [sorted, tab])
   const { page, pageCount, visible, setPage } = usePagination(shown, CONVERSATIONS_PER_PAGE)
@@ -133,11 +145,12 @@ export default function ConversationListPage() {
 
         {showPanel && <NewConversationPanel onClose={() => setShowPanel(false)} />}
 
-        <section className="dash-section" aria-label="Conversations">
+        <section className={`dash-section chat-tab-${tab}`} aria-label="Conversations">
           {state.status === 'loaded' && sorted.length > 0 && (
             <div className="chat-toggle" role="group" aria-label="Conversation type">
               <button
                 type="button"
+                className="chat-toggle-dm"
                 aria-pressed={tab === 'personal'}
                 onClick={() => {
                   setTab('personal')
@@ -148,6 +161,7 @@ export default function ConversationListPage() {
               </button>
               <button
                 type="button"
+                className="chat-toggle-group"
                 aria-pressed={tab === 'group'}
                 onClick={() => {
                   setTab('group')

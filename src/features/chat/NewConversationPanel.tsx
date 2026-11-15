@@ -11,6 +11,7 @@ import {
 } from './chatService'
 import type { UserSummary } from './chatService'
 import { validateGroup } from './groupValidation'
+import { useUserList } from './userLists'
 import type { GroupValidationError } from './groupValidation'
 
 const SEARCH_DEBOUNCE_MS = 300
@@ -36,6 +37,7 @@ export function NewConversationPanel({ onClose }: { onClose: () => void }) {
   const auth = useAuth()
   const selfId = auth.status === 'authenticated' ? (auth.userId ?? '') : ''
   const navigate = useNavigate()
+  const blocked = useUserList('blocked', selfId || undefined)
 
   const [mode, setMode] = useState<Mode>('direct')
   const [query, setQuery] = useState('')
@@ -69,6 +71,10 @@ export function NewConversationPanel({ onClose }: { onClose: () => void }) {
     }, SEARCH_DEBOUNCE_MS)
     return () => clearTimeout(timer)
   }, [query, service])
+
+  // Blocked people don't show up in search at all.
+  const foundUsers =
+    search.status === 'done' ? search.users.filter((u) => !blocked.has(u.userId)) : []
 
   async function openPersonal(user: UserSummary) {
     if (busy) return
@@ -168,12 +174,12 @@ export function NewConversationPanel({ onClose }: { onClose: () => void }) {
           {search.status === 'too_long' && (
             <p>Search text must be 1 to {USER_SEARCH_MAX_QUERY} characters.</p>
           )}
-          {search.status === 'done' && search.users.length === 0 && <p>No users found.</p>}
+          {search.status === 'done' && foundUsers.length === 0 && <p>No users found.</p>}
         </div>
         {search.status === 'error' && <p role="alert">Users could not be searched.</p>}
-        {search.status === 'done' && search.users.length > 0 && (
+        {foundUsers.length > 0 && (
           <ul className="user-results">
-            {search.users.map((u) => (
+            {foundUsers.map((u) => (
               <li key={u.userId}>
                 <span>{u.username}</span>{' '}
                 {mode === 'direct' ? (
