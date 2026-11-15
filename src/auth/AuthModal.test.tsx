@@ -10,6 +10,7 @@ function makeService(overrides: Partial<AuthService> = {}): AuthService {
     signUp: vi.fn().mockResolvedValue({ ok: true, confirmationRequired: false }),
     requestPasswordReset: vi.fn().mockResolvedValue({ ok: true }),
     updatePassword: vi.fn().mockResolvedValue({ ok: true }),
+    updateEmail: vi.fn().mockResolvedValue({ ok: true }),
     signOut: vi.fn().mockResolvedValue(undefined),
     ...overrides,
   }

@@ -278,6 +278,33 @@ describe('auth service unit tests', () => {
     })
   })
 
+  describe('updateEmail', () => {
+    it('sends the new email to Supabase and returns ok', async () => {
+      const updateUser = vi.fn(async () => ({ error: null }))
+      const svc = createAuthService(makeUnitClient({ updateUser }), makeStorage())
+      expect(await svc.updateEmail('new@example.com')).toEqual({ ok: true })
+      expect(updateUser).toHaveBeenCalledWith({ email: 'new@example.com' })
+    })
+    it('maps email_exists to email_taken and other errors to update_unavailable', async () => {
+      const taken = createAuthService(
+        makeUnitClient({ updateUser: async () => ({ error: { code: 'email_exists' } }) }),
+        makeStorage(),
+      )
+      expect(await taken.updateEmail('a@b.co')).toEqual({ ok: false, error: 'email_taken' })
+      const failing = createAuthService(
+        makeUnitClient({ updateUser: async () => ({ error: { code: 'unexpected_failure' } }) }),
+        makeStorage(),
+      )
+      expect(await failing.updateEmail('a@b.co')).toEqual({ ok: false, error: 'update_unavailable' })
+    })
+    it('times out as update_unavailable', async () => {
+      vi.useFakeTimers()
+      const hanging = createAuthService(makeUnitClient({ updateUser: () => new Promise(() => {}) }), makeStorage())
+      const p = hanging.updateEmail('a@b.co')
+      await vi.advanceTimersByTimeAsync(SERVICE_TIMEOUT_MS)
+      expect(await p).toEqual({ ok: false, error: 'update_unavailable' })
+    })
+  })
   describe('signOut', () => {
     it('clears storage after a successful sign-out with local scope', async () => {
       const st = makeStorage()

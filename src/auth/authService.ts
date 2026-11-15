@@ -14,11 +14,17 @@ export type UpdatePasswordResult =
   | { ok: true }
   | { ok: false; error: 'update_unavailable' }
 
+export type UpdateEmailResult =
+  | { ok: true }
+  | { ok: false; error: 'email_taken' | 'update_unavailable' }
+
 export interface AuthService {
   signIn(i: { username: string; password: string; remember: boolean }): Promise<SignInResult>
   signUp(i: { username: string; email: string; password: string }): Promise<SignUpResult>
   requestPasswordReset(identifier: string): Promise<ResetResult>
   updatePassword(newPassword: string): Promise<UpdatePasswordResult>
+  /** Starts an email change. Supabase emails a confirmation link; the address changes once it is followed. */
+  updateEmail(newEmail: string): Promise<UpdateEmailResult>
   signOut(): Promise<void>
 }
 
@@ -102,7 +108,7 @@ export interface AuthServiceClient {
       data: { session: unknown; user: { identities?: unknown[] } | null }
       error: unknown
     }>
-    updateUser(args: { password: string }): PromiseLike<{ error: unknown }>
+    updateUser(args: { password: string } | { email: string }): PromiseLike<{ error: unknown }>
     signOut(args?: { scope?: 'global' | 'local' | 'others' }): PromiseLike<{ error: unknown }>
   }
   functions: {
@@ -187,6 +193,18 @@ export function createAuthService(client: AuthServiceClient, storage: Switchable
       }
     },
 
+    async updateEmail(newEmail) {
+      try {
+        const { error } = await withTimeout(client.auth.updateUser({ email: newEmail }))
+        if (error) {
+          const code = String(field(error, 'code') ?? '')
+          return { ok: false, error: code === 'email_exists' ? 'email_taken' : 'update_unavailable' }
+        }
+        return { ok: true }
+      } catch {
+        return { ok: false, error: 'update_unavailable' }
+      }
+    },
     async signOut() {
       try {
         const { error } = await withTimeout(client.auth.signOut({ scope: 'local' }))

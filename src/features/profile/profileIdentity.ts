@@ -29,12 +29,3 @@ export function daysSince(iso: string | undefined, now: Date = new Date()): numb
   if (Number.isNaN(date.getTime())) return null
   return Math.max(0, Math.floor((now.getTime() - date.getTime()) / 86_400_000))
 }
-
-/** Time-of-day greeting for the player card. */
-export function greetingFor(now: Date = new Date()): string {
-  const h = now.getHours()
-  if (h < 5) return 'Burning the midnight oil'
-  if (h < 12) return 'Good morning'
-  if (h < 18) return 'Good afternoon'
-  return 'Good evening'
-}

@@ -16,6 +16,7 @@ const serviceWith = (signOut: AuthService['signOut']): AuthService => ({
   signUp: vi.fn(),
   requestPasswordReset: vi.fn(),
   updatePassword: vi.fn(),
+  updateEmail: vi.fn(),
   signOut,
 })
 
@@ -47,6 +48,170 @@ describe('ProfilePage', () => {
     cleanup()
     renderProfile(serviceWith(vi.fn()), { status: 'authenticated', userMetadata: {} })
     expect(screen.queryByText('Username')).toBeNull()
+  })
+
+  it('shows days, favorites and blocked as three cards in one row', () => {
+    localStorage.clear()
+    renderProfile(serviceWith(vi.fn()), {
+      status: 'authenticated',
+      userMetadata: { username: 'Ada' },
+      userId: 'stats-empty',
+      createdAt: new Date(Date.now() - 3 * 86_400_000).toISOString(),
+    } as AuthState)
+    const cards = screen.getByRole('region', { name: 'Your stats' }).querySelectorAll('li')
+    expect(cards).toHaveLength(3)
+    expect(cards[0].textContent).toBe('3days on Dyne')
+    expect(cards[1].textContent).toBe('0Favorites')
+    expect(cards[2].textContent).toBe('0Blocked')
+    expect(screen.queryByText('Your journey')).toBeNull()
+    expect(screen.queryByText(/weeks in the game/)).toBeNull()
+  })
+
+  it('keeps the lists hidden until a card is clicked, then shows them in a modal', async () => {
+    localStorage.clear()
+    localStorage.setItem('dyne:favorites:lists-user', JSON.stringify([{ userId: 'u1', username: 'Grace' }]))
+    localStorage.setItem('dyne:blocked:lists-user', JSON.stringify([{ userId: 'u2', username: 'Linus' }]))
+    const user = userEvent.setup()
+    renderProfile(serviceWith(vi.fn()), { ...authed, userId: 'lists-user' } as AuthState)
+    expect(screen.queryByText('Grace')).toBeNull()
+    expect(screen.queryByText('Linus')).toBeNull()
+
+    await user.click(screen.getByRole('button', { name: /Favorites/ }))
+    const favorites = screen.getByRole('dialog', { name: 'Favorites' })
+    expect(within(favorites).getByText('Grace')).toBeTruthy()
+    expect(within(favorites).queryByText('Linus')).toBeNull()
+    await user.click(within(favorites).getByRole('button', { name: 'Close' }))
+
+    await user.click(screen.getByRole('button', { name: /Blocked/ }))
+    const blocked = screen.getByRole('dialog', { name: 'Blocked users' })
+    expect(within(blocked).getByText('Linus')).toBeTruthy()
+    expect(within(blocked).queryByText('Grace')).toBeNull()
+  })
+
+  it('the x next to a person removes them and updates the count and saved list', async () => {
+    localStorage.clear()
+    localStorage.setItem(
+      'dyne:favorites:remove-user',
+      JSON.stringify([
+        { userId: 'u1', username: 'Grace' },
+        { userId: 'u2', username: 'Linus' },
+      ]),
+    )
+    const user = userEvent.setup()
+    renderProfile(serviceWith(vi.fn()), { ...authed, userId: 'remove-user' } as AuthState)
+    await user.click(screen.getByRole('button', { name: /Favorites/ }))
+    const dialog = screen.getByRole('dialog', { name: 'Favorites' })
+    await user.click(within(dialog).getByRole('button', { name: 'Remove Grace from favorites' }))
+    expect(within(dialog).queryByText('Grace')).toBeNull()
+    expect(within(dialog).getByText('Linus')).toBeTruthy()
+    expect(JSON.parse(localStorage.getItem('dyne:favorites:remove-user')!)).toEqual([
+      { userId: 'u2', username: 'Linus' },
+    ])
+    await user.click(within(dialog).getByRole('button', { name: 'Remove Linus from favorites' }))
+    expect(within(dialog).getByText('No favorites yet.')).toBeTruthy()
+    await user.click(within(dialog).getByRole('button', { name: 'Close' }))
+    expect(screen.getByRole('button', { name: /Favorites/ }).textContent).toBe('0Favorites')
+  })
+  it('has no greeting line', () => {
+    renderProfile(serviceWith(vi.fn()))
+    expect(screen.queryByText(/good (morning|afternoon|evening)|midnight oil/i)).toBeNull()
+  })
+
+  it('offers 50 avatars, saves the pick, and can go back to initials', async () => {
+    localStorage.clear()
+    const user = userEvent.setup()
+    renderProfile(serviceWith(vi.fn()), { ...authed, userId: 'avatar-user' } as AuthState)
+    const card = screen.getByRole('region', { name: 'Player card' })
+    expect(card.querySelector('.profile-avatar')?.textContent).toBe('A')
+
+    await user.click(screen.getByRole('button', { name: 'Change avatar' }))
+    const dialog = screen.getByRole('dialog', { name: 'Choose an avatar' })
+    expect(within(dialog).getAllByRole('button', { pressed: false })).toHaveLength(50)
+
+    await user.click(within(dialog).getByRole('button', { name: 'Fox' }))
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(card.querySelector('.profile-avatar')?.textContent).toBe('🦊')
+    expect(localStorage.getItem('dyne:avatar:avatar-user')).toBe('fox')
+
+    await user.click(screen.getByRole('button', { name: 'Change avatar' }))
+    expect(screen.getByRole('button', { name: 'Fox' }).getAttribute('aria-pressed')).toBe('true')
+    await user.click(screen.getByRole('button', { name: 'Use my initials' }))
+    expect(card.querySelector('.profile-avatar')?.textContent).toBe('A')
+    expect(localStorage.getItem('dyne:avatar:avatar-user')).toBeNull()
+  })
+
+  it('places the avatar button before the avatar and the edit button after it', () => {
+    renderProfile(serviceWith(vi.fn()))
+    const row = screen.getByRole('region', { name: 'Player card' }).querySelector('.profile-avatar-row')!
+    const kids = Array.from(row.children)
+    expect(kids[0].getAttribute('aria-label')).toBe('Change avatar')
+    expect(kids[1].classList.contains('profile-avatar')).toBe(true)
+    expect(kids[2].getAttribute('aria-label')).toMatch(/^Edit profile/)
+  })
+
+  describe('edit profile', () => {
+    const withEmail = (id: string): AuthState =>
+      ({ status: 'authenticated', userMetadata: { username: 'Ada' }, userId: id, email: 'ada@example.com' }) as AuthState
+
+    async function openEdit(service: AuthService, id: string) {
+      const user = userEvent.setup()
+      renderProfile(service, withEmail(id))
+      await user.click(screen.getByRole('button', { name: 'Edit profile' }))
+      return { user, dialog: screen.getByRole('dialog', { name: 'Edit profile' }) }
+    }
+
+    it('requests an email change and says to check the inbox', async () => {
+      const updateEmail = vi.fn().mockResolvedValue({ ok: true })
+      const { user, dialog } = await openEdit({ ...serviceWith(vi.fn()), updateEmail }, 'edit-1')
+      const save = within(dialog).getByRole('button', { name: 'Save email' }) as HTMLButtonElement
+      expect(save.disabled).toBe(true)
+      const input = within(dialog).getByLabelText('Email')
+      await user.clear(input)
+      await user.type(input, 'new@example.com')
+      await user.click(save)
+      expect(updateEmail).toHaveBeenCalledWith('new@example.com')
+      expect((await within(dialog).findByRole('status')).textContent).toMatch(/new@example\.com/)
+    })
+
+    it('rejects an invalid email without calling the service', async () => {
+      const updateEmail = vi.fn()
+      const { user, dialog } = await openEdit({ ...serviceWith(vi.fn()), updateEmail }, 'edit-2')
+      const input = within(dialog).getByLabelText('Email')
+      await user.clear(input)
+      await user.type(input, 'nope')
+      await user.click(within(dialog).getByRole('button', { name: 'Save email' }))
+      expect((await within(dialog).findByRole('alert')).textContent).toMatch(/valid email/i)
+      expect(updateEmail).not.toHaveBeenCalled()
+    })
+
+    it('shows an error when the email is taken or the service fails', async () => {
+      const updateEmail = vi
+        .fn()
+        .mockResolvedValueOnce({ ok: false, error: 'email_taken' })
+        .mockResolvedValueOnce({ ok: false, error: 'update_unavailable' })
+      const { user, dialog } = await openEdit({ ...serviceWith(vi.fn()), updateEmail }, 'edit-3')
+      const input = within(dialog).getByLabelText('Email')
+      await user.clear(input)
+      await user.type(input, 'taken@example.com')
+      await user.click(within(dialog).getByRole('button', { name: 'Save email' }))
+      expect((await within(dialog).findByRole('alert')).textContent).toMatch(/already in use/i)
+      await user.click(within(dialog).getByRole('button', { name: 'Save email' }))
+      await waitFor(() => expect(within(dialog).getByRole('alert').textContent).toMatch(/couldn.t update/i))
+    })
+
+    it('offers 15 neon colors; picking one recolours the page and saves it', async () => {
+      localStorage.clear()
+      const { user, dialog } = await openEdit(serviceWith(vi.fn()), 'color-user')
+      const swatches = within(dialog).getAllByRole('button', { pressed: false })
+      expect(swatches.filter((b) => b.classList.contains('color-swatch'))).toHaveLength(15)
+      await user.click(within(dialog).getByRole('button', { name: 'Green' }))
+      expect(within(dialog).getByRole('button', { name: 'Green' }).getAttribute('aria-pressed')).toBe('true')
+      expect(localStorage.getItem('dyne:accent:color-user')).toBe('green')
+      expect(document.querySelector<HTMLElement>('.app-shell')!.style.getPropertyValue('--hue')).toBe('130')
+      expect(document.querySelector<HTMLElement>('.bottom-nav')!.style.getPropertyValue('--nav-accent')).toBe(
+        'hsl(130 100% 62%)',
+      )
+    })
   })
 
   it('marks Profile as the current page in the bottom nav', () => {

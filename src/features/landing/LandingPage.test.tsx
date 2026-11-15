@@ -45,6 +45,7 @@ describe('LandingPage', () => {
           signUp: vi.fn(),
           requestPasswordReset: vi.fn(),
           updatePassword: vi.fn(),
+          updateEmail: vi.fn(),
           signOut: vi.fn(),
         }}
       />,
@@ -67,6 +68,7 @@ describe('LandingPage', () => {
     signUp: vi.fn(),
     requestPasswordReset: vi.fn(),
     updatePassword: vi.fn(),
+    updateEmail: vi.fn(),
     signOut: vi.fn(),
   })
 

@@ -22,6 +22,8 @@ export type FieldError =
   | { field: 'confirmPassword'; code: 'mismatch' }
 
 /** True when the value is empty or whitespace only. */
+export const isValidEmail = (s: string): boolean => s.length <= LIMITS.email && EMAIL_RE.test(s)
+
 export const isBlank = (s: string): boolean => s.trim() === ''
 
 /**

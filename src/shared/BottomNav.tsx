@@ -1,5 +1,7 @@
-import type { ReactNode } from 'react'
+import { useContext, type CSSProperties, type ReactNode } from 'react'
 import { NavLink } from 'react-router'
+import { AuthContext } from '../auth/authContext'
+import { accentCss, useAccentColor } from '../features/profile/accentColor'
 import { useChatUnread } from '../features/chat/chatContext'
 import UnreadAlertIcon from '../features/chat/UnreadAlertIcon'
 import { chatNavLabel } from '../features/chat/unreadBadge'
@@ -57,8 +59,15 @@ function Bubble({ icon, label, badges }: { icon: ReactNode; label: string; badge
 /** Fixed bottom navigation shared by the signed-in pages. */
 export default function BottomNav() {
   const { total, totalDms, totalGroups } = useChatUnread()
+  // Read the context directly: some callers render the nav without an auth provider.
+  const auth = useContext(AuthContext)
+  const { accent } = useAccentColor(auth?.status === 'authenticated' ? auth.userId : undefined)
   return (
-    <nav className="bottom-nav" aria-label="Primary">
+    <nav
+      className="bottom-nav"
+      aria-label="Primary"
+      style={accent ? ({ '--nav-accent': accentCss(accent.hue) } as CSSProperties) : undefined}
+    >
       <ul>
         {NAV_ITEMS.map((item) => (
           <li key={item.label}>
