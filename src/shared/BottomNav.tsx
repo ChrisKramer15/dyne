@@ -40,13 +40,14 @@ const NAV_ITEMS: readonly NavItem[] = [
   },
 ]
 
-function Bubble({ icon, label }: { icon: ReactNode; label: string }) {
+function Bubble({ icon, label, badges }: { icon: ReactNode; label: string; badges?: ReactNode }) {
   return (
     <>
       <span className="nav-bubble" aria-hidden="true">
         <svg viewBox="0 0 24 24" focusable="false">
           {icon}
         </svg>
+        {badges}
       </span>
       <span className="nav-label">{label}</span>
     </>
@@ -55,7 +56,7 @@ function Bubble({ icon, label }: { icon: ReactNode; label: string }) {
 
 /** Fixed bottom navigation shared by the signed-in pages. */
 export default function BottomNav() {
-  const { total } = useChatUnread()
+  const { total, totalDms, totalGroups } = useChatUnread()
   return (
     <nav className="bottom-nav" aria-label="Primary">
       <ul>
@@ -70,8 +71,16 @@ export default function BottomNav() {
                   className="nav-item"
                   aria-label={chatNavLabel(total)}
                 >
-                  <Bubble icon={item.icon} label={item.label} />
-                  <UnreadAlertIcon count={total} />
+                  <Bubble
+                    icon={item.icon}
+                    label={item.label}
+                    badges={
+                      <>
+                        <UnreadAlertIcon count={totalDms} variant="dm" />
+                        <UnreadAlertIcon count={totalGroups} variant="group" />
+                      </>
+                    }
+                  />
                 </NavLink>
               ) : (
                 <NavLink to={item.to} end className="nav-item">

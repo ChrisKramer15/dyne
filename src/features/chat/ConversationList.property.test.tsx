@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { render, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import fc from 'fast-check'
 import { MemoryRouter } from 'react-router'
 import { AuthContext } from '../../auth/authContext'
@@ -45,7 +45,10 @@ describe('Property 16: Unread entries follow the unread count in emphasis', () =
   // **Validates: Requirements 9.5, 9.9**
   it('emphasises exactly the entries with a positive unread count and shows the capped badge', async () => {
     await fc.assert(
-      fc.asyncProperty(rowsArb, async (rows) => {
+      fc.asyncProperty(rowsArb, async (allRows) => {
+        // The list shows one kind at a time (DMs or Group Chats), so test the kind of the first row.
+        const showGroups = allRows[0].group
+        const rows = allRows.filter((r) => r.group === showGroups)
         const conversations: ConversationSummary[] = rows.map((r, i) => ({
           id: `c${i}`,
           kind: r.group ? 'group' : 'personal',
@@ -67,6 +70,7 @@ describe('Property 16: Unread entries follow the unread count in emphasis', () =
           </MemoryRouter>,
         )
         try {
+          if (showGroups) fireEvent.click(await screen.findByRole('button', { name: 'Group Chats' }))
           await waitFor(() => {
             expect(container.querySelectorAll('li.conversation-item').length).toBe(rows.length)
             // Wait until the provider's counts are loaded.

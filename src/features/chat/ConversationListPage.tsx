@@ -5,7 +5,7 @@ import BottomNav from '../../shared/BottomNav'
 import { Pager } from '../../shared/Pager'
 import { usePagination } from '../../shared/usePagination'
 import { useChat } from './chatContext'
-import type { ConversationSummary } from './chatService'
+import type { ConversationKind, ConversationSummary } from './chatService'
 import {
   CONVERSATIONS_PER_PAGE,
   displayName,
@@ -76,6 +76,7 @@ export default function ConversationListPage() {
   const { service, unreadFor, addListener } = chat
   const [state, setState] = useState<LoadState>({ status: 'loading' })
   const [showPanel, setShowPanel] = useState(false)
+  const [tab, setTab] = useState<ConversationKind>('personal')
   const requestId = useRef({ value: 0 })
 
   const load = useCallback(
@@ -113,7 +114,8 @@ export default function ConversationListPage() {
     () => (state.status === 'loaded' ? sortConversations(state.conversations) : []),
     [state],
   )
-  const { page, pageCount, visible, setPage } = usePagination(sorted, CONVERSATIONS_PER_PAGE)
+  const shown = useMemo(() => sorted.filter((c) => c.kind === tab), [sorted, tab])
+  const { page, pageCount, visible, setPage } = usePagination(shown, CONVERSATIONS_PER_PAGE)
 
   return (
     <div className="app-shell">
@@ -132,6 +134,30 @@ export default function ConversationListPage() {
         {showPanel && <NewConversationPanel onClose={() => setShowPanel(false)} />}
 
         <section className="dash-section" aria-label="Conversations">
+          {state.status === 'loaded' && sorted.length > 0 && (
+            <div className="chat-toggle" role="group" aria-label="Conversation type">
+              <button
+                type="button"
+                aria-pressed={tab === 'personal'}
+                onClick={() => {
+                  setTab('personal')
+                  setPage(0)
+                }}
+              >
+                DMs
+              </button>
+              <button
+                type="button"
+                aria-pressed={tab === 'group'}
+                onClick={() => {
+                  setTab('group')
+                  setPage(0)
+                }}
+              >
+                Group Chats
+              </button>
+            </div>
+          )}
           {state.status === 'loading' && (
             <p className="loading" role="status">
               Loading…

@@ -63,6 +63,8 @@ export interface UnreadEntry {
   conversationId: string
   unread: number
   lastReadAt: string
+  /** DM or group; lets the nav badge split unread counts. Missing is treated as a DM. */
+  kind?: ConversationKind
 }
 
 export type Unsubscribe = () => void

@@ -12,7 +12,7 @@ import type { ChatService, LeaveGroupResult } from './chatService'
 import { getDefaultChatService } from './defaultChatService'
 import { ChatContext } from './chatContext'
 import type { ChatContextValue, ChatListener } from './chatContext'
-import { initialUnreadState, totalUnread, unreadReducer } from './unreadReducer'
+import { initialUnreadState, totalUnread, unreadByKind, unreadReducer } from './unreadReducer'
 import type { UnreadState } from './unreadReducer'
 
 function compareTime(a: string, b: string): number {
@@ -116,8 +116,10 @@ export function ChatProvider({
     [sleep],
   )
   const markReadRef = useRef(markRead)
+  const refreshRef = useRef(refresh)
   useLayoutEffect(() => {
     markReadRef.current = markRead
+    refreshRef.current = refresh
   })
 
   // Session lifecycle: load unread, subscribe, reset on sign-out / user change.
@@ -150,6 +152,8 @@ export function ChatProvider({
               latestRef.current[m.conversationId] = m.createdAt
               void markReadRef.current(m.conversationId, m.createdAt)
             } else {
+              // A conversation we have no kind for (e.g. a brand-new one): reload so the nav badge can classify it.
+              if (!(m.conversationId in stateRef.current.kinds)) void refreshRef.current()
               dispatch({
                 type: 'MESSAGE_RECEIVED',
                 conversationId: m.conversationId,
@@ -275,11 +279,15 @@ export function ChatProvider({
   )
 
   const total = totalUnread(state)
+  const totalDms = unreadByKind(state, 'personal')
+  const totalGroups = unreadByKind(state, 'group')
 
   const value = useMemo<ChatContextValue>(
     () => ({
       service: svc,
       total,
+      totalDms,
+      totalGroups,
       unreadFor,
       markRead,
       openConversation,
@@ -292,6 +300,8 @@ export function ChatProvider({
     [
       svc,
       total,
+      totalDms,
+      totalGroups,
       unreadFor,
       markRead,
       openConversation,

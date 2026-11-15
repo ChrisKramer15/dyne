@@ -13,6 +13,10 @@ export interface ChatContextValue {
   service: ChatService
   /** Total_Unread_Count (unknown counts contribute 0). */
   total: number
+  /** Unread messages in DMs. */
+  totalDms: number
+  /** Unread messages in group chats. */
+  totalGroups: number
   /** Unread count for one conversation; null when it could not be retrieved. */
   unreadFor(conversationId: string): number | null
   /**
@@ -43,7 +47,11 @@ export function useChat(): ChatContextValue {
 }
 
 /** Safe outside a ChatProvider: reports no unread messages. */
-export function useChatUnread(): { total: number } {
+export function useChatUnread(): { total: number; totalDms: number; totalGroups: number } {
   const value = useContext(ChatContext)
-  return { total: value?.total ?? 0 }
+  return {
+    total: value?.total ?? 0,
+    totalDms: value?.totalDms ?? 0,
+    totalGroups: value?.totalGroups ?? 0,
+  }
 }

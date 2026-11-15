@@ -1,3 +1,4 @@
+import { useMemo, useState } from 'react'
 import '../../App.css'
 import BottomNav from '../../shared/BottomNav'
 import { LEAGUES, LEAGUES_PER_PAGE, LEAGUE_TYPE_ACCENT, ordinal, type League } from './leaguesData'
@@ -20,10 +21,11 @@ function LeagueCard({ league }: { league: League }) {
   return (
     <li>
       <article className={`league-card accent-${LEAGUE_TYPE_ACCENT[league.leagueType]}`} aria-labelledby={`league-${league.id}`}>
+        <div className="league-pic" aria-hidden="true">
+          {league.emoji}
+        </div>
+        <div className="league-body">
         <div className="league-top">
-          <span className="league-pic" aria-hidden="true">
-            {league.emoji}
-          </span>
           <div className="league-info">
             <h3 id={`league-${league.id}`} className="league-name">
               {league.name}
@@ -46,14 +48,24 @@ function LeagueCard({ league }: { league: League }) {
           )}
           {m.status === 'upcoming' && <span className="matchup-note">{m.note}</span>}
         </div>
+        </div>
       </article>
     </li>
   )
 }
 
 export default function LeaguesPage() {
-  const { page, pageCount, visible, setPage } = usePagination(LEAGUES, LEAGUES_PER_PAGE)
-  const liveCount = LEAGUES.filter((l) => l.matchup.status === 'live').length
+  const [sport, setSport] = useState('all')
+  const sports = useMemo(() => [...new Set(LEAGUES.map((l) => l.sport))].sort((a, b) => a.localeCompare(b)), [])
+  const leagues = useMemo(
+    () =>
+      LEAGUES.filter((l) => sport === 'all' || l.sport === sport).sort((a, b) =>
+        a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
+      ),
+    [sport],
+  )
+  const { page, pageCount, visible, setPage } = usePagination(leagues, LEAGUES_PER_PAGE)
+  const liveCount = leagues.filter((l) => l.matchup.status === 'live').length
 
   return (
     <div className="app-shell">
@@ -65,21 +77,39 @@ export default function LeaguesPage() {
         </header>
 
         <p className="leagues-summary">
-          {LEAGUES.length} leagues · {liveCount} live now
+          {leagues.length} leagues · {liveCount} live now
         </p>
 
         <section className="dash-section" aria-labelledby="my-leagues">
           <h2 id="my-leagues" className="dash-heading">
             My leagues
           </h2>
-          {LEAGUES.length > 0 ? (
+            <div className="league-filter">
+              <label htmlFor="sport-filter">Sport</label>
+              <select
+                id="sport-filter"
+                value={sport}
+                onChange={(e) => {
+                  setSport(e.target.value)
+                  setPage(0)
+                }}
+              >
+                <option value="all">All sports</option>
+                {sports.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </div>
+          {leagues.length > 0 ? (
             <ul className="league-list">
               {visible.map((l) => (
                 <LeagueCard key={l.id} league={l} />
               ))}
             </ul>
           ) : (
-            <p className="empty-state">No leagues yet.</p>
+            <p className="empty-state">{LEAGUES.length > 0 ? 'No leagues for this sport.' : 'No leagues yet.'}</p>
           )}
           <Pager label="Leagues pages" page={page} pageCount={pageCount} onPageChange={setPage} />
         </section>

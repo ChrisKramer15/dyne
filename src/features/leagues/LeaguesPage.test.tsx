@@ -30,7 +30,9 @@ describe('LeaguesPage', () => {
 
   it('shows a card for every league with record, rank and opponent', () => {
     renderLeagues()
-    const firstPage = LEAGUES.slice(0, LEAGUES_PER_PAGE)
+    const firstPage = [...LEAGUES]
+      .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }))
+      .slice(0, LEAGUES_PER_PAGE)
     expect(cards()).toHaveLength(firstPage.length)
     for (const l of firstPage) {
       const card = screen.getByRole('article', { name: l.name })
@@ -40,11 +42,20 @@ describe('LeaguesPage', () => {
     }
   })
 
-  it('has no sport filter', () => {
+  it('lists leagues alphabetically by name', () => {
     renderLeagues()
-    expect(screen.queryByRole('group', { name: 'Filter by sport' })).toBeNull()
+    const names = cards().map((c) => c.querySelector('h3')?.textContent ?? '')
+    expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' })))
   })
-
+  it('filters by sport', async () => {
+    const user = userEvent.setup()
+    renderLeagues()
+    const sport = LEAGUES[0].sport
+    await user.selectOptions(screen.getByLabelText('Sport'), sport)
+    const expected = LEAGUES.filter((l) => l.sport === sport).length
+    expect(cards()).toHaveLength(Math.min(expected, LEAGUES_PER_PAGE))
+    for (const c of cards()) expect(c.textContent).toContain(sport)
+  })
   it('marks Leagues as the current page in the bottom nav', () => {
     renderLeagues()
     const nav = screen.getByRole('navigation', { name: 'Primary' })

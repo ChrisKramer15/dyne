@@ -348,6 +348,7 @@ export function createChatService(client: SupabaseClient): ChatService {
             conversationId: r.conversation_id,
             unread: Number(r.unread ?? 0),
             lastReadAt: r.last_read_at,
+            kind: r.kind,
           })),
         }
       } catch {
