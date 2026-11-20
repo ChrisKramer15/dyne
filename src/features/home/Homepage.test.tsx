@@ -1,9 +1,10 @@
-import { describe, it, expect, afterEach } from 'vitest'
+import { describe, it, expect, afterEach, vi } from 'vitest'
 import { render, cleanup, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter } from 'react-router'
+import { MemoryRouter, Route, Routes } from 'react-router'
 import Homepage from './Homepage'
 import { ALERTS_PER_PAGE, SPORTS } from './homeData'
+import type { LeagueService } from '../leagues/wizard/leagueService'
 
 const renderHome = () =>
   render(
@@ -115,5 +116,70 @@ describe('Homepage structure and accessibility', () => {
     for (const n of names) {
       expect(within(region).getByRole('button', { name: `Create a ${n} Baseball league` })).toBeTruthy()
     }
+  })
+})
+describe('Homepage create league wizard', () => {
+  afterEach(() => cleanup())
+
+  const card = (format: string) => screen.getByRole('button', { name: `Create a ${format} Baseball league` })
+  const dialog = () => screen.queryByRole('dialog', { name: 'Create a league' })
+
+  it.each([
+    ['click', async (u: ReturnType<typeof userEvent.setup>) => u.click(card('Guillotine'))],
+    ['Enter', async (u: ReturnType<typeof userEvent.setup>) => { card('Guillotine').focus(); await u.keyboard('{Enter}') }],
+    ['Space', async (u: ReturnType<typeof userEvent.setup>) => { card('Guillotine').focus(); await u.keyboard(' ') }],
+  ])('%s opens the wizard with the card format (1.1, 1.3)', async (_label, act) => {
+    const user = userEvent.setup()
+    renderHome()
+    expect(dialog()).toBeNull()
+    await act(user)
+    expect(dialog()).not.toBeNull()
+    expect(screen.getByRole('radio', { name: /Guillotine/ })).toBeChecked()
+    expect(screen.getAllByRole('radio').filter((r) => (r as HTMLInputElement).checked)).toHaveLength(1)
+  })
+
+  it('returns focus to the card when the wizard closes (1.4)', async () => {
+    const user = userEvent.setup()
+    renderHome()
+    await user.click(card('Keeper'))
+    expect(dialog()).not.toBeNull()
+    await user.keyboard('{Escape}')
+    expect(dialog()).toBeNull()
+    expect(document.activeElement).toBe(card('Keeper'))
+  })
+
+  it('focuses the Create league heading when the card is gone (1.4)', async () => {
+    const user = userEvent.setup()
+    renderHome()
+    const opener = card('Redraft')
+    await user.click(opener)
+    opener.remove()
+    await user.keyboard('{Escape}')
+    expect(dialog()).toBeNull()
+    expect(document.activeElement).toBe(document.getElementById('dash-join'))
+  })
+
+  it('navigates to /leagues after a successful creation (8.4)', async () => {
+    const user = userEvent.setup()
+    const leagueService: LeagueService = {
+      createLeague: vi.fn(async () => ({ ok: true as const, leagueId: 'l1' })),
+    }
+    render(
+      <MemoryRouter initialEntries={['/home']}>
+        <Routes>
+          <Route path="/home" element={<Homepage leagueService={leagueService} />} />
+          <Route path="/leagues" element={<p>Leagues page</p>} />
+        </Routes>
+      </MemoryRouter>,
+    )
+    await user.click(card('Dynasty'))
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Next' }))
+    await user.type(screen.getByLabelText('League name'), 'Sandlot Kings')
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Next' }))
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Next' }))
+    await user.click(screen.getByRole('button', { name: 'Create league' }))
+    expect(await screen.findByText('Leagues page')).toBeTruthy()
+    expect(leagueService.createLeague).toHaveBeenCalledTimes(1)
+    expect(dialog()).toBeNull()
   })
 })

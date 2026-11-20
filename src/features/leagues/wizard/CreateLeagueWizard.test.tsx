@@ -1,0 +1,385 @@
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { CreateLeagueWizard } from './CreateLeagueWizard'
+import {
+  GENERIC_FAILURE_MESSAGE,
+  LEAGUE_SUBMIT_TIMEOUT_MS,
+  TIMEOUT_MESSAGE,
+  type CreateLeagueResult,
+  type LeagueService,
+} from './leagueService'
+
+function makeService(impl?: LeagueService['createLeague']): LeagueService {
+  return {
+    createLeague: vi.fn(impl ?? (async () => ({ ok: true, leagueId: 'league-1' }) as CreateLeagueResult)),
+  }
+}
+
+function renderWizard(opts: { format?: string; service?: LeagueService } = {}) {
+  const service = opts.service ?? makeService()
+  const onClose = vi.fn()
+  const onCreated = vi.fn()
+  render(
+    <CreateLeagueWizard
+      format={opts.format ?? 'Dynasty'}
+      service={service}
+      onClose={onClose}
+      onCreated={onCreated}
+    />,
+  )
+  return { service, onClose, onCreated }
+}
+
+const next = () => screen.getByRole('button', { name: 'Next' })
+const back = () => screen.getByRole('button', { name: 'Back' })
+const closeBtn = () => screen.getByRole('button', { name: 'Close' })
+const create = () => screen.getByRole('button', { name: 'Create league' })
+const nameInput = () => screen.getByLabelText('League name')
+
+/** Format -> Details (valid name) -> Settings -> Review, with real timers. */
+async function reachReview(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(next())
+  await user.type(nameInput(), 'Sandlot Kings')
+  await user.click(next())
+  await user.click(next())
+}
+
+/** Same walk without user-event, safe under fake timers. */
+function reachReviewSync() {
+  fireEvent.click(next())
+  fireEvent.change(nameInput(), { target: { value: 'Sandlot Kings' } })
+  fireEvent.click(next())
+  fireEvent.click(next())
+}
+
+function deferred<T>() {
+  let resolve!: (v: T) => void
+  const promise = new Promise<T>((r) => {
+    resolve = r
+  })
+  return { promise, resolve }
+}
+
+afterEach(() => {
+  vi.useRealTimers()
+})
+
+describe('CreateLeagueWizard dialog shell', () => {
+  it('renders a modal dialog named "Create a league" (1.5)', () => {
+    renderWizard()
+    const dialog = screen.getByRole('dialog', { name: 'Create a league' })
+    expect(dialog).toHaveAttribute('aria-modal', 'true')
+    expect(dialog).not.toHaveAttribute('aria-busy')
+  })
+
+  it('focuses the first interactive element of the Format step on open (1.2)', () => {
+    renderWizard()
+    const active = document.activeElement as HTMLInputElement
+    expect(active.type).toBe('radio')
+    expect(screen.getByRole('group', { name: 'League format' }).contains(active)).toBe(true)
+  })
+
+  it('selects only the opening format (1.1)', () => {
+    renderWizard({ format: 'Guillotine' })
+    expect(screen.getByRole('radio', { name: /Guillotine/ })).toBeChecked()
+    expect(screen.getAllByRole('radio').filter((r) => (r as HTMLInputElement).checked)).toHaveLength(1)
+  })
+
+  it('wraps Tab from the last control to the first and Shift+Tab back (1.6, 9.9)', async () => {
+    const user = userEvent.setup()
+    renderWizard()
+    // Back is disabled on step 1, so Next is the last focusable control.
+    next().focus()
+    await user.tab()
+    expect(document.activeElement).toBe(closeBtn())
+    await user.tab({ shift: true })
+    expect(document.activeElement).toBe(next())
+  })
+})
+
+describe('CreateLeagueWizard steps', () => {
+  it('shows step titles and status text as the user moves (2.x)', async () => {
+    const user = userEvent.setup()
+    renderWizard()
+    expect(screen.getByText('Step 1 of 4: Format')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Format' })).toBeInTheDocument()
+
+    await user.click(next())
+    expect(screen.getByText('Step 2 of 4: Details')).toBeInTheDocument()
+    expect(document.activeElement).toBe(screen.getByRole('heading', { name: 'Details' }))
+
+    const progress = screen.getByRole('list', { name: 'Progress' })
+    const items = within(progress).getAllByRole('listitem')
+    expect(items).toHaveLength(4)
+    expect(items[1]).toHaveAttribute('aria-current', 'step')
+    expect(items[0]).not.toHaveAttribute('aria-current')
+    expect(items[2]).not.toHaveAttribute('aria-current')
+  })
+
+  it('disables Back on the Format step and enables it afterwards (6.4)', async () => {
+    const user = userEvent.setup()
+    renderWizard()
+    expect(back()).toBeDisabled()
+    await user.click(next())
+    expect(back()).toBeEnabled()
+  })
+
+  it('replaces Next with Create league on Review (6.7)', async () => {
+    const user = userEvent.setup()
+    renderWizard()
+    await reachReview(user)
+    expect(create()).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Next' })).toBeNull()
+    expect(screen.getByText('Step 4 of 4: Review')).toBeInTheDocument()
+  })
+
+  it('marks an invalid field with aria-invalid and a described error, and clears it on edit (4.5, 4.6)', async () => {
+    const user = userEvent.setup()
+    renderWizard()
+    await user.click(next())
+    await user.click(next())
+
+    const input = nameInput()
+    expect(screen.getByText('Step 2 of 4: Details')).toBeInTheDocument()
+    expect(input).toHaveAttribute('aria-invalid', 'true')
+    const errorId = input.getAttribute('aria-describedby')
+    expect(errorId).toBeTruthy()
+    expect(document.getElementById(errorId!)).toHaveTextContent('Enter a league name')
+    expect(document.activeElement).toBe(input)
+
+    await user.type(input, 'A')
+    expect(input).not.toHaveAttribute('aria-invalid')
+    expect(input).not.toHaveAttribute('aria-describedby')
+    expect(screen.queryByText('Enter a league name')).toBeNull()
+  })
+
+  it('shows the Guillotine hint and range error on Settings (5.4)', async () => {
+    const user = userEvent.setup()
+    renderWizard({ format: 'Guillotine' })
+    await user.click(next())
+    await user.type(nameInput(), 'Cut Throat')
+    await user.click(next())
+
+    expect(screen.getByText('6 to 20 teams')).toBeInTheDocument()
+    const teams = screen.getByLabelText('Number of teams')
+    await user.clear(teams)
+    await user.type(teams, '5')
+    await user.click(next())
+    expect(teams).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.getByText(/from 6 to 20/)).toBeInTheDocument()
+    expect(teams).toHaveValue('5')
+  })
+
+  it('shows a format error and stays put when no format is selected (3.4 via empty draft)', async () => {
+    const user = userEvent.setup()
+    renderWizard({ format: 'Nonexistent' })
+    await user.click(next())
+    expect(screen.getByText('Choose a league format')).toBeInTheDocument()
+    expect(screen.getByText('Step 1 of 4: Format')).toBeInTheDocument()
+  })
+})
+
+describe('CreateLeagueWizard submission', () => {
+  it('is busy while submitting, then closes via onCreated on success (8.3, 8.4)', async () => {
+    const user = userEvent.setup()
+    const d = deferred<CreateLeagueResult>()
+    const { service, onCreated, onClose } = renderWizard({ service: makeService(() => d.promise) })
+    await reachReview(user)
+
+    await user.click(create())
+    const dialog = screen.getByRole('dialog')
+    expect(dialog).toHaveAttribute('aria-busy', 'true')
+    expect(create()).toBeDisabled()
+    expect(back()).toBeDisabled()
+    expect(closeBtn()).toBeDisabled()
+
+    await user.keyboard('{Escape}')
+    fireEvent.mouseDown(dialog.parentElement!)
+    expect(onClose).not.toHaveBeenCalled()
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+
+    await act(async () => {
+      d.resolve({ ok: true, leagueId: 'abc' })
+    })
+    expect(service.createLeague).toHaveBeenCalledTimes(1)
+    expect(service.createLeague).toHaveBeenCalledWith({
+      format: 'Dynasty',
+      name: 'Sandlot Kings',
+      description: '',
+      teamCount: 10,
+      visibility: 'private',
+    })
+    expect(onCreated).toHaveBeenCalledWith('abc')
+    expect(onClose).not.toHaveBeenCalled()
+  })
+
+  it('shows the failure reason, re-enables controls and retains the draft (8.5)', async () => {
+    const user = userEvent.setup()
+    const { onCreated } = renderWizard({
+      service: makeService(async () => ({ ok: false, reason: 'Name already taken' })),
+    })
+    await reachReview(user)
+    await user.click(create())
+
+    expect(await screen.findByText('Name already taken')).toBeInTheDocument()
+    const dialog = screen.getByRole('dialog')
+    expect(dialog).not.toHaveAttribute('aria-busy')
+    expect(create()).toBeEnabled()
+    expect(back()).toBeEnabled()
+    expect(closeBtn()).toBeEnabled()
+    expect(screen.getByText('Sandlot Kings')).toBeInTheDocument()
+    expect(onCreated).not.toHaveBeenCalled()
+  })
+
+  it('falls back to the generic message without a reason (8.5)', async () => {
+    const user = userEvent.setup()
+    renderWizard({ service: makeService(async () => ({ ok: false })) })
+    await reachReview(user)
+    await user.click(create())
+    expect(await screen.findByText(GENERIC_FAILURE_MESSAGE)).toBeInTheDocument()
+  })
+
+  it('clears the message and resubmits on retry (8.8)', async () => {
+    const user = userEvent.setup()
+    const d = deferred<CreateLeagueResult>()
+    const createLeague = vi
+      .fn<LeagueService['createLeague']>()
+      .mockResolvedValueOnce({ ok: false, reason: 'Server busy' })
+      .mockReturnValueOnce(d.promise)
+    const { onCreated } = renderWizard({ service: { createLeague } })
+    await reachReview(user)
+    await user.click(create())
+    expect(await screen.findByText('Server busy')).toBeInTheDocument()
+
+    await user.click(create())
+    expect(screen.queryByText('Server busy')).toBeNull()
+    expect(createLeague).toHaveBeenCalledTimes(2)
+    expect(createLeague.mock.calls[1][0]).toEqual(createLeague.mock.calls[0][0])
+
+    await act(async () => {
+      d.resolve({ ok: true, leagueId: 'retry-id' })
+    })
+    expect(onCreated).toHaveBeenCalledWith('retry-id')
+  })
+
+  it('times out after 15 s and ignores a late response (8.7)', async () => {
+    vi.useFakeTimers()
+    const d = deferred<CreateLeagueResult>()
+    const { onCreated } = renderWizard({ service: makeService(() => d.promise) })
+    reachReviewSync()
+
+    fireEvent.click(create())
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(LEAGUE_SUBMIT_TIMEOUT_MS - 1)
+    })
+    expect(screen.getByRole('dialog')).toHaveAttribute('aria-busy', 'true')
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1)
+    })
+    expect(screen.getByText(TIMEOUT_MESSAGE)).toBeInTheDocument()
+    expect(screen.getByRole('dialog')).not.toHaveAttribute('aria-busy')
+
+    await act(async () => {
+      d.resolve({ ok: true, leagueId: 'late' })
+      await vi.advanceTimersByTimeAsync(0)
+    })
+    expect(onCreated).not.toHaveBeenCalled()
+    expect(screen.getByText(TIMEOUT_MESSAGE)).toBeInTheDocument()
+  })
+})
+
+describe('CreateLeagueWizard dismissal', () => {
+  it('closes without confirmation on Escape when the draft is unchanged (9.1, 9.5)', async () => {
+    const user = userEvent.setup()
+    const { onClose } = renderWizard()
+    await user.keyboard('{Escape}')
+    expect(onClose).toHaveBeenCalledTimes(1)
+  })
+
+  it('closes on backdrop press (9.2) and on the close button (9.3)', async () => {
+    const user = userEvent.setup()
+    const first = renderWizard()
+    fireEvent.mouseDown(screen.getByRole('dialog').parentElement!)
+    expect(first.onClose).toHaveBeenCalledTimes(1)
+
+    const second = renderWizard()
+    await user.click(screen.getAllByRole('button', { name: 'Close' })[1])
+    expect(second.onClose).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not close when pressing inside the dialog (9.2)', () => {
+    const { onClose } = renderWizard()
+    fireEvent.mouseDown(screen.getByRole('dialog'))
+    expect(onClose).not.toHaveBeenCalled()
+  })
+
+  it('asks for confirmation when dirty; Keep editing and Escape restore focus (9.6, 9.7)', async () => {
+    const user = userEvent.setup()
+    const { onClose } = renderWizard({ format: 'Dynasty' })
+    const other = screen.getByRole('radio', { name: /Keeper/ })
+    await user.click(other)
+    expect(other).toHaveFocus()
+
+    await user.keyboard('{Escape}')
+    expect(onClose).not.toHaveBeenCalled()
+    const confirm = screen.getByRole('group', { name: 'Discard changes' })
+    const buttons = within(confirm).getAllByRole('button')
+    expect(buttons.map((b) => b.textContent)).toEqual(['Discard', 'Keep editing'])
+    expect(screen.getByRole('button', { name: 'Keep editing' })).toHaveFocus()
+
+    await user.click(screen.getByRole('button', { name: 'Keep editing' }))
+    expect(screen.queryByRole('group', { name: 'Discard changes' })).toBeNull()
+    expect(other).toBeChecked()
+    expect(other).toHaveFocus()
+
+    await user.keyboard('{Escape}')
+    expect(screen.getByRole('group', { name: 'Discard changes' })).toBeInTheDocument()
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('group', { name: 'Discard changes' })).toBeNull()
+    expect(other).toBeChecked()
+    expect(other).toHaveFocus()
+    expect(onClose).not.toHaveBeenCalled()
+  })
+
+  it('closes after Discard (9.6, 9.8)', async () => {
+    const user = userEvent.setup()
+    const { onClose } = renderWizard({ format: 'Dynasty' })
+    await user.click(screen.getByRole('radio', { name: /Keeper/ }))
+    await user.click(closeBtn())
+    expect(onClose).not.toHaveBeenCalled()
+    await user.click(screen.getByRole('button', { name: 'Discard' }))
+    expect(onClose).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('CreateLeagueWizard with no formats', () => {
+  it('shows a message and disables Next (3.5)', async () => {
+    vi.resetModules()
+    vi.doMock('../../home/homeData', async (importOriginal) => ({
+      ...(await importOriginal<typeof import('../../home/homeData')>()),
+      SPORTS: [],
+    }))
+    try {
+      const rtl = await import('@testing-library/react')
+      const { createElement } = await import('react')
+      const { CreateLeagueWizard: Wizard } = await import('./CreateLeagueWizard')
+      const view = rtl.render(
+        createElement(Wizard, {
+          format: 'Dynasty',
+          service: makeService(),
+          onClose: vi.fn(),
+          onCreated: vi.fn(),
+        }),
+      )
+      expect(rtl.screen.getByText('No league formats are available')).toBeInTheDocument()
+      expect(rtl.screen.getByRole('button', { name: 'Next' })).toBeDisabled()
+      expect(rtl.screen.queryAllByRole('radio')).toHaveLength(0)
+      view.unmount()
+    } finally {
+      vi.doUnmock('../../home/homeData')
+      vi.resetModules()
+    }
+  })
+})
