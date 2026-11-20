@@ -37,9 +37,8 @@ const closeBtn = () => screen.getByRole('button', { name: 'Close' })
 const create = () => screen.getByRole('button', { name: 'Create league' })
 const nameInput = () => screen.getByLabelText('League name')
 
-/** Format -> Details (valid name) -> Settings -> Review, with real timers. */
+/** Details (valid name) -> Settings -> Review, with real timers. */
 async function reachReview(user: ReturnType<typeof userEvent.setup>) {
-  await user.click(next())
   await user.type(nameInput(), 'Sandlot Kings')
   await user.click(next())
   await user.click(next())
@@ -47,7 +46,6 @@ async function reachReview(user: ReturnType<typeof userEvent.setup>) {
 
 /** Same walk without user-event, safe under fake timers. */
 function reachReviewSync() {
-  fireEvent.click(next())
   fireEvent.change(nameInput(), { target: { value: 'Sandlot Kings' } })
   fireEvent.click(next())
   fireEvent.click(next())
@@ -66,24 +64,24 @@ afterEach(() => {
 })
 
 describe('CreateLeagueWizard dialog shell', () => {
-  it('renders a modal dialog named "Create a league" (1.5)', () => {
-    renderWizard()
-    const dialog = screen.getByRole('dialog', { name: 'Create a league' })
+  it('renders a modal dialog named after the opening format (1.1, 1.5)', () => {
+    renderWizard({ format: 'Bestball' })
+    const dialog = screen.getByRole('dialog', { name: 'Create a Bestball league' })
     expect(dialog).toHaveAttribute('aria-modal', 'true')
     expect(dialog).not.toHaveAttribute('aria-busy')
   })
 
-  it('focuses the first interactive element of the Format step on open (1.2)', () => {
+  it('opens on Details and never asks for a format (1.1, 3.1)', () => {
     renderWizard()
-    const active = document.activeElement as HTMLInputElement
-    expect(active.type).toBe('radio')
-    expect(screen.getByRole('group', { name: 'League format' }).contains(active)).toBe(true)
+    expect(screen.getByText('Step 1 of 3: Details')).toBeInTheDocument()
+    expect(screen.queryAllByRole('radio', { name: /Dynasty|Keeper|Redraft/ })).toHaveLength(0)
+    expect(screen.queryByRole('group', { name: 'League format' })).toBeNull()
+    expect(screen.getByRole('list', { name: 'Progress' }).querySelectorAll('li')).toHaveLength(3)
   })
 
-  it('selects only the opening format (1.1)', () => {
-    renderWizard({ format: 'Guillotine' })
-    expect(screen.getByRole('radio', { name: /Guillotine/ })).toBeChecked()
-    expect(screen.getAllByRole('radio').filter((r) => (r as HTMLInputElement).checked)).toHaveLength(1)
+  it('focuses the first interactive element of the Details step on open (1.2)', () => {
+    renderWizard()
+    expect(document.activeElement).toBe(nameInput())
   })
 
   it('wraps Tab from the last control to the first and Shift+Tab back (1.6, 9.9)', async () => {
@@ -99,28 +97,30 @@ describe('CreateLeagueWizard dialog shell', () => {
 })
 
 describe('CreateLeagueWizard steps', () => {
-  it('shows step titles and status text as the user moves (2.x)', async () => {
+  it('shows step titles and status text as the user moves (2.1)', async () => {
     const user = userEvent.setup()
     renderWizard()
-    expect(screen.getByText('Step 1 of 4: Format')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Format' })).toBeInTheDocument()
+    expect(screen.getByText('Step 1 of 3: Details')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Details' })).toBeInTheDocument()
 
+    await user.type(nameInput(), 'Sandlot Kings')
     await user.click(next())
-    expect(screen.getByText('Step 2 of 4: Details')).toBeInTheDocument()
-    expect(document.activeElement).toBe(screen.getByRole('heading', { name: 'Details' }))
+    expect(screen.getByText('Step 2 of 3: Settings')).toBeInTheDocument()
+    expect(document.activeElement).toBe(screen.getByRole('heading', { name: 'Settings' }))
 
     const progress = screen.getByRole('list', { name: 'Progress' })
     const items = within(progress).getAllByRole('listitem')
-    expect(items).toHaveLength(4)
+    expect(items).toHaveLength(3)
     expect(items[1]).toHaveAttribute('aria-current', 'step')
     expect(items[0]).not.toHaveAttribute('aria-current')
     expect(items[2]).not.toHaveAttribute('aria-current')
   })
 
-  it('disables Back on the Format step and enables it afterwards (6.4)', async () => {
+  it('disables Back on the Details step and enables it afterwards (6.4)', async () => {
     const user = userEvent.setup()
     renderWizard()
     expect(back()).toBeDisabled()
+    await user.type(nameInput(), 'Sandlot Kings')
     await user.click(next())
     expect(back()).toBeEnabled()
   })
@@ -131,17 +131,16 @@ describe('CreateLeagueWizard steps', () => {
     await reachReview(user)
     expect(create()).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Next' })).toBeNull()
-    expect(screen.getByText('Step 4 of 4: Review')).toBeInTheDocument()
+    expect(screen.getByText('Step 3 of 3: Review')).toBeInTheDocument()
   })
 
   it('marks an invalid field with aria-invalid and a described error, and clears it on edit (4.5, 4.6)', async () => {
     const user = userEvent.setup()
     renderWizard()
     await user.click(next())
-    await user.click(next())
 
     const input = nameInput()
-    expect(screen.getByText('Step 2 of 4: Details')).toBeInTheDocument()
+    expect(screen.getByText('Step 1 of 3: Details')).toBeInTheDocument()
     expect(input).toHaveAttribute('aria-invalid', 'true')
     const errorId = input.getAttribute('aria-describedby')
     expect(errorId).toBeTruthy()
@@ -157,7 +156,6 @@ describe('CreateLeagueWizard steps', () => {
   it('shows the Guillotine hint and range error on Settings (5.4)', async () => {
     const user = userEvent.setup()
     renderWizard({ format: 'Guillotine' })
-    await user.click(next())
     await user.type(nameInput(), 'Cut Throat')
     await user.click(next())
 
@@ -171,12 +169,14 @@ describe('CreateLeagueWizard steps', () => {
     expect(teams).toHaveValue('5')
   })
 
-  it('shows a format error and stays put when no format is selected (3.4 via empty draft)', async () => {
+  it('shows the chosen format read-only on Review without an Edit button for it (3.2, 3.3)', async () => {
     const user = userEvent.setup()
-    renderWizard({ format: 'Nonexistent' })
-    await user.click(next())
-    expect(screen.getByText('Choose a league format')).toBeInTheDocument()
-    expect(screen.getByText('Step 1 of 4: Format')).toBeInTheDocument()
+    renderWizard({ format: 'Bestball' })
+    await reachReview(user)
+    expect(screen.getByText('Format')).toBeInTheDocument()
+    expect(screen.getByText('Bestball')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Edit format' })).toBeNull()
+    expect(screen.getAllByRole('button', { name: /^Edit / })).toHaveLength(4)
   })
 })
 
@@ -317,10 +317,10 @@ describe('CreateLeagueWizard dismissal', () => {
 
   it('asks for confirmation when dirty; Keep editing and Escape restore focus (9.6, 9.7)', async () => {
     const user = userEvent.setup()
-    const { onClose } = renderWizard({ format: 'Dynasty' })
-    const other = screen.getByRole('radio', { name: /Keeper/ })
-    await user.click(other)
-    expect(other).toHaveFocus()
+    const { onClose } = renderWizard()
+    const input = nameInput()
+    await user.type(input, 'Sandlot')
+    expect(input).toHaveFocus()
 
     await user.keyboard('{Escape}')
     expect(onClose).not.toHaveBeenCalled()
@@ -331,55 +331,24 @@ describe('CreateLeagueWizard dismissal', () => {
 
     await user.click(screen.getByRole('button', { name: 'Keep editing' }))
     expect(screen.queryByRole('group', { name: 'Discard changes' })).toBeNull()
-    expect(other).toBeChecked()
-    expect(other).toHaveFocus()
+    expect(input).toHaveValue('Sandlot')
+    expect(input).toHaveFocus()
 
     await user.keyboard('{Escape}')
     expect(screen.getByRole('group', { name: 'Discard changes' })).toBeInTheDocument()
     await user.keyboard('{Escape}')
     expect(screen.queryByRole('group', { name: 'Discard changes' })).toBeNull()
-    expect(other).toBeChecked()
-    expect(other).toHaveFocus()
+    expect(input).toHaveFocus()
     expect(onClose).not.toHaveBeenCalled()
   })
 
   it('closes after Discard (9.6, 9.8)', async () => {
     const user = userEvent.setup()
-    const { onClose } = renderWizard({ format: 'Dynasty' })
-    await user.click(screen.getByRole('radio', { name: /Keeper/ }))
+    const { onClose } = renderWizard()
+    await user.type(nameInput(), 'Sandlot')
     await user.click(closeBtn())
     expect(onClose).not.toHaveBeenCalled()
     await user.click(screen.getByRole('button', { name: 'Discard' }))
     expect(onClose).toHaveBeenCalledTimes(1)
-  })
-})
-
-describe('CreateLeagueWizard with no formats', () => {
-  it('shows a message and disables Next (3.5)', async () => {
-    vi.resetModules()
-    vi.doMock('../../home/homeData', async (importOriginal) => ({
-      ...(await importOriginal<typeof import('../../home/homeData')>()),
-      SPORTS: [],
-    }))
-    try {
-      const rtl = await import('@testing-library/react')
-      const { createElement } = await import('react')
-      const { CreateLeagueWizard: Wizard } = await import('./CreateLeagueWizard')
-      const view = rtl.render(
-        createElement(Wizard, {
-          format: 'Dynasty',
-          service: makeService(),
-          onClose: vi.fn(),
-          onCreated: vi.fn(),
-        }),
-      )
-      expect(rtl.screen.getByText('No league formats are available')).toBeInTheDocument()
-      expect(rtl.screen.getByRole('button', { name: 'Next' })).toBeDisabled()
-      expect(rtl.screen.queryAllByRole('radio')).toHaveLength(0)
-      view.unmount()
-    } finally {
-      vi.doUnmock('../../home/homeData')
-      vi.resetModules()
-    }
   })
 })

@@ -16,11 +16,10 @@ import {
  */
 
 const otherFormatArb = fc.oneof(
-  fc.constant<string | null>(null),
   fc.string({ maxLength: 20 }).filter((s) => s !== GUILLOTINE_FORMAT),
   fc.constantFrom('Redraft', 'Dynasty', 'Keeper'),
 )
-const formatArb = fc.oneof(fc.constant<string | null>(GUILLOTINE_FORMAT), otherFormatArb)
+const formatArb = fc.oneof(fc.constant(GUILLOTINE_FORMAT), otherFormatArb)
 
 const digitsArb = fc.nat({ max: 999 }).map(String)
 const teamCountArb = fc.oneof(
@@ -30,7 +29,7 @@ const teamCountArb = fc.oneof(
   fc.constantFrom('', ' ', '4.5', '1e1', '-6', '+8', 'abc', '0x10', ' 8 ', '08'),
 )
 
-function oracle(format: string | null, raw: string): boolean {
+function oracle(format: string, raw: string): boolean {
   const min = format === GUILLOTINE_FORMAT ? GUILLOTINE_MIN_TEAMS : MIN_TEAMS
   const t = raw.trim()
   if (!/^\d+$/.test(t)) return false
@@ -38,7 +37,7 @@ function oracle(format: string | null, raw: string): boolean {
   return n >= min && n <= MAX_TEAMS
 }
 
-const teamErrors = (format: string | null, teamCount: string) =>
+const teamErrors = (format: string, teamCount: string) =>
   validateStep({ ...initialDraft(format), teamCount }, 'settings').teamCount
 
 describe('Property 4: team count validation depends on the current format', () => {

@@ -3,19 +3,21 @@ import type { LeagueDraft, StepId } from './leagueDraft'
 import { FIELD_STEP, validateDraft } from './leagueValidation'
 import type { FieldName } from './leagueValidation'
 
+export type ReviewField = 'format' | FieldName
+
 export interface ReviewGroup {
-  field: FieldName
+  field: ReviewField
   label: string
   value: string
-  /** Step that owns the field; the Review "Edit" control returns here. */
-  step: StepId
+  /** Step that owns the field; the Review "Edit" control returns here. Null for the read-only format. */
+  step: StepId | null
   invalid: boolean
   error?: string
 }
 
 export const NO_DESCRIPTION_PLACEHOLDER = 'No description provided'
 
-const GROUPS: readonly { field: FieldName; label: string }[] = [
+const GROUPS: readonly { field: ReviewField; label: string }[] = [
   { field: 'format', label: 'Format' },
   { field: 'name', label: 'Name' },
   { field: 'description', label: 'Description' },
@@ -23,10 +25,10 @@ const GROUPS: readonly { field: FieldName; label: string }[] = [
   { field: 'visibility', label: 'Visibility' },
 ]
 
-function displayValue(field: FieldName, d: LeagueDraft): string {
+function displayValue(field: ReviewField, d: LeagueDraft): string {
   switch (field) {
     case 'format':
-      return d.format ?? ''
+      return d.format
     case 'name':
       return d.name
     case 'description':
@@ -39,16 +41,16 @@ function displayValue(field: FieldName, d: LeagueDraft): string {
 }
 
 /** Pure. Builds the review groups in display order from the normalized draft. */
-export function buildReviewSummary(draft: LeagueDraft, formats?: readonly string[]): ReviewGroup[] {
+export function buildReviewSummary(draft: LeagueDraft): ReviewGroup[] {
   const d = normalizeDraft(draft)
-  const errors = validateDraft(draft, formats)
+  const errors = validateDraft(draft)
   return GROUPS.map(({ field, label }) => {
-    const error = errors[field]
+    const error = field === 'format' ? undefined : errors[field]
     const group: ReviewGroup = {
       field,
       label,
       value: displayValue(field, d),
-      step: FIELD_STEP[field],
+      step: field === 'format' ? null : FIELD_STEP[field],
       invalid: error !== undefined,
     }
     if (error !== undefined) group.error = error

@@ -5,10 +5,9 @@ import type { LeagueDraft, StepId } from './leagueDraft'
 import { FIELD_ORDER, validateStep } from './leagueValidation'
 import type { FieldName } from './leagueValidation'
 
-const FORMATS = ['Guillotine', 'Redraft', 'Dynasty']
 
 const draftArb: fc.Arbitrary<LeagueDraft> = fc.record({
-  format: fc.oneof(fc.constant(null), fc.constantFrom(...FORMATS), fc.string({ maxLength: 10 })),
+  format: fc.oneof(fc.constantFrom('Guillotine', 'Redraft', 'Dynasty'), fc.string({ maxLength: 10 })),
   name: fc.oneof(fc.string({ maxLength: 70 }), fc.string({ unit: 'binary', maxLength: 60 })),
   description: fc.string({ maxLength: 320 }),
   teamCount: fc.oneof(
@@ -26,8 +25,6 @@ const len = (s: string) => Array.from(s.trim()).length
 /** Independent oracle: is the field invalid under the spec rules? */
 function isInvalid(field: FieldName, d: LeagueDraft): boolean {
   switch (field) {
-    case 'format':
-      return d.format === null || !FORMATS.includes(d.format)
     case 'name':
       return len(d.name) === 0 || len(d.name) > 50
     case 'description':
@@ -52,8 +49,8 @@ describe('leagueValidation contract properties', () => {
     fc.assert(
       fc.property(draftArb, stepArb, (draft, step) => {
         const before = structuredClone(draft)
-        const first = validateStep(draft, step, FORMATS)
-        const second = validateStep(draft, step, FORMATS)
+        const first = validateStep(draft, step)
+        const second = validateStep(draft, step)
 
         expect(draft).toEqual(before)
         expect(second).toEqual(first)

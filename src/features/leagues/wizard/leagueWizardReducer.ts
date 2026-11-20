@@ -27,7 +27,6 @@ export interface WizardState {
 
 export type WizardAction =
   | { type: 'EDIT'; patch: Partial<LeagueDraft> }
-  | { type: 'SELECT_FORMAT'; format: string }
   | { type: 'NEXT' }
   | { type: 'BACK' }
   | { type: 'GO_TO'; step: StepId }
@@ -42,7 +41,7 @@ export type WizardAction =
 export function createInitialState(format: string): WizardState {
   const initial = initialDraft(format)
   return {
-    step: 'format',
+    step: 'details',
     draft: initial,
     initial,
     attempted: new Set<StepId>(),
@@ -72,19 +71,13 @@ function withAttempted(s: WizardState, step: StepId, add: boolean): ReadonlySet<
   return next
 }
 
-function editing(
-  s: WizardState,
-  a: WizardAction,
-  formats?: readonly string[],
-): WizardState {
+function editing(s: WizardState, a: WizardAction): WizardState {
   switch (a.type) {
     case 'EDIT':
       return { ...s, draft: { ...s.draft, ...a.patch }, focusTarget: null }
-    case 'SELECT_FORMAT':
-      return { ...s, draft: { ...s.draft, format: a.format }, focusTarget: null }
     case 'NEXT': {
       if (s.step === 'review') return s
-      const errors = validateStep(s.draft, s.step, formats)
+      const errors = validateStep(s.draft, s.step)
       if (Object.keys(errors).length > 0) {
         return {
           ...s,
@@ -107,7 +100,7 @@ function editing(
       return s.step === 'review' && a.step !== 'review' ? moveTo(s, a.step) : s
     case 'SUBMIT': {
       if (s.step !== 'review') return s
-      const invalid = firstInvalidStep(s.draft, formats)
+      const invalid = firstInvalidStep(s.draft)
       if (invalid === null) {
         return { ...s, message: null, phase: 'submitting', focusTarget: null }
       }
@@ -115,7 +108,7 @@ function editing(
         ...s,
         step: invalid,
         attempted: withAttempted(s, invalid, true),
-        focusTarget: firstInvalidField(validateStep(s.draft, invalid, formats), invalid),
+        focusTarget: firstInvalidField(validateStep(s.draft, invalid), invalid),
       }
     }
     case 'REQUEST_CLOSE':
@@ -127,11 +120,7 @@ function editing(
   }
 }
 
-export function wizardReducer(
-  s: WizardState,
-  a: WizardAction,
-  formats?: readonly string[],
-): WizardState {
+export function wizardReducer(s: WizardState, a: WizardAction): WizardState {
   switch (s.phase) {
     case 'closed':
       return s
@@ -152,11 +141,11 @@ export function wizardReducer(
       if (a.type === 'DISCARD') return { ...s, phase: 'closed', focusTarget: null }
       return s
     case 'editing':
-      return editing(s, a, formats)
+      return editing(s, a)
   }
 }
 
 /** Errors to display: only for steps the user has tried to leave, always live. */
-export function displayedErrors(s: WizardState, formats?: readonly string[]): FieldErrors {
-  return s.attempted.has(s.step) ? validateStep(s.draft, s.step, formats) : {}
+export function displayedErrors(s: WizardState): FieldErrors {
+  return s.attempted.has(s.step) ? validateStep(s.draft, s.step) : {}
 }

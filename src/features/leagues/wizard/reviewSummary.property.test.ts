@@ -42,8 +42,8 @@ function byField(groups: ReturnType<typeof buildReviewSummary>) {
   return Object.fromEntries(groups.map((g) => [g.field, g.value]))
 }
 
-function expectMatches(draft: LeagueDraft, formats: readonly string[]) {
-  const groups = buildReviewSummary(draft, formats)
+function expectMatches(draft: LeagueDraft) {
+  const groups = buildReviewSummary(draft)
   expect(groups.map((g) => g.field)).toEqual([
     'format',
     'name',
@@ -65,16 +65,16 @@ function expectMatches(draft: LeagueDraft, formats: readonly string[]) {
 describe('Property 11: review summary shows every draft value', () => {
   it('has one group per field whose value matches the draft', () => {
     fc.assert(
-      fc.property(scenarioArb, ({ formats, first }) => {
-        expectMatches(first, formats)
+      fc.property(scenarioArb, ({ first }) => {
+        expectMatches(first)
       }),
     )
   })
 
   it('uses the placeholder for empty or whitespace-only descriptions', () => {
     fc.assert(
-      fc.property(scenarioArb, blankArb, ({ formats, first }, blank) => {
-        const groups = buildReviewSummary({ ...first, description: blank }, formats)
+      fc.property(scenarioArb, blankArb, ({ first }, blank) => {
+        const groups = buildReviewSummary({ ...first, description: blank })
         expect(groups.find((g) => g.field === 'description')?.value).toBe(
           NO_DESCRIPTION_PLACEHOLDER,
         )
@@ -84,10 +84,10 @@ describe('Property 11: review summary shows every draft value', () => {
 
   it('reflects the latest draft after an edit', () => {
     fc.assert(
-      fc.property(scenarioArb, ({ formats, first, second }) => {
-        buildReviewSummary(first, formats)
-        expectMatches(second, formats)
-        expect(buildReviewSummary(second, formats)).toEqual(buildReviewSummary({ ...second }, formats))
+      fc.property(scenarioArb, ({ first, second }) => {
+        buildReviewSummary(first)
+        expectMatches(second)
+        expect(buildReviewSummary(second)).toEqual(buildReviewSummary({ ...second }))
       }),
     )
   })

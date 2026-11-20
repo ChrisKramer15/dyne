@@ -59,7 +59,7 @@ describe('leagueWizardReducer navigation round trip', () => {
   /** **Validates: Requirements 6.5, 11.3** */
   it('forward then BACK returns to the original step with the same draft', () => {
     fc.assert(
-      fc.property(validDraftArb, fc.constantFrom<StepId>('format', 'details', 'settings'), (draft, start) => {
+      fc.property(validDraftArb, fc.constantFrom<StepId>('details', 'settings'), (draft, start) => {
         const base = createInitialState('Guillotine')
         const s0: WizardState = { ...base, draft, initial: draft, step: start }
         const forward = wizardReducer(s0, { type: 'NEXT' })

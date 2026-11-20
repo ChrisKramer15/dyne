@@ -1,7 +1,5 @@
 import { useEffect, useId, useReducer, useRef } from 'react'
 import { DetailsStep } from './DetailsStep'
-import { FormatStep } from './FormatStep'
-import { FORMAT_OPTIONS } from './formatOptions'
 import { getDefaultLeagueService } from './defaultLeagueService'
 import { normalizeDraft, STEPS, toNewLeague } from './leagueDraft'
 import { submitLeague } from './leagueService'
@@ -33,7 +31,7 @@ function reduce(s: WizardState, a: WizardAction): WizardState {
   return wizardReducer(s, a)
 }
 
-/** Four-step create-league dialog: shell, focus handling, footer and submission. */
+/** Three-step create-league dialog: shell, focus handling, footer and submission. */
 export function CreateLeagueWizard({ format, service, onClose, onCreated }: CreateLeagueWizardProps) {
   const [state, dispatch] = useReducer(reduce, format, createInitialState)
   const { step, draft, phase, message } = state
@@ -139,7 +137,6 @@ export function CreateLeagueWizard({ format, service, onClose, onCreated }: Crea
   }
 
   const locked = busy || confirming
-  const noFormats = step === 'format' && FORMAT_OPTIONS.length === 0
 
   return (
     <div
@@ -160,7 +157,7 @@ export function CreateLeagueWizard({ format, service, onClose, onCreated }: Crea
       >
         <div className="wizard-header">
           <h2 className="wizard-title" id={titleId}>
-            Create a league
+            Create a {format} league
           </h2>
           <button
             type="button"
@@ -191,13 +188,6 @@ export function CreateLeagueWizard({ format, service, onClose, onCreated }: Crea
             {stepTitle}
           </h3>
 
-          {step === 'format' && (
-            <FormatStep
-              selected={draft.format}
-              error={errors.format}
-              onSelect={(f) => dispatch({ type: 'SELECT_FORMAT', format: f })}
-            />
-          )}
           {step === 'details' && (
             <DetailsStep
               name={draft.name}
@@ -246,7 +236,7 @@ export function CreateLeagueWizard({ format, service, onClose, onCreated }: Crea
           <button
             type="button"
             className="btn"
-            disabled={step === 'format' || locked}
+            disabled={step === 'details' || locked}
             onClick={() => dispatch({ type: 'BACK' })}
           >
             Back
@@ -264,7 +254,7 @@ export function CreateLeagueWizard({ format, service, onClose, onCreated }: Crea
             <button
               type="button"
               className="btn btn-primary"
-              disabled={locked || noFormats}
+              disabled={locked}
               onClick={() => dispatch({ type: 'NEXT' })}
             >
               Next

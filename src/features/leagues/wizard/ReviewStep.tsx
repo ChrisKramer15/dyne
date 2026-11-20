@@ -14,6 +14,7 @@ export function ReviewStep({ groups, onEdit }: ReviewStepProps) {
     <dl className="wizard-review">
       {groups.map((g) => {
         const errorId = `wizard-review-${g.field}-error`
+        const owner = g.step
         return (
           <div
             className={g.invalid ? 'wizard-review-group wizard-review-group--invalid' : 'wizard-review-group'}
@@ -30,17 +31,19 @@ export function ReviewStep({ groups, onEdit }: ReviewStepProps) {
                 </span>
               )}
             </dd>
-            <dd className="wizard-review-action">
-              <button
-                type="button"
-                className="wizard-edit"
-                onClick={() => onEdit(g.step)}
-                aria-label={`Edit ${g.label.toLowerCase()}`}
-                aria-describedby={g.invalid && g.error ? errorId : undefined}
-              >
-                Edit
-              </button>
-            </dd>
+            {owner !== null && (
+              <dd className="wizard-review-action">
+                <button
+                  type="button"
+                  className="wizard-edit"
+                  onClick={() => onEdit(owner)}
+                  aria-label={`Edit ${g.label.toLowerCase()}`}
+                  aria-describedby={g.invalid && g.error ? errorId : undefined}
+                >
+                  Edit
+                </button>
+              </dd>
+            )}
           </div>
         )
       })}

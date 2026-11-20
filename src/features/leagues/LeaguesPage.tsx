@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import '../../App.css'
 import BottomNav from '../../shared/BottomNav'
-import { LEAGUES, LEAGUES_PER_PAGE, LEAGUE_TYPE_ACCENT, ordinal, type League } from './leaguesData'
+import { useLeagues } from './leagueStore'
+import { LEAGUES_PER_PAGE, LEAGUE_TYPE_ACCENT, ordinal, type League } from './leaguesData'
 import { Pager } from '../../shared/Pager'
 import { usePagination } from '../../shared/usePagination'
 
@@ -56,13 +57,17 @@ function LeagueCard({ league }: { league: League }) {
 
 export default function LeaguesPage() {
   const [sport, setSport] = useState('all')
-  const sports = useMemo(() => [...new Set(LEAGUES.map((l) => l.sport))].sort((a, b) => a.localeCompare(b)), [])
+  const allLeagues = useLeagues()
+  const sports = useMemo(
+    () => [...new Set(allLeagues.map((l) => l.sport))].sort((a, b) => a.localeCompare(b)),
+    [allLeagues],
+  )
   const leagues = useMemo(
     () =>
-      LEAGUES.filter((l) => sport === 'all' || l.sport === sport).sort((a, b) =>
-        a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
-      ),
-    [sport],
+      allLeagues
+        .filter((l) => sport === 'all' || l.sport === sport)
+        .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })),
+    [allLeagues, sport],
   )
   const { page, pageCount, visible, setPage } = usePagination(leagues, LEAGUES_PER_PAGE)
   const liveCount = leagues.filter((l) => l.matchup.status === 'live').length
@@ -109,7 +114,7 @@ export default function LeaguesPage() {
               ))}
             </ul>
           ) : (
-            <p className="empty-state">{LEAGUES.length > 0 ? 'No leagues for this sport.' : 'No leagues yet.'}</p>
+            <p className="empty-state">{allLeagues.length > 0 ? 'No leagues for this sport.' : 'No leagues yet.'}</p>
           )}
           <Pager label="Leagues pages" page={page} pageCount={pageCount} onPageChange={setPage} />
         </section>

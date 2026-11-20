@@ -4,10 +4,9 @@ import { firstInvalidStep } from './leagueValidation'
 import { createInitialState, wizardReducer } from './leagueWizardReducer'
 import type { WizardState } from './leagueWizardReducer'
 
-const FORMATS = ['Redraft', 'Dynasty', 'Guillotine']
 
 const draftPatchArb = fc.record({
-  format: fc.oneof(fc.constantFrom(...FORMATS), fc.constant(null), fc.string({ maxLength: 10 })),
+  format: fc.oneof(fc.constantFrom('Redraft', 'Dynasty', 'Guillotine'), fc.string({ maxLength: 10 })),
   name: fc.oneof(fc.string({ maxLength: 60 }), fc.constantFrom('My League', 'ab', '  ')),
   description: fc.string({ maxLength: 300 }),
   teamCount: fc.oneof(fc.string({ maxLength: 5 }), fc.constantFrom('4', '8', '10', '12', '16', '0')),
@@ -15,7 +14,7 @@ const draftPatchArb = fc.record({
 })
 
 const validPatchArb = fc.record({
-  format: fc.constantFrom(...FORMATS),
+  format: fc.constantFrom('Redraft', 'Dynasty', 'Guillotine'),
   name: fc.constantFrom('My League', 'Sunday Funday'),
   description: fc.constantFrom('', 'A fun league'),
   teamCount: fc.constantFrom('4', '8', '10', '12', '16'),
@@ -31,8 +30,8 @@ describe('Property 13: Submit is gated on whole-draft validity', () => {
       fc.property(fc.oneof(draftPatchArb, validPatchArb), (patch) => {
         const base = createInitialState('Redraft')
         const start: WizardState = { ...base, step: 'review', draft: { ...base.draft, ...patch } }
-        const invalid = firstInvalidStep(start.draft, FORMATS)
-        const next = wizardReducer(start, { type: 'SUBMIT' }, FORMATS)
+        const invalid = firstInvalidStep(start.draft)
+        const next = wizardReducer(start, { type: 'SUBMIT' })
 
         if (invalid === null) {
           expect(next.phase).toBe('submitting')

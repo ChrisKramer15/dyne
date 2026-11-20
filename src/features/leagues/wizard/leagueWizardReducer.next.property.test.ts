@@ -6,10 +6,9 @@ import { validateStep, FIELD_ORDER } from './leagueValidation'
 import { createInitialState, wizardReducer } from './leagueWizardReducer'
 import type { WizardState } from './leagueWizardReducer'
 
-const FORMATS = ['Redraft', 'Dynasty', 'Guillotine']
 
 const draftPatchArb = fc.record({
-  format: fc.oneof(fc.constantFrom(...FORMATS), fc.constant(null), fc.string({ maxLength: 10 })),
+  format: fc.oneof(fc.constantFrom('Redraft', 'Dynasty', 'Guillotine'), fc.string({ maxLength: 10 })),
   name: fc.oneof(fc.string({ maxLength: 60 }), fc.constantFrom('My League', 'ab', '  ')),
   description: fc.string({ maxLength: 300 }),
   teamCount: fc.oneof(fc.string({ maxLength: 5 }), fc.constantFrom('4', '8', '10', '12', '16', '0')),
@@ -27,8 +26,8 @@ describe('Property 7: Next advances exactly when the step is valid', () => {
       fc.property(draftPatchArb, stepArb, (patch, step) => {
         const base = createInitialState('Redraft')
         const start: WizardState = { ...base, step, draft: { ...base.draft, ...patch } }
-        const errors = validateStep(start.draft, step, FORMATS)
-        const next = wizardReducer(start, { type: 'NEXT' }, FORMATS)
+        const errors = validateStep(start.draft, step)
+        const next = wizardReducer(start, { type: 'NEXT' })
         const idx = STEPS.findIndex((s) => s.id === step)
 
         if (Object.keys(errors).length === 0) {

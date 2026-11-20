@@ -8,7 +8,7 @@ import type { WizardState } from './leagueWizardReducer'
 const stepArb = fc.constantFrom(...STEPS.map((s) => s.id))
 
 const draftArb: fc.Arbitrary<LeagueDraft> = fc.record({
-  format: fc.oneof(fc.constant(null), fc.constantFrom('Guillotine', 'Redraft', 'Unknown')),
+  format: fc.constantFrom('Guillotine', 'Redraft', 'Unknown'),
   name: fc.string({ maxLength: 60 }),
   description: fc.string({ maxLength: 60 }),
   teamCount: fc.oneof(fc.string({ maxLength: 6 }), fc.integer({ min: 0, max: 30 }).map(String)),

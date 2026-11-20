@@ -15,7 +15,7 @@ const paddedArb = fc.oneof(
 )
 
 const draftArb: fc.Arbitrary<LeagueDraft> = fc.record({
-  format: fc.oneof(fc.constant(null), fc.constantFrom('Guillotine', 'Redraft', 'Unknown')),
+  format: fc.constantFrom('Guillotine', 'Redraft', 'Unknown'),
   name: paddedArb,
   description: paddedArb,
   teamCount: fc.oneof(paddedArb, fc.integer({ min: 0, max: 30 }).map((n) => ` ${n} `)),

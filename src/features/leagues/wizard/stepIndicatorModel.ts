@@ -23,7 +23,7 @@ export function stepIndicatorModel(current: number): IndicatorItem[] {
   })
 }
 
-/** Status text such as "Step 2 of 4: Details". */
+/** Status text such as "Step 2 of 3: Details". */
 export function statusText(current: number): string {
   const title = STEPS[current - 1]?.title ?? ''
   return `Step ${current} of ${TOTAL_STEPS}: ${title}`

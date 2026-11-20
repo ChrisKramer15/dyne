@@ -122,7 +122,7 @@ describe('Homepage create league wizard', () => {
   afterEach(() => cleanup())
 
   const card = (format: string) => screen.getByRole('button', { name: `Create a ${format} Baseball league` })
-  const dialog = () => screen.queryByRole('dialog', { name: 'Create a league' })
+  const dialog = () => screen.queryByRole('dialog', { name: /^Create a .+ league$/ })
 
   it.each([
     ['click', async (u: ReturnType<typeof userEvent.setup>) => u.click(card('Guillotine'))],
@@ -134,8 +134,9 @@ describe('Homepage create league wizard', () => {
     expect(dialog()).toBeNull()
     await act(user)
     expect(dialog()).not.toBeNull()
-    expect(screen.getByRole('radio', { name: /Guillotine/ })).toBeChecked()
-    expect(screen.getAllByRole('radio').filter((r) => (r as HTMLInputElement).checked)).toHaveLength(1)
+    expect(screen.getByRole('dialog', { name: 'Create a Guillotine league' })).toBeTruthy()
+    expect(screen.getByText('Step 1 of 3: Details')).toBeTruthy()
+    expect(screen.queryAllByRole('radio', { name: /Keeper|Redraft/ })).toHaveLength(0)
   })
 
   it('returns focus to the card when the wizard closes (1.4)', async () => {
@@ -173,7 +174,6 @@ describe('Homepage create league wizard', () => {
       </MemoryRouter>,
     )
     await user.click(card('Dynasty'))
-    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Next' }))
     await user.type(screen.getByLabelText('League name'), 'Sandlot Kings')
     await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Next' }))
     await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Next' }))

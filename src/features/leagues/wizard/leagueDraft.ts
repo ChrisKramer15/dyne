@@ -1,19 +1,18 @@
 import type { LeagueVisibility, NewLeague } from './leagueService'
 
-export type StepId = 'format' | 'details' | 'settings' | 'review'
+export type StepId = 'details' | 'settings' | 'review'
 
 /** Wizard steps in order; index + 1 is the step number. */
 export const STEPS: readonly { id: StepId; title: string }[] = [
-  { id: 'format', title: 'Format' },
   { id: 'details', title: 'Details' },
   { id: 'settings', title: 'Settings' },
   { id: 'review', title: 'Review' },
 ]
 
-export const TOTAL_STEPS = 4
+export const TOTAL_STEPS = 3
 
 export interface LeagueDraft {
-  format: string | null
+  format: string
   name: string
   description: string
   /** Raw input so empty and non-numeric values can be kept and reported. */
@@ -23,7 +22,7 @@ export interface LeagueDraft {
 
 export const DEFAULT_TEAM_COUNT = '10'
 
-export function initialDraft(format: string | null): LeagueDraft {
+export function initialDraft(format: string): LeagueDraft {
   return {
     format,
     name: '',
@@ -57,7 +56,7 @@ export function isDirty(draft: LeagueDraft, initial: LeagueDraft): boolean {
 /** Call only with a draft that passed validation (after `normalizeDraft`). */
 export function toNewLeague(d: LeagueDraft): NewLeague {
   return {
-    format: d.format ?? '',
+    format: d.format,
     name: d.name,
     description: d.description,
     teamCount: Number(d.teamCount),

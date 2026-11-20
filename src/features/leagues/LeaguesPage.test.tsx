@@ -1,4 +1,5 @@
-import { describe, it, expect, afterEach } from 'vitest'
+import { describe, it, expect, afterEach, beforeEach } from 'vitest'
+import { resetLeagueStore, addLeague } from './leagueStore'
 import { render, cleanup, screen, within, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
@@ -7,7 +8,11 @@ import { renderApp } from '../../routing/testUtils'
 import LeaguesPage from './LeaguesPage'
 import { LEAGUES, LEAGUES_PER_PAGE, ordinal } from './leaguesData'
 
-afterEach(cleanup)
+beforeEach(resetLeagueStore)
+afterEach(() => {
+  cleanup()
+  resetLeagueStore()
+})
 
 const renderLeagues = () =>
   render(
@@ -40,6 +45,24 @@ describe('LeaguesPage', () => {
       expect(card.textContent).toContain(`${ordinal(l.rank)} of ${l.teams}`)
       expect(card.textContent).toContain(`vs ${l.matchup.opponent}`)
     }
+  })
+
+  it('shows a league created through the store', () => {
+    addLeague({
+      id: 'aaa-new',
+      name: 'AAA Brand New',
+      sport: 'Baseball',
+      emoji: '⚾',
+      leagueType: 'Dynasty',
+      record: '0-0',
+      rank: 1,
+      teams: 12,
+      matchup: { opponent: 'TBD', status: 'upcoming', myScore: null, theirScore: null, note: 'Season not started' },
+    })
+    renderLeagues()
+    const card = screen.getByRole('article', { name: 'AAA Brand New' })
+    expect(card.textContent).toContain('0-0')
+    expect(card.textContent).toContain('1st of 12')
   })
 
   it('lists leagues alphabetically by name', () => {
