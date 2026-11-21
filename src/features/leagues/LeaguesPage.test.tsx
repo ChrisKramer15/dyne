@@ -6,7 +6,7 @@ import { MemoryRouter } from 'react-router'
 import { renderApp } from '../../routing/testUtils'
 import LeaguesPage from './LeaguesPage'
 import type { LeagueLoader, LoadLeaguesResult } from './leagueLoader'
-import { LEAGUES, LEAGUES_PER_PAGE, ordinal, type League } from './leaguesData'
+import { LEAGUES_PER_PAGE, ordinal, type League } from './leaguesData'
 
 afterEach(cleanup)
 
@@ -32,24 +32,10 @@ describe('LeaguesPage', () => {
     expect(screen.getAllByRole('main')).toHaveLength(1)
   })
 
-  it('shows a card for every league with record, rank and opponent', () => {
-    renderLeagues()
-    const firstPage = [...LEAGUES]
-      .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }))
-      .slice(0, LEAGUES_PER_PAGE)
-    expect(cards()).toHaveLength(firstPage.length)
-    for (const l of firstPage) {
-      const card = screen.getByRole('article', { name: l.name })
-      expect(card.textContent).toContain(l.record)
-      expect(card.textContent).toContain(`${ordinal(l.rank)} of ${l.teams}`)
-      expect(card.textContent).toContain(`vs ${l.matchup.opponent}`)
-    }
-  })
-
-  const mk = (id: string, name: string): League => ({
+  const mk = (id: string, name: string, sport = 'Baseball'): League => ({
     id,
     name,
-    sport: 'Baseball',
+    sport,
     emoji: '⚾',
     leagueType: 'Dynasty',
     record: '0-0',
@@ -57,15 +43,33 @@ describe('LeaguesPage', () => {
     teams: 12,
     matchup: { opponent: 'TBD', status: 'upcoming', myScore: null, theirScore: null, note: 'Season not started' },
   })
+  const fakeLeagues = (n: number, sport = 'Baseball') =>
+    Array.from({ length: n }, (_, i) => mk(`id${i}`, `League ${String(i).padStart(2, '0')}`, sport))
 
-  it('shows loaded leagues newest first, before the sample leagues', async () => {
+  it('shows a card for each loaded league with record, rank and opponent', async () => {
+    const leagues = fakeLeagues(3)
+    renderLeagues(loaderOf({ ok: true, leagues }))
+    await screen.findByRole('article', { name: 'League 00' })
+    expect(cards()).toHaveLength(3)
+    for (const l of leagues) {
+      const card = screen.getByRole('article', { name: l.name })
+      expect(card.textContent).toContain(l.record)
+      expect(card.textContent).toContain(`${ordinal(l.rank)} of ${l.teams}`)
+      expect(card.textContent).toContain(`vs ${l.matchup.opponent}`)
+    }
+  })
+
+  it('keeps the loader order (newest first) instead of sorting by name', async () => {
     renderLeagues(loaderOf({ ok: true, leagues: [mk('n', 'Zed New'), mk('o', 'Alpha Old')] }))
     await screen.findByRole('article', { name: 'Zed New' })
-    const names = cards().map((c) => c.querySelector('h3')?.textContent)
-    expect(names.slice(0, 2)).toEqual(['Zed New', 'Alpha Old'])
-    const card = screen.getByRole('article', { name: 'Zed New' })
-    expect(card.textContent).toContain('0-0')
-    expect(card.textContent).toContain('1st of 12')
+    expect(cards().map((c) => c.querySelector('h3')?.textContent)).toEqual(['Zed New', 'Alpha Old'])
+  })
+
+  it('shows "No leagues yet." when the user has none', async () => {
+    renderLeagues()
+    expect((await screen.findByText('No leagues yet.')).textContent).toBe('No leagues yet.')
+    expect(cards()).toHaveLength(0)
+    expect(screen.getByText(/^0 leagues/)).toBeTruthy()
   })
 
   it('shows a loading state, then removes it', async () => {
@@ -74,27 +78,33 @@ describe('LeaguesPage', () => {
     await waitFor(() => expect(screen.queryByRole('status')).toBeNull())
   })
 
-  it('shows an error and still lists the sample leagues when loading fails', async () => {
+  it('shows an error and no leagues when loading fails', async () => {
     renderLeagues(loaderOf({ ok: false, reason: 'Your leagues could not be loaded.' }))
     expect((await screen.findByRole('alert')).textContent).toBe('Your leagues could not be loaded.')
-    expect(cards().length).toBeGreaterThan(0)
+    expect(cards()).toHaveLength(0)
   })
 
-
-  it('lists leagues alphabetically by name', () => {
-    renderLeagues()
-    const names = cards().map((c) => c.querySelector('h3')?.textContent ?? '')
-    expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' })))
-  })
-  it('filters by sport', async () => {
+  it('paginates when there are more leagues than fit on a page', async () => {
     const user = userEvent.setup()
-    renderLeagues()
-    const sport = LEAGUES[0].sport
-    await user.selectOptions(screen.getByLabelText('Sport'), sport)
-    const expected = LEAGUES.filter((l) => l.sport === sport).length
-    expect(cards()).toHaveLength(Math.min(expected, LEAGUES_PER_PAGE))
-    for (const c of cards()) expect(c.textContent).toContain(sport)
+    renderLeagues(loaderOf({ ok: true, leagues: fakeLeagues(LEAGUES_PER_PAGE + 2) }))
+    await screen.findByRole('article', { name: 'League 00' })
+    expect(cards()).toHaveLength(LEAGUES_PER_PAGE)
+    await user.click(screen.getByRole('button', { name: /next/i }))
+    expect(cards()).toHaveLength(2)
   })
+
+  it('filters by sport and offers only sports from loaded leagues', async () => {
+    const user = userEvent.setup()
+    const leagues = [mk('a', 'Diamond', 'Baseball'), mk('b', 'Gridiron', 'Football'), mk('c', 'Pitch', 'Baseball')]
+    renderLeagues(loaderOf({ ok: true, leagues }))
+    await screen.findByRole('article', { name: 'Diamond' })
+    const options = within(screen.getByLabelText('Sport')).getAllByRole('option').map((o) => o.textContent)
+    expect(options).toEqual(['All sports', 'Baseball', 'Football'])
+    await user.selectOptions(screen.getByLabelText('Sport'), 'Baseball')
+    expect(cards()).toHaveLength(2)
+    for (const c of cards()) expect(c.textContent).toContain('Baseball')
+  })
+
   it('marks Leagues as the current page in the bottom nav', () => {
     renderLeagues()
     const nav = screen.getByRole('navigation', { name: 'Primary' })

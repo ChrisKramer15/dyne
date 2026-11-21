@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import '../../App.css'
 import BottomNav from '../../shared/BottomNav'
 import { getDefaultLeagueLoader, type LeagueLoader } from './leagueLoader'
-import { LEAGUES, LEAGUES_PER_PAGE, LEAGUE_TYPE_ACCENT, ordinal, type League } from './leaguesData'
+import { LEAGUES_PER_PAGE, LEAGUE_TYPE_ACCENT, ordinal, type League } from './leaguesData'
 import { Pager } from '../../shared/Pager'
 import { usePagination } from '../../shared/usePagination'
 
@@ -55,10 +55,6 @@ function LeagueCard({ league }: { league: League }) {
   )
 }
 
-const SAMPLE_LEAGUES: readonly League[] = [...LEAGUES].sort((a, b) =>
-  a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
-)
-
 type MyLeagues =
   | { status: 'loading' }
   | { status: 'error'; message: string }
@@ -83,11 +79,8 @@ function useMyLeagues(loader: LeagueLoader | undefined): MyLeagues {
 export default function LeaguesPage({ loader }: { loader?: LeagueLoader } = {}) {
   const [sport, setSport] = useState('all')
   const mine = useMyLeagues(loader)
-  // Your leagues (newest first) come before the built-in samples.
-  const allLeagues = useMemo(
-    () => [...(mine.status === 'ready' ? mine.leagues : []), ...SAMPLE_LEAGUES],
-    [mine],
-  )
+  // Only the user's own leagues, in the order the loader returns them (newest first).
+  const allLeagues = useMemo<readonly League[]>(() => (mine.status === 'ready' ? mine.leagues : []), [mine])
   const sports = useMemo(
     () => [...new Set(allLeagues.map((l) => l.sport))].sort((a, b) => a.localeCompare(b)),
     [allLeagues],
@@ -142,7 +135,7 @@ export default function LeaguesPage({ loader }: { loader?: LeagueLoader } = {}) 
                 <LeagueCard key={l.id} league={l} />
               ))}
             </ul>
-          ) : (
+          ) : mine.status === 'ready' && (
             <p className="empty-state">{allLeagues.length > 0 ? 'No leagues for this sport.' : 'No leagues yet.'}</p>
           )}
           <Pager label="Leagues pages" page={page} pageCount={pageCount} onPageChange={setPage} />
