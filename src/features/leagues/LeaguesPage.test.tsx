@@ -1,23 +1,22 @@
-import { describe, it, expect, afterEach, beforeEach } from 'vitest'
-import { resetLeagueStore, addLeague } from './leagueStore'
+import { describe, it, expect, afterEach } from 'vitest'
 import { render, cleanup, screen, within, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 // testUtils must be imported before routes (it installs the Supabase mock).
 import { renderApp } from '../../routing/testUtils'
 import LeaguesPage from './LeaguesPage'
-import { LEAGUES, LEAGUES_PER_PAGE, ordinal } from './leaguesData'
+import type { LeagueLoader, LoadLeaguesResult } from './leagueLoader'
+import { LEAGUES, LEAGUES_PER_PAGE, ordinal, type League } from './leaguesData'
 
-beforeEach(resetLeagueStore)
-afterEach(() => {
-  cleanup()
-  resetLeagueStore()
-})
+afterEach(cleanup)
 
-const renderLeagues = () =>
+const loaderOf = (res: LoadLeaguesResult): LeagueLoader => ({ loadMyLeagues: () => Promise.resolve(res) })
+const none = loaderOf({ ok: true, leagues: [] })
+
+const renderLeagues = (loader: LeagueLoader = none) =>
   render(
     <MemoryRouter initialEntries={['/leagues']}>
-      <LeaguesPage />
+      <LeaguesPage loader={loader} />
     </MemoryRouter>,
   )
 
@@ -47,23 +46,40 @@ describe('LeaguesPage', () => {
     }
   })
 
-  it('shows a league created through the store', () => {
-    addLeague({
-      id: 'aaa-new',
-      name: 'AAA Brand New',
-      sport: 'Baseball',
-      emoji: '⚾',
-      leagueType: 'Dynasty',
-      record: '0-0',
-      rank: 1,
-      teams: 12,
-      matchup: { opponent: 'TBD', status: 'upcoming', myScore: null, theirScore: null, note: 'Season not started' },
-    })
-    renderLeagues()
-    const card = screen.getByRole('article', { name: 'AAA Brand New' })
+  const mk = (id: string, name: string): League => ({
+    id,
+    name,
+    sport: 'Baseball',
+    emoji: '⚾',
+    leagueType: 'Dynasty',
+    record: '0-0',
+    rank: 1,
+    teams: 12,
+    matchup: { opponent: 'TBD', status: 'upcoming', myScore: null, theirScore: null, note: 'Season not started' },
+  })
+
+  it('shows loaded leagues newest first, before the sample leagues', async () => {
+    renderLeagues(loaderOf({ ok: true, leagues: [mk('n', 'Zed New'), mk('o', 'Alpha Old')] }))
+    await screen.findByRole('article', { name: 'Zed New' })
+    const names = cards().map((c) => c.querySelector('h3')?.textContent)
+    expect(names.slice(0, 2)).toEqual(['Zed New', 'Alpha Old'])
+    const card = screen.getByRole('article', { name: 'Zed New' })
     expect(card.textContent).toContain('0-0')
     expect(card.textContent).toContain('1st of 12')
   })
+
+  it('shows a loading state, then removes it', async () => {
+    renderLeagues()
+    expect(screen.getByRole('status').textContent).toContain('Loading')
+    await waitFor(() => expect(screen.queryByRole('status')).toBeNull())
+  })
+
+  it('shows an error and still lists the sample leagues when loading fails', async () => {
+    renderLeagues(loaderOf({ ok: false, reason: 'Your leagues could not be loaded.' }))
+    expect((await screen.findByRole('alert')).textContent).toBe('Your leagues could not be loaded.')
+    expect(cards().length).toBeGreaterThan(0)
+  })
+
 
   it('lists leagues alphabetically by name', () => {
     renderLeagues()

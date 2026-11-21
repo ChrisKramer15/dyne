@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import '../../App.css'
 import BottomNav from '../../shared/BottomNav'
-import { useLeagues } from './leagueStore'
-import { LEAGUES_PER_PAGE, LEAGUE_TYPE_ACCENT, ordinal, type League } from './leaguesData'
+import { getDefaultLeagueLoader, type LeagueLoader } from './leagueLoader'
+import { LEAGUES, LEAGUES_PER_PAGE, LEAGUE_TYPE_ACCENT, ordinal, type League } from './leaguesData'
 import { Pager } from '../../shared/Pager'
 import { usePagination } from '../../shared/usePagination'
 
@@ -55,18 +55,45 @@ function LeagueCard({ league }: { league: League }) {
   )
 }
 
-export default function LeaguesPage() {
+const SAMPLE_LEAGUES: readonly League[] = [...LEAGUES].sort((a, b) =>
+  a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
+)
+
+type MyLeagues =
+  | { status: 'loading' }
+  | { status: 'error'; message: string }
+  | { status: 'ready'; leagues: readonly League[] }
+
+/** Loads the signed-in user's leagues on every mount, so a new league shows up right away. */
+function useMyLeagues(loader: LeagueLoader | undefined): MyLeagues {
+  const [state, setState] = useState<MyLeagues>({ status: 'loading' })
+  useEffect(() => {
+    let cancelled = false
+    void (loader ?? getDefaultLeagueLoader()).loadMyLeagues().then((res) => {
+      if (cancelled) return
+      setState(res.ok ? { status: 'ready', leagues: res.leagues } : { status: 'error', message: res.reason })
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [loader])
+  return state
+}
+
+export default function LeaguesPage({ loader }: { loader?: LeagueLoader } = {}) {
   const [sport, setSport] = useState('all')
-  const allLeagues = useLeagues()
+  const mine = useMyLeagues(loader)
+  // Your leagues (newest first) come before the built-in samples.
+  const allLeagues = useMemo(
+    () => [...(mine.status === 'ready' ? mine.leagues : []), ...SAMPLE_LEAGUES],
+    [mine],
+  )
   const sports = useMemo(
     () => [...new Set(allLeagues.map((l) => l.sport))].sort((a, b) => a.localeCompare(b)),
     [allLeagues],
   )
   const leagues = useMemo(
-    () =>
-      allLeagues
-        .filter((l) => sport === 'all' || l.sport === sport)
-        .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })),
+    () => allLeagues.filter((l) => sport === 'all' || l.sport === sport),
     [allLeagues, sport],
   )
   const { page, pageCount, visible, setPage } = usePagination(leagues, LEAGUES_PER_PAGE)
@@ -107,6 +134,8 @@ export default function LeaguesPage() {
                 ))}
               </select>
             </div>
+          {mine.status === 'loading' && <p role="status">Loading your leagues…</p>}
+          {mine.status === 'error' && <p role="alert">{mine.message}</p>}
           {leagues.length > 0 ? (
             <ul className="league-list">
               {visible.map((l) => (

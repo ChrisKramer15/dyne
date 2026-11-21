@@ -8,7 +8,8 @@ import {
   type LeagueService,
   type NewLeague,
 } from './leagueService'
-import { getDefaultLeagueService } from './defaultLeagueService'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import { createLeagueService, getDefaultLeagueService } from './defaultLeagueService'
 
 const league: NewLeague = {
   format: 'Guillotine',
@@ -94,10 +95,37 @@ describe('getDefaultLeagueService', () => {
     expect(getDefaultLeagueService()).toBe(getDefaultLeagueService())
   })
 
-  it('resolves ok with a non-empty leagueId', async () => {
-    const result = await getDefaultLeagueService().createLeague(league)
-    expect(result.ok).toBe(true)
-    if (result.ok) expect(result.leagueId).not.toBe('')
+  it('calls create_league with the league fields and returns the new id', async () => {
+    const calls: { fn: string; args: unknown }[] = []
+    const client = {
+      rpc: (fn: string, args: unknown) => {
+        calls.push({ fn, args })
+        return Promise.resolve({ data: 'id-1', error: null })
+      },
+    } as unknown as SupabaseClient
+    const result = await createLeagueService(client).createLeague(league)
+    expect(result).toEqual({ ok: true, leagueId: 'id-1' })
+    expect(calls).toEqual([
+      {
+        fn: 'create_league',
+        args: {
+          p_name: league.name,
+          p_description: league.description,
+          p_format: league.format,
+          p_team_count: league.teamCount,
+          p_visibility: league.visibility,
+        },
+      },
+    ])
+  })
+
+  it.each([
+    [{ message: 'not_authenticated' }, 'Sign in to create a league.'],
+    [{ code: '23514', message: 'violates check constraint' }, 'The league details were not accepted. Check them and try again.'],
+    [{ code: '500', message: 'boom' }, 'The league could not be created. Try again.'],
+  ])('maps database error %j to a reason', async (error, reason) => {
+    const client = { rpc: () => Promise.resolve({ data: null, error }) } as unknown as SupabaseClient
+    expect(await createLeagueService(client).createLeague(league)).toEqual({ ok: false, reason })
   })
 
   it('creates the instance lazily on first use, not at import', async () => {

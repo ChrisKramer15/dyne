@@ -59,6 +59,19 @@ function falls back to the request `Origin` header, which has no `/dyne/` path, 
 reset links would land on the wrong page. The same URL must be allowed under
 **Authentication -> URL Configuration -> Redirect URLs**.
 
+### Leagues migration
+
+The Create league wizard and the Leagues page need
+`supabase/migrations/20250305000000_leagues.sql` (tables `leagues` and
+`league_members`, and the `create_league` RPC). Nothing applies it for you.
+Until it is applied, creating a league fails and the Leagues page shows
+"Your leagues could not be loaded." above the sample leagues.
+
+- **Local database** (needs Docker): `supabase start`, then `supabase db reset`.
+  This replays every migration and the seed files.
+- **Hosted project**: `supabase link --project-ref <ref>` (once), then
+  `supabase db push`. Behind Zscaler, see the next section.
+
 ### Deploying behind a corporate VPN (Zscaler)
 
 Zscaler performs TLS inspection, which breaks the Supabase CLI (a Go binary that
