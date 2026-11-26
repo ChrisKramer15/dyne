@@ -1,6 +1,6 @@
 import { initialDraft, isDirty, STEPS } from './leagueDraft'
 import type { LeagueDraft, StepId } from './leagueDraft'
-import { FIELD_ORDER, firstInvalidStep, validateStep } from './leagueValidation'
+import { fieldsFor, firstInvalidStep, validateStep } from './leagueValidation'
 import type { FieldErrors, FieldName } from './leagueValidation'
 
 export type WizardPhase = 'editing' | 'confirming-close' | 'submitting' | 'closed'
@@ -30,7 +30,6 @@ export type WizardAction =
   | { type: 'NEXT' }
   | { type: 'BACK' }
   | { type: 'GO_TO'; step: StepId }
-  | { type: 'EDIT_GROUP'; step: StepId }
   | { type: 'SUBMIT' }
   | { type: 'SUBMIT_SUCCEEDED' }
   | { type: 'SUBMIT_FAILED'; message: string }
@@ -41,7 +40,7 @@ export type WizardAction =
 export function createInitialState(format: string): WizardState {
   const initial = initialDraft(format)
   return {
-    step: 'details',
+    step: 'general',
     draft: initial,
     initial,
     attempted: new Set<StepId>(),
@@ -50,6 +49,8 @@ export function createInitialState(format: string): WizardState {
     focusTarget: null,
   }
 }
+
+const LAST_STEP: StepId = STEPS[STEPS.length - 1].id
 
 function indexOf(step: StepId): number {
   return STEPS.findIndex((s) => s.id === step)
@@ -60,7 +61,7 @@ function moveTo(s: WizardState, step: StepId): WizardState {
 }
 
 function firstInvalidField(errors: FieldErrors, step: StepId): FocusTarget {
-  const field = FIELD_ORDER[step].find((f) => errors[f] !== undefined)
+  const field = fieldsFor(step).find((f) => errors[f] !== undefined)
   return field ? { kind: 'field', field } : null
 }
 
@@ -76,7 +77,7 @@ function editing(s: WizardState, a: WizardAction): WizardState {
     case 'EDIT':
       return { ...s, draft: { ...s.draft, ...a.patch }, focusTarget: null }
     case 'NEXT': {
-      if (s.step === 'review') return s
+      if (s.step === LAST_STEP) return s
       const errors = validateStep(s.draft, s.step)
       if (Object.keys(errors).length > 0) {
         return {
@@ -96,10 +97,8 @@ function editing(s: WizardState, a: WizardAction): WizardState {
     }
     case 'GO_TO':
       return indexOf(a.step) < indexOf(s.step) ? moveTo(s, a.step) : s
-    case 'EDIT_GROUP':
-      return s.step === 'review' && a.step !== 'review' ? moveTo(s, a.step) : s
     case 'SUBMIT': {
-      if (s.step !== 'review') return s
+      if (s.step !== LAST_STEP) return s
       const invalid = firstInvalidStep(s.draft)
       if (invalid === null) {
         return { ...s, message: null, phase: 'submitting', focusTarget: null }
@@ -129,7 +128,7 @@ export function wizardReducer(s: WizardState, a: WizardAction): WizardState {
       if (a.type === 'SUBMIT_FAILED') {
         return {
           ...s,
-          step: 'review',
+          step: LAST_STEP,
           phase: 'editing',
           message: a.message,
           focusTarget: { kind: 'message' },

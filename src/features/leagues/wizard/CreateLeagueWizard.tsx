@@ -1,14 +1,13 @@
 import { useEffect, useId, useReducer, useRef } from 'react'
-import { DetailsStep } from './DetailsStep'
+import { GeneralStep } from './GeneralStep'
 import { getDefaultLeagueService } from './defaultLeagueService'
 import { normalizeDraft, STEPS, toNewLeague } from './leagueDraft'
 import { submitLeague } from './leagueService'
 import type { LeagueService } from './leagueService'
 import { createInitialState, displayedErrors, wizardReducer } from './leagueWizardReducer'
 import type { WizardAction, WizardState } from './leagueWizardReducer'
-import { buildReviewSummary } from './reviewSummary'
-import { ReviewStep } from './ReviewStep'
-import { SettingsStep } from './SettingsStep'
+import { RosterStep } from './RosterStep'
+import { ScoringStep } from './ScoringStep'
 import { statusText } from './stepIndicatorModel'
 import { StepIndicator } from './StepIndicator'
 import { useFocusOnStepChange } from './useFocusOnStepChange'
@@ -31,7 +30,7 @@ function reduce(s: WizardState, a: WizardAction): WizardState {
   return wizardReducer(s, a)
 }
 
-/** Three-step create-league dialog: shell, focus handling, footer and submission. */
+/** Three-step create-league dialog (General, Roster, Scoring): shell, focus handling, footer and submission. */
 export function CreateLeagueWizard({ format, service, onClose, onCreated }: CreateLeagueWizardProps) {
   const [state, dispatch] = useReducer(reduce, format, createInitialState)
   const { step, draft, phase, message } = state
@@ -39,6 +38,7 @@ export function CreateLeagueWizard({ format, service, onClose, onCreated }: Crea
   const confirming = phase === 'confirming-close'
   const stepNumber = STEPS.findIndex((s) => s.id === step) + 1
   const stepTitle = STEPS[stepNumber - 1].title
+  const isLast = stepNumber === STEPS.length
   const errors = displayedErrors(state)
 
   const titleId = useId()
@@ -166,7 +166,7 @@ export function CreateLeagueWizard({ format, service, onClose, onCreated }: Crea
             disabled={locked}
             onClick={requestClose}
           >
-            <span aria-hidden="true">×</span>
+            <span aria-hidden="true">Ã—</span>
           </button>
           <StepIndicator step={step} dispatch={dispatch} disabled={locked} />
           <p className="visually-hidden" role="status">
@@ -176,45 +176,47 @@ export function CreateLeagueWizard({ format, service, onClose, onCreated }: Crea
 
         <div className="wizard-content" ref={contentRef}>
           <p
-            className={message !== null && step === 'review' ? 'wizard-message' : 'visually-hidden'}
+            className={message !== null && isLast ? 'wizard-message' : 'visually-hidden'}
             role="status"
             tabIndex={-1}
             ref={messageRef}
           >
-            {step === 'review' ? message : null}
+            {isLast ? message : null}
           </p>
 
           <h3 className="wizard-step-heading" tabIndex={-1} ref={headingRef}>
             {stepTitle}
           </h3>
 
-          {step === 'details' && (
-            <DetailsStep
+          {step === 'general' && (
+            <GeneralStep
+              format={draft.format}
               name={draft.name}
-              description={draft.description}
+              teamCount={draft.teamCount}
               errors={errors}
               onNameChange={(name) => dispatch({ type: 'EDIT', patch: { name } })}
-              onDescriptionChange={(description) => dispatch({ type: 'EDIT', patch: { description } })}
-            />
-          )}
-          {step === 'settings' && (
-            <SettingsStep
-              format={draft.format}
-              teamCount={draft.teamCount}
-              visibility={draft.visibility}
-              errors={errors}
               onTeamCountChange={(teamCount) => dispatch({ type: 'EDIT', patch: { teamCount } })}
-              onVisibilityChange={(visibility) => dispatch({ type: 'EDIT', patch: { visibility } })}
             />
           )}
-          {step === 'review' && (
-            <ReviewStep
-              groups={buildReviewSummary(draft)}
-              onEdit={(s) => dispatch({ type: 'EDIT_GROUP', step: s })}
+          {step === 'roster' && (
+            <RosterStep
+              roster={draft.roster}
+              errors={errors}
+              onSlotsChange={(key, value) =>
+                dispatch({ type: 'EDIT', patch: { roster: { ...draft.roster, [key]: value } } })
+              }
+            />
+          )}
+          {step === 'scoring' && (
+            <ScoringStep
+              scoring={draft.scoring}
+              errors={errors}
+              onPointsChange={(key, value) =>
+                dispatch({ type: 'EDIT', patch: { scoring: { ...draft.scoring, [key]: value } } })
+              }
             />
           )}
         </div>
-
         {confirming && (
           <div className="wizard-confirm" role="group" aria-label="Discard changes">
             <span>Discard your changes?</span>
@@ -236,12 +238,12 @@ export function CreateLeagueWizard({ format, service, onClose, onCreated }: Crea
           <button
             type="button"
             className="btn"
-            disabled={step === 'details' || locked}
+            disabled={step === STEPS[0].id || locked}
             onClick={() => dispatch({ type: 'BACK' })}
           >
             Back
           </button>
-          {step === 'review' ? (
+          {isLast ? (
             <button
               type="button"
               className="btn btn-primary"

@@ -14,9 +14,9 @@ import { createLeagueService, getDefaultLeagueService } from './defaultLeagueSer
 const league: NewLeague = {
   format: 'Guillotine',
   name: 'My League',
-  description: '',
   teamCount: 10,
-  visibility: 'private',
+  roster: { SP: 4, C: 1 },
+  scoring: { bat_hr: 4, pit_w: 5 },
 }
 
 const serviceReturning = (result: CreateLeagueResult): LeagueService => ({
@@ -110,10 +110,10 @@ describe('getDefaultLeagueService', () => {
         fn: 'create_league',
         args: {
           p_name: league.name,
-          p_description: league.description,
           p_format: league.format,
           p_team_count: league.teamCount,
-          p_visibility: league.visibility,
+          p_roster: league.roster,
+          p_scoring: league.scoring,
         },
       },
     ])

@@ -2,7 +2,8 @@ import { describe, it, expect } from 'vitest'
 import fc from 'fast-check'
 import { STEPS } from './leagueDraft'
 import type { StepId } from './leagueDraft'
-import { validateStep, FIELD_ORDER } from './leagueValidation'
+import { rosterArb, scoringArb } from './draftArbitraries.testutil'
+import { validateStep, fieldsFor } from './leagueValidation'
 import { createInitialState, wizardReducer } from './leagueWizardReducer'
 import type { WizardState } from './leagueWizardReducer'
 
@@ -10,12 +11,12 @@ import type { WizardState } from './leagueWizardReducer'
 const draftPatchArb = fc.record({
   format: fc.oneof(fc.constantFrom('Redraft', 'Dynasty', 'Guillotine'), fc.string({ maxLength: 10 })),
   name: fc.oneof(fc.string({ maxLength: 60 }), fc.constantFrom('My League', 'ab', '  ')),
-  description: fc.string({ maxLength: 300 }),
   teamCount: fc.oneof(fc.string({ maxLength: 5 }), fc.constantFrom('4', '8', '10', '12', '16', '0')),
-  visibility: fc.constantFrom('private' as const, 'public' as const),
+  roster: rosterArb,
+  scoring: scoringArb,
 })
 
-const stepArb = fc.constantFrom(...STEPS.map((s) => s.id).filter((id) => id !== 'review')) as fc.Arbitrary<StepId>
+const stepArb = fc.constantFrom(...STEPS.map((s) => s.id).slice(0, -1)) as fc.Arbitrary<StepId>
 
 describe('Property 7: Next advances exactly when the step is valid', () => {
   /**
@@ -37,7 +38,7 @@ describe('Property 7: Next advances exactly when the step is valid', () => {
         } else {
           expect(next.step).toBe(step)
           expect(next.attempted.has(step)).toBe(true)
-          const first = FIELD_ORDER[step].find((f) => errors[f] !== undefined)
+          const first = fieldsFor(step).find((f) => errors[f] !== undefined)
           expect(next.focusTarget).toEqual({ kind: 'field', field: first })
         }
         expect(next.draft).toEqual(start.draft)

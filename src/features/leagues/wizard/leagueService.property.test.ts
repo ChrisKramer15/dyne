@@ -12,9 +12,9 @@ import {
 const leagueArb: fc.Arbitrary<NewLeague> = fc.record({
   format: fc.string({ minLength: 1, maxLength: 20 }),
   name: fc.string({ minLength: 1, maxLength: 50 }),
-  description: fc.string({ maxLength: 100 }),
-  teamCount: fc.integer({ min: 6, max: 20 }),
-  visibility: fc.constantFrom('private' as const, 'public' as const),
+  teamCount: fc.integer({ min: 6, max: 32 }),
+  roster: fc.constant({ SP: 4, C: 1 }),
+  scoring: fc.constant({ bat_hr: 4, pit_w: 5 }),
 })
 
 const nonBlankReasonArb = fc.string({ minLength: 1, maxLength: 60 }).filter((s) => s.trim() !== '')

@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import fc from 'fast-check'
 import { STEPS } from './leagueDraft'
 import type { LeagueDraft, StepId } from './leagueDraft'
+import { rosterArb, scoringArb } from './draftArbitraries.testutil'
 import { wizardReducer } from './leagueWizardReducer'
 import type { WizardPhase, WizardState } from './leagueWizardReducer'
 
@@ -10,9 +11,9 @@ const stepArb = fc.constantFrom(...STEPS.map((s) => s.id))
 const draftArb: fc.Arbitrary<LeagueDraft> = fc.record({
   format: fc.constantFrom('Guillotine', 'Redraft', 'Unknown'),
   name: fc.string({ maxLength: 60 }),
-  description: fc.string({ maxLength: 60 }),
   teamCount: fc.oneof(fc.string({ maxLength: 6 }), fc.integer({ min: 0, max: 30 }).map(String)),
-  visibility: fc.constantFrom('private' as const, 'public' as const),
+  roster: rosterArb,
+  scoring: scoringArb,
 })
 
 const stateWith = (phase: WizardPhase): fc.Arbitrary<WizardState> =>

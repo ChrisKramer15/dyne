@@ -38,7 +38,7 @@ function oracle(format: string, raw: string): boolean {
 }
 
 const teamErrors = (format: string, teamCount: string) =>
-  validateStep({ ...initialDraft(format), teamCount }, 'settings').teamCount
+  validateStep({ ...initialDraft(format), teamCount }, 'general').teamCount
 
 describe('Property 4: team count validation depends on the current format', () => {
   it('reports an error exactly when the count is outside the format range', () => {

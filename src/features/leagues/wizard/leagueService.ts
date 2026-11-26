@@ -1,16 +1,15 @@
 import { TimeoutError, withTimeout } from '../../../auth/authService'
 
-export type LeagueVisibility = 'private' | 'public'
-
 export interface NewLeague {
   /** League_Format name, e.g. 'Guillotine'. */
   format: string
   /** Trimmed. */
   name: string
-  /** Trimmed, may be ''. */
-  description: string
   teamCount: number
-  visibility: LeagueVisibility
+  /** Starting slots per position key (see leagueCategories). */
+  roster: Record<string, number>
+  /** Points per unit per scoring category key. */
+  scoring: Record<string, number>
 }
 
 export type CreateLeagueResult = { ok: true; leagueId: string } | { ok: false; reason?: string }

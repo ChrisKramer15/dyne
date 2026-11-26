@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import fc from 'fast-check'
 import { normalizeDraft, type LeagueDraft } from './leagueDraft'
 import { validateDraft } from './leagueValidation'
+import { rosterArb, scoringArb } from './draftArbitraries.testutil'
 
 const paddedArb = fc.oneof(
   fc.string({ maxLength: 60 }),
@@ -17,9 +18,9 @@ const paddedArb = fc.oneof(
 const draftArb: fc.Arbitrary<LeagueDraft> = fc.record({
   format: fc.constantFrom('Guillotine', 'Redraft', 'Unknown'),
   name: paddedArb,
-  description: paddedArb,
   teamCount: fc.oneof(paddedArb, fc.integer({ min: 0, max: 30 }).map((n) => ` ${n} `)),
-  visibility: fc.constantFrom('private' as const, 'public' as const),
+  roster: rosterArb,
+  scoring: scoringArb,
 })
 
 describe('leagueDraft properties', () => {
@@ -33,7 +34,6 @@ describe('leagueDraft properties', () => {
         expect(draft).toEqual(snapshot)
         expect(normalizeDraft(once)).toEqual(once)
         expect(once.format).toBe(draft.format)
-        expect(once.visibility).toBe(draft.visibility)
         expect(validateDraft(once)).toEqual(validateDraft(draft))
       }),
       { numRuns: 100 },

@@ -135,7 +135,7 @@ describe('Homepage create league wizard', () => {
     await act(user)
     expect(dialog()).not.toBeNull()
     expect(screen.getByRole('dialog', { name: 'Create a Guillotine league' })).toBeTruthy()
-    expect(screen.getByText('Step 1 of 3: Details')).toBeTruthy()
+    expect(screen.getByText('Step 1 of 3: General')).toBeTruthy()
     expect(screen.queryAllByRole('radio', { name: /Keeper|Redraft/ })).toHaveLength(0)
   })
 

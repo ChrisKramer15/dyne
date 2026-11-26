@@ -28,10 +28,10 @@ export function createLeagueService(client: SupabaseClient): LeagueService {
     async createLeague(league) {
       const { data, error } = await client.rpc('create_league', {
         p_name: league.name,
-        p_description: league.description,
         p_format: league.format,
         p_team_count: league.teamCount,
-        p_visibility: league.visibility,
+        p_roster: league.roster,
+        p_scoring: league.scoring,
       })
       if (error) return { ok: false, reason: failureReason(error) }
       if (typeof data !== 'string' || data === '') return { ok: false, reason: UNAVAILABLE }

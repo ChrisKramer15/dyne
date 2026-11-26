@@ -37,15 +37,15 @@ const closeBtn = () => screen.getByRole('button', { name: 'Close' })
 const create = () => screen.getByRole('button', { name: 'Create league' })
 const nameInput = () => screen.getByLabelText('League name')
 
-/** Details (valid name) -> Settings -> Review, with real timers. */
-async function reachReview(user: ReturnType<typeof userEvent.setup>) {
+/** General (valid name) -> Roster -> Scoring, with real timers. */
+async function reachScoring(user: ReturnType<typeof userEvent.setup>) {
   await user.type(nameInput(), 'Sandlot Kings')
   await user.click(next())
   await user.click(next())
 }
 
 /** Same walk without user-event, safe under fake timers. */
-function reachReviewSync() {
+function reachScoringSync() {
   fireEvent.change(nameInput(), { target: { value: 'Sandlot Kings' } })
   fireEvent.click(next())
   fireEvent.click(next())
@@ -71,15 +71,15 @@ describe('CreateLeagueWizard dialog shell', () => {
     expect(dialog).not.toHaveAttribute('aria-busy')
   })
 
-  it('opens on Details and never asks for a format (1.1, 3.1)', () => {
+  it('opens on General and never asks for a format (1.1, 3.1)', () => {
     renderWizard()
-    expect(screen.getByText('Step 1 of 3: Details')).toBeInTheDocument()
+    expect(screen.getByText('Step 1 of 3: General')).toBeInTheDocument()
     expect(screen.queryAllByRole('radio', { name: /Dynasty|Keeper|Redraft/ })).toHaveLength(0)
     expect(screen.queryByRole('group', { name: 'League format' })).toBeNull()
     expect(screen.getByRole('list', { name: 'Progress' }).querySelectorAll('li')).toHaveLength(3)
   })
 
-  it('focuses the first interactive element of the Details step on open (1.2)', () => {
+  it('focuses the first interactive element of the General step on open (1.2)', () => {
     renderWizard()
     expect(document.activeElement).toBe(nameInput())
   })
@@ -100,13 +100,13 @@ describe('CreateLeagueWizard steps', () => {
   it('shows step titles and status text as the user moves (2.1)', async () => {
     const user = userEvent.setup()
     renderWizard()
-    expect(screen.getByText('Step 1 of 3: Details')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Details' })).toBeInTheDocument()
+    expect(screen.getByText('Step 1 of 3: General')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'General' })).toBeInTheDocument()
 
     await user.type(nameInput(), 'Sandlot Kings')
     await user.click(next())
-    expect(screen.getByText('Step 2 of 3: Settings')).toBeInTheDocument()
-    expect(document.activeElement).toBe(screen.getByRole('heading', { name: 'Settings' }))
+    expect(screen.getByText('Step 2 of 3: Roster')).toBeInTheDocument()
+    expect(document.activeElement).toBe(screen.getByRole('heading', { name: 'Roster' }))
 
     const progress = screen.getByRole('list', { name: 'Progress' })
     const items = within(progress).getAllByRole('listitem')
@@ -116,7 +116,7 @@ describe('CreateLeagueWizard steps', () => {
     expect(items[2]).not.toHaveAttribute('aria-current')
   })
 
-  it('disables Back on the Details step and enables it afterwards (6.4)', async () => {
+  it('disables Back on the General step and enables it afterwards (6.4)', async () => {
     const user = userEvent.setup()
     renderWizard()
     expect(back()).toBeDisabled()
@@ -125,13 +125,13 @@ describe('CreateLeagueWizard steps', () => {
     expect(back()).toBeEnabled()
   })
 
-  it('replaces Next with Create league on Review (6.7)', async () => {
+  it('replaces Next with Create league on Scoring (6.7)', async () => {
     const user = userEvent.setup()
     renderWizard()
-    await reachReview(user)
+    await reachScoring(user)
     expect(create()).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Next' })).toBeNull()
-    expect(screen.getByText('Step 3 of 3: Review')).toBeInTheDocument()
+    expect(screen.getByText('Step 3 of 3: Scoring')).toBeInTheDocument()
   })
 
   it('marks an invalid field with aria-invalid and a described error, and clears it on edit (4.5, 4.6)', async () => {
@@ -140,7 +140,7 @@ describe('CreateLeagueWizard steps', () => {
     await user.click(next())
 
     const input = nameInput()
-    expect(screen.getByText('Step 1 of 3: Details')).toBeInTheDocument()
+    expect(screen.getByText('Step 1 of 3: General')).toBeInTheDocument()
     expect(input).toHaveAttribute('aria-invalid', 'true')
     const errorId = input.getAttribute('aria-describedby')
     expect(errorId).toBeTruthy()
@@ -153,39 +153,97 @@ describe('CreateLeagueWizard steps', () => {
     expect(screen.queryByText('Enter a league name')).toBeNull()
   })
 
-  it('shows the Guillotine hint and range error on Settings (5.4)', async () => {
+  it('shows the Guillotine hint and range error for the team count (5.4)', async () => {
     const user = userEvent.setup()
     renderWizard({ format: 'Guillotine' })
+    expect(screen.getByText('6 to 32 teams')).toBeInTheDocument()
     await user.type(nameInput(), 'Cut Throat')
-    await user.click(next())
-
-    expect(screen.getByText('6 to 20 teams')).toBeInTheDocument()
     const teams = screen.getByLabelText('Number of teams')
     await user.clear(teams)
     await user.type(teams, '5')
     await user.click(next())
     expect(teams).toHaveAttribute('aria-invalid', 'true')
-    expect(screen.getByText(/from 6 to 20/)).toBeInTheDocument()
+    expect(screen.getByText(/from 6 to 32/)).toBeInTheDocument()
     expect(teams).toHaveValue('5')
+    expect(screen.getByText('Step 1 of 3: General')).toBeInTheDocument()
   })
-
-  it('shows the chosen format read-only on Review without an Edit button for it (3.2, 3.3)', async () => {
+  it('offers a slot count for each roster position', async () => {
     const user = userEvent.setup()
-    renderWizard({ format: 'Bestball' })
-    await reachReview(user)
-    expect(screen.getByText('Format')).toBeInTheDocument()
-    expect(screen.getByText('Bestball')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Edit format' })).toBeNull()
-    expect(screen.getAllByRole('button', { name: /^Edit / })).toHaveLength(4)
+    renderWizard()
+    await user.type(nameInput(), 'Sandlot Kings')
+    await user.click(next())
+    for (const label of [
+      'Starting Pitcher',
+      'Relief Pitcher',
+      'Closing Pitcher',
+      'Catcher',
+      'First Base',
+      'Second Base',
+      'Shortstop',
+      'Third Base',
+      'Left Fielder',
+      'Center Fielder',
+      'Right Fielder',
+    ]) {
+      expect(screen.getByLabelText(label)).toBeInTheDocument()
+    }
+  })
+  it('blocks Next on Roster for an invalid slot count and when no slot is filled', async () => {
+    const user = userEvent.setup()
+    renderWizard()
+    await user.type(nameInput(), 'Sandlot Kings')
+    await user.click(next())
+    const sp = screen.getByLabelText('Starting Pitcher')
+    await user.clear(sp)
+    await user.type(sp, 'x')
+    await user.click(next())
+    expect(sp).toHaveAttribute('aria-invalid', 'true')
+    expect(sp).toHaveFocus()
+    expect(screen.getByText('Step 2 of 3: Roster')).toBeInTheDocument()
+    for (const p of ['Starting Pitcher', 'Relief Pitcher', 'Closing Pitcher', 'Catcher', 'First Base', 'Second Base', 'Shortstop', 'Third Base', 'Left Fielder', 'Center Fielder', 'Right Fielder']) {
+      const input = screen.getByLabelText(p)
+      await user.clear(input)
+      await user.type(input, '0')
+    }
+    await user.click(next())
+    expect(screen.getByText('Fill at least one roster slot')).toBeInTheDocument()
+  })
+  it('offers hitting, pitching and fielding scoring categories and validates them', async () => {
+    const user = userEvent.setup()
+    renderWizard()
+    await reachScoring(user)
+    for (const group of ['Hitting', 'Pitching', 'Fielding']) {
+      expect(screen.getByRole('group', { name: group })).toBeInTheDocument()
+    }
+    expect(within(screen.getByRole('group', { name: 'Hitting' })).getByLabelText('Home Runs (HR)')).toHaveValue('4')
+    expect(within(screen.getByRole('group', { name: 'Pitching' })).getByLabelText('Saves (SV)')).toBeInTheDocument()
+    const errors = within(screen.getByRole('group', { name: 'Fielding' })).getByLabelText('Errors (E)')
+    await user.clear(errors)
+    await user.type(errors, 'abc')
+    await user.click(create())
+    expect(errors).toHaveAttribute('aria-invalid', 'true')
+    expect(errors).toHaveFocus()
+    expect(screen.getByRole('button', { name: 'Create league' })).toBeEnabled()
+  })
+  it('keeps edited roster and scoring values when navigating back and forward', async () => {
+    const user = userEvent.setup()
+    renderWizard()
+    await user.type(nameInput(), 'Sandlot Kings')
+    await user.click(next())
+    const sp = screen.getByLabelText('Starting Pitcher')
+    await user.clear(sp)
+    await user.type(sp, '6')
+    await user.click(next())
+    await user.click(back())
+    expect(screen.getByLabelText('Starting Pitcher')).toHaveValue('6')
   })
 })
-
 describe('CreateLeagueWizard submission', () => {
   it('is busy while submitting, then closes via onCreated on success (8.3, 8.4)', async () => {
     const user = userEvent.setup()
     const d = deferred<CreateLeagueResult>()
     const { service, onCreated, onClose } = renderWizard({ service: makeService(() => d.promise) })
-    await reachReview(user)
+    await reachScoring(user)
 
     await user.click(create())
     const dialog = screen.getByRole('dialog')
@@ -206,9 +264,9 @@ describe('CreateLeagueWizard submission', () => {
     expect(service.createLeague).toHaveBeenCalledWith({
       format: 'Dynasty',
       name: 'Sandlot Kings',
-      description: '',
       teamCount: 10,
-      visibility: 'private',
+      roster: expect.objectContaining({ SP: 4, RP: 2, CP: 1, C: 1, RF: 1 }),
+      scoring: expect.objectContaining({ bat_hr: 4, bat_k: -0.5, pit_w: 5, fld_e: -1 }),
     })
     expect(onCreated).toHaveBeenCalledWith('abc')
     expect(onClose).not.toHaveBeenCalled()
@@ -219,7 +277,7 @@ describe('CreateLeagueWizard submission', () => {
     const { onCreated } = renderWizard({
       service: makeService(async () => ({ ok: false, reason: 'Name already taken' })),
     })
-    await reachReview(user)
+    await reachScoring(user)
     await user.click(create())
 
     expect(await screen.findByText('Name already taken')).toBeInTheDocument()
@@ -228,14 +286,16 @@ describe('CreateLeagueWizard submission', () => {
     expect(create()).toBeEnabled()
     expect(back()).toBeEnabled()
     expect(closeBtn()).toBeEnabled()
-    expect(screen.getByText('Sandlot Kings')).toBeInTheDocument()
+    await user.click(back())
+    await user.click(back())
+    expect(nameInput()).toHaveValue('Sandlot Kings')
     expect(onCreated).not.toHaveBeenCalled()
   })
 
   it('falls back to the generic message without a reason (8.5)', async () => {
     const user = userEvent.setup()
     renderWizard({ service: makeService(async () => ({ ok: false })) })
-    await reachReview(user)
+    await reachScoring(user)
     await user.click(create())
     expect(await screen.findByText(GENERIC_FAILURE_MESSAGE)).toBeInTheDocument()
   })
@@ -248,7 +308,7 @@ describe('CreateLeagueWizard submission', () => {
       .mockResolvedValueOnce({ ok: false, reason: 'Server busy' })
       .mockReturnValueOnce(d.promise)
     const { onCreated } = renderWizard({ service: { createLeague } })
-    await reachReview(user)
+    await reachScoring(user)
     await user.click(create())
     expect(await screen.findByText('Server busy')).toBeInTheDocument()
 
@@ -267,7 +327,7 @@ describe('CreateLeagueWizard submission', () => {
     vi.useFakeTimers()
     const d = deferred<CreateLeagueResult>()
     const { onCreated } = renderWizard({ service: makeService(() => d.promise) })
-    reachReviewSync()
+    reachScoringSync()
 
     fireEvent.click(create())
     await act(async () => {

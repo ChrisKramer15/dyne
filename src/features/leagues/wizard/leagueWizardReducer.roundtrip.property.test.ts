@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import fc from 'fast-check'
 import { STEPS } from './leagueDraft'
 import type { LeagueDraft, StepId } from './leagueDraft'
+import { validRosterArb, validScoringArb } from './draftArbitraries.testutil'
 import { createInitialState, wizardReducer } from './leagueWizardReducer'
 import type { WizardAction, WizardState } from './leagueWizardReducer'
 
@@ -12,15 +13,14 @@ const num = (id: StepId) => STEPS.findIndex((s) => s.id === id)
 const validDraftArb: fc.Arbitrary<LeagueDraft> = fc.record({
   format: fc.constantFrom('Guillotine', 'Redraft'),
   name: fc.stringMatching(/^[A-Za-z0-9][A-Za-z0-9 ]{0,30}$/),
-  description: fc.string({ maxLength: 60 }),
-  teamCount: fc.integer({ min: 6, max: 20 }).map(String),
-  visibility: fc.constantFrom('private' as const, 'public' as const),
+  teamCount: fc.integer({ min: 6, max: 32 }).map(String),
+  roster: validRosterArb,
+  scoring: validScoringArb,
 })
 
 const forwardActionArb: fc.Arbitrary<WizardAction> = fc.oneof(
   fc.constant<WizardAction>({ type: 'NEXT' }),
   stepArb.map<WizardAction>((step) => ({ type: 'GO_TO', step })),
-  stepArb.map<WizardAction>((step) => ({ type: 'EDIT_GROUP', step })),
   fc.constant<WizardAction>({ type: 'BACK' }),
 )
 
@@ -59,7 +59,7 @@ describe('leagueWizardReducer navigation round trip', () => {
   /** **Validates: Requirements 6.5, 11.3** */
   it('forward then BACK returns to the original step with the same draft', () => {
     fc.assert(
-      fc.property(validDraftArb, fc.constantFrom<StepId>('details', 'settings'), (draft, start) => {
+      fc.property(validDraftArb, fc.constantFrom<StepId>('general', 'roster'), (draft, start) => {
         const base = createInitialState('Guillotine')
         const s0: WizardState = { ...base, draft, initial: draft, step: start }
         const forward = wizardReducer(s0, { type: 'NEXT' })
