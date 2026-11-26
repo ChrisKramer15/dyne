@@ -131,3 +131,24 @@ describe('Homepage league format availability', () => {
     expect(screen.queryByRole('dialog')).toBeNull()
   })
 })
+
+describe('Create league wizard from the homepage', () => {
+  afterEach(() => cleanup())
+
+  it('opens the themed General Settings modal when an enabled format is clicked', async () => {
+    const user = userEvent.setup()
+    const { container } = renderHome()
+    expect(screen.queryByRole('dialog')).toBeNull()
+    await user.click(screen.getByRole('button', { name: 'Create a Dynasty Baseball league' }))
+    expect(screen.getByRole('dialog', { name: 'General Settings' })).toBeTruthy()
+    expect(container.querySelector('.league-wizard')?.classList.contains('accent-green')).toBe(true)
+  })
+
+  it('closes the modal on Cancel', async () => {
+    const user = userEvent.setup()
+    renderHome()
+    await user.click(screen.getByRole('button', { name: 'Create a Dynasty Baseball league' }))
+    await user.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+})

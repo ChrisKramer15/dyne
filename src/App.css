@@ -2780,3 +2780,113 @@ button.profile-stat:focus-visible {
   outline: 3px solid var(--text);
   outline-offset: 2px;
 }
+
+/* ---------- Create league wizard ---------- */
+/* The wrapper carries an accent-* class from the chosen format, which sets --accent.
+   Everything below, plus the shared modal border (--chat-accent), follows it. */
+.league-wizard {
+  --chat-accent: var(--accent);
+}
+.league-wizard .modal-dialog {
+  width: min(100%, 520px);
+  border-color: color-mix(in srgb, var(--accent) 70%, transparent);
+  box-shadow:
+    0 24px 64px hsl(228 60% 2% / 0.7),
+    0 0 40px -6px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.league-wizard .modal-title {
+  color: var(--accent);
+  text-shadow: 0 0 12px color-mix(in srgb, var(--accent) 60%, transparent);
+}
+.league-wizard .auth-input:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+.league-wizard .modal-close:focus-visible,
+.league-wizard .modal-button:focus-visible {
+  outline-color: var(--accent);
+}
+.league-wizard .modal-button:hover {
+  border-color: var(--accent);
+}
+.league-wizard .modal-error {
+  margin: 6px 0 0;
+}
+.wizard-form {
+  margin-top: 16px;
+}
+.wizard-required {
+  font-weight: 400;
+  color: var(--accent);
+}
+.wizard-primary {
+  color: var(--bg);
+  font-weight: 700;
+  background: var(--accent);
+  border-color: transparent;
+  box-shadow: 0 0 16px -4px var(--accent);
+}
+.wizard-primary:hover {
+  filter: brightness(1.1);
+}
+.wizard-avatars {
+  margin: 8px 0 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.wizard-avatars legend {
+  padding: 0;
+}
+.avatar-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+  gap: 6px;
+  max-height: min(34dvh, 260px);
+  padding: 6px;
+  overflow-y: auto;
+  background: hsl(228 30% 9%);
+  border: 1px solid hsl(228 28% 26%);
+  border-radius: 12px;
+}
+.avatar-option {
+  position: relative;
+  display: block;
+  cursor: pointer;
+}
+/* The native radio stays in the layout, invisible, so keyboard and screen reader behavior is built in. */
+.avatar-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.avatar-face {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  font-size: 1.6rem;
+  line-height: 1;
+  background: hsl(0 0% 100% / 0.05);
+  border: 2px solid transparent;
+  border-radius: 12px;
+  transition:
+    background 120ms ease-out,
+    border-color 120ms ease-out;
+}
+.avatar-option:hover .avatar-face {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+.avatar-input:checked + .avatar-face {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  border-color: var(--accent);
+  box-shadow: 0 0 14px -2px var(--accent);
+}
+.avatar-input:focus-visible + .avatar-face {
+  outline: 3px solid var(--text);
+  outline-offset: 2px;
+}

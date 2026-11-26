@@ -1,13 +1,16 @@
+import { useState } from 'react'
 import '../../App.css'
 import BottomNav from '../../shared/BottomNav'
 import { ACTIONS, ALERTS_PER_PAGE, SPORTS } from './homeData'
 import { SportIcon } from './SportIcon'
 import { Pager } from '../../shared/Pager'
 import { usePagination } from '../../shared/usePagination'
+import CreateLeagueWizard, { type WizardFormat } from '../leagues/wizard/CreateLeagueWizard'
 
 
 export default function Homepage() {
   const { page, pageCount, visible, setPage } = usePagination(ACTIONS, ALERTS_PER_PAGE)
+  const [wizardFormat, setWizardFormat] = useState<WizardFormat | null>(null)
 
   return (
     <div className="app-shell">
@@ -38,6 +41,7 @@ export default function Homepage() {
                       className={`sport-card accent-${f.accent}`}
                       aria-label={`Create a ${f.name} ${s.name} league`}
                       disabled={!f.enabled}
+                      onClick={() => setWizardFormat({ name: f.name, sport: s.name, accent: f.accent })}
                     >
                       <span className="sport-icon-wrap">
                         <SportIcon name={f.icon} className="sport-pic" />
@@ -87,6 +91,7 @@ export default function Homepage() {
         </section>
       </main>
       <BottomNav />
+      {wizardFormat && <CreateLeagueWizard format={wizardFormat} onClose={() => setWizardFormat(null)} />}
     </div>
   )
 }
