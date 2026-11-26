@@ -2890,3 +2890,78 @@ button.profile-stat:focus-visible {
   outline: 3px solid var(--text);
   outline-offset: 2px;
 }
+/* Wizard: scoring step */
+.league-wizard .modal-actions {
+  position: sticky;
+  bottom: 0;
+  padding-top: 12px;
+  background: var(--surface);
+}
+.wizard-intro {
+  margin: 0 0 12px;
+  font-size: 0.9rem;
+}
+.scoring-group {
+  margin: 0 0 16px;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.scoring-legend {
+  float: left;
+  width: 100%;
+  margin: 0 0 6px;
+  padding: 0 0 6px;
+  font-family: var(--display);
+  font-size: 1rem;
+  color: var(--accent);
+  border-bottom: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.scoring-legend + * {
+  clear: both;
+}
+.scoring-row {
+  display: grid;
+  grid-template-columns: 1fr minmax(76px, 96px);
+  align-items: center;
+  column-gap: 12px;
+  padding: 4px 0;
+}
+.scoring-label {
+  display: flex;
+  flex-direction: column;
+  color: var(--text);
+  font-size: 0.95rem;
+}
+.scoring-abbr,
+.scoring-note {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.scoring-input {
+  margin-bottom: 0;
+  min-width: 0;
+  text-align: right;
+}
+.scoring-error {
+  grid-column: 1 / -1;
+  justify-self: end;
+  margin: 2px 0 0;
+  font-size: 0.8rem;
+}
+.scoring-reset {
+  margin-bottom: 4px;
+}
+.wizard-save-error {
+  margin: 12px 0 0;
+}
+
+.wizard-teams {
+  width: 7rem;
+  margin-bottom: 4px;
+}
+.wizard-hint {
+  margin: 0 0 14px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}

@@ -1,5 +1,5 @@
 import { useId, type Ref } from 'react'
-import { LEAGUE_NAME_MAX, type GeneralErrors, type GeneralSettings } from './generalSettings'
+import { LEAGUE_NAME_MAX, MAX_TEAMS, type GeneralErrors, type GeneralSettings } from './generalSettings'
 import { LEAGUE_AVATARS } from './leagueAvatars'
 
 export interface GeneralStepProps {
@@ -8,12 +8,17 @@ export interface GeneralStepProps {
   /** Errors to display. Empty until the user tries to continue. */
   errors: GeneralErrors
   nameRef?: Ref<HTMLInputElement>
+  /** Lowest allowed team count for this format. */
+  minTeams: number
 }
 
 /** Step 1: league name and avatar. Both are required. */
-export function GeneralStep({ value, onChange, errors, nameRef }: GeneralStepProps) {
+export function GeneralStep({ value, onChange, errors, nameRef, minTeams }: GeneralStepProps) {
   const nameId = useId()
   const nameErrorId = `${nameId}-error`
+  const teamsId = useId()
+  const teamsErrorId = `${teamsId}-error`
+  const teamsHintId = `${teamsId}-hint`
   const avatarErrorId = useId()
   const groupName = useId()
 
@@ -38,6 +43,30 @@ export function GeneralStep({ value, onChange, errors, nameRef }: GeneralStepPro
       {errors.name && (
         <p className="modal-error" id={nameErrorId} role="alert">
           {errors.name}
+        </p>
+      )}
+
+      <label className="auth-label" htmlFor={teamsId}>
+        Number of teams <span className="wizard-required">(required)</span>
+      </label>
+      <input
+        id={teamsId}
+        className="auth-input wizard-teams"
+        type="text"
+        inputMode="numeric"
+        autoComplete="off"
+        required
+        value={value.teamCount}
+        onChange={(e) => onChange({ ...value, teamCount: e.target.value })}
+        aria-invalid={errors.teamCount ? true : undefined}
+        aria-describedby={errors.teamCount ? `${teamsHintId} ${teamsErrorId}` : teamsHintId}
+      />
+      <p className="wizard-hint" id={teamsHintId}>
+        {minTeams} to {MAX_TEAMS} teams.
+      </p>
+      {errors.teamCount && (
+        <p className="modal-error" id={teamsErrorId} role="alert">
+          {errors.teamCount}
         </p>
       )}
 

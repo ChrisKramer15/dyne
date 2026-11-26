@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router'
 import '../../App.css'
 import BottomNav from '../../shared/BottomNav'
 import { ACTIONS, ALERTS_PER_PAGE, SPORTS } from './homeData'
@@ -11,6 +12,7 @@ import CreateLeagueWizard, { type WizardFormat } from '../leagues/wizard/CreateL
 export default function Homepage() {
   const { page, pageCount, visible, setPage } = usePagination(ACTIONS, ALERTS_PER_PAGE)
   const [wizardFormat, setWizardFormat] = useState<WizardFormat | null>(null)
+  const navigate = useNavigate()
 
   return (
     <div className="app-shell">
@@ -91,7 +93,13 @@ export default function Homepage() {
         </section>
       </main>
       <BottomNav />
-      {wizardFormat && <CreateLeagueWizard format={wizardFormat} onClose={() => setWizardFormat(null)} />}
+      {wizardFormat && (
+        <CreateLeagueWizard
+          format={wizardFormat}
+          onClose={() => setWizardFormat(null)}
+          onCreated={() => navigate('/leagues')}
+        />
+      )}
     </div>
   )
 }
