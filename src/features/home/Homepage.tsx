@@ -1,35 +1,13 @@
-import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router'
 import '../../App.css'
 import BottomNav from '../../shared/BottomNav'
 import { ACTIONS, ALERTS_PER_PAGE, SPORTS } from './homeData'
 import { SportIcon } from './SportIcon'
 import { Pager } from '../../shared/Pager'
 import { usePagination } from '../../shared/usePagination'
-import { CreateLeagueWizard } from '../leagues/wizard/CreateLeagueWizard'
-import type { LeagueService } from '../leagues/wizard/leagueService'
 
 
-export interface HomepageProps {
-  /** Overrides the app-wide league service used by the wizard. */
-  leagueService?: LeagueService
-}
-
-export default function Homepage({ leagueService }: HomepageProps = {}) {
-  const navigate = useNavigate()
-  const [wizard, setWizard] = useState<{ format: string; opener: HTMLElement } | null>(null)
-  const restoreFocusRef = useRef<HTMLElement | null>(null)
+export default function Homepage() {
   const { page, pageCount, visible, setPage } = usePagination(ACTIONS, ALERTS_PER_PAGE)
-
-  // After the wizard unmounts, return focus to the opener, or the section heading if it is gone.
-  useEffect(() => {
-    if (wizard) return
-    const opener = restoreFocusRef.current
-    if (!opener) return
-    restoreFocusRef.current = null
-    if (opener.isConnected) opener.focus()
-    else document.getElementById('dash-join')?.focus()
-  }, [wizard])
 
   return (
     <div className="app-shell">
@@ -59,7 +37,7 @@ export default function Homepage({ leagueService }: HomepageProps = {}) {
                       type="button"
                       className={`sport-card accent-${f.accent}`}
                       aria-label={`Create a ${f.name} ${s.name} league`}
-                      onClick={(e) => setWizard({ format: f.name, opener: e.currentTarget })}
+                      disabled={!f.enabled}
                     >
                       <span className="sport-icon-wrap">
                         <SportIcon name={f.icon} className="sport-pic" />
@@ -109,20 +87,6 @@ export default function Homepage({ leagueService }: HomepageProps = {}) {
         </section>
       </main>
       <BottomNav />
-      {wizard && (
-        <CreateLeagueWizard
-          format={wizard.format}
-          service={leagueService}
-          onClose={() => {
-            restoreFocusRef.current = wizard.opener
-            setWizard(null)
-          }}
-          onCreated={() => {
-            setWizard(null)
-            navigate('/leagues')
-          }}
-        />
-      )}
     </div>
   )
 }

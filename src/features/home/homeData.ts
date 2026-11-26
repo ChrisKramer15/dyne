@@ -11,17 +11,17 @@ export const ACTIONS = [
 
 /** Alerts shown per page; more than this turns on pagination. */
 export const ALERTS_PER_PAGE = 3
-/** Sports a user can start or join a league in. */
+/** Sports a user can start or join a league in. Formats with enabled: false are shown greyed out until they are set up. */
 export const SPORTS = [
   {
     name: 'Baseball',
     emoji: '⚾',
     formats: [
-      { name: 'Bestball', icon: 'bestball', accent: 'orange', tagline: 'Draft once. No lineups to set.' },
-      { name: 'Dynasty', icon: 'dynasty', accent: 'green', tagline: 'Keep your whole roster, year after year.' },
-      { name: 'Guillotine', icon: 'guillotine', accent: 'magenta', tagline: 'Lowest score gets cut every week.' },
-      { name: 'Keeper', icon: 'keeper', accent: 'purple', tagline: 'Hold onto a few stars each season.' },
-      { name: 'Redraft', icon: 'redraft', accent: 'blue', tagline: 'Fresh draft every season.' },
+      { name: 'Bestball', icon: 'bestball', enabled: false, accent: 'orange', tagline: 'Draft once. No lineups to set.' },
+      { name: 'Dynasty', icon: 'dynasty', enabled: true, accent: 'green', tagline: 'Keep your whole roster, year after year.' },
+      { name: 'Guillotine', icon: 'guillotine', enabled: false, accent: 'magenta', tagline: 'Lowest score gets cut every week.' },
+      { name: 'Keeper', icon: 'keeper', enabled: false, accent: 'purple', tagline: 'Hold onto a few stars each season.' },
+      { name: 'Redraft', icon: 'redraft', enabled: false, accent: 'blue', tagline: 'Fresh draft every season.' },
     ],
   },
 ] as const

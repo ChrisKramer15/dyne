@@ -1,10 +1,9 @@
-import { describe, it, expect, afterEach, vi } from 'vitest'
+import { describe, it, expect, afterEach } from 'vitest'
 import { render, cleanup, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter, Route, Routes } from 'react-router'
+import { MemoryRouter } from 'react-router'
 import Homepage from './Homepage'
 import { ALERTS_PER_PAGE, SPORTS } from './homeData'
-import type { LeagueService } from '../leagues/wizard/leagueService'
 
 const renderHome = () =>
   render(
@@ -118,68 +117,17 @@ describe('Homepage structure and accessibility', () => {
     }
   })
 })
-describe('Homepage create league wizard', () => {
+describe('Homepage league format availability', () => {
   afterEach(() => cleanup())
-
-  const card = (format: string) => screen.getByRole('button', { name: `Create a ${format} Baseball league` })
-  const dialog = () => screen.queryByRole('dialog', { name: /^Create a .+ league$/ })
-
-  it.each([
-    ['click', async (u: ReturnType<typeof userEvent.setup>) => u.click(card('Guillotine'))],
-    ['Enter', async (u: ReturnType<typeof userEvent.setup>) => { card('Guillotine').focus(); await u.keyboard('{Enter}') }],
-    ['Space', async (u: ReturnType<typeof userEvent.setup>) => { card('Guillotine').focus(); await u.keyboard(' ') }],
-  ])('%s opens the wizard with the card format (1.1, 1.3)', async (_label, act) => {
+  it('enables only Dynasty and greys out the other formats', async () => {
     const user = userEvent.setup()
     renderHome()
-    expect(dialog()).toBeNull()
-    await act(user)
-    expect(dialog()).not.toBeNull()
-    expect(screen.getByRole('dialog', { name: 'Create a Guillotine league' })).toBeTruthy()
-    expect(screen.getByText('Step 1 of 3: General')).toBeTruthy()
-    expect(screen.queryAllByRole('radio', { name: /Keeper|Redraft/ })).toHaveLength(0)
-  })
-
-  it('returns focus to the card when the wizard closes (1.4)', async () => {
-    const user = userEvent.setup()
-    renderHome()
-    await user.click(card('Keeper'))
-    expect(dialog()).not.toBeNull()
-    await user.keyboard('{Escape}')
-    expect(dialog()).toBeNull()
-    expect(document.activeElement).toBe(card('Keeper'))
-  })
-
-  it('focuses the Create league heading when the card is gone (1.4)', async () => {
-    const user = userEvent.setup()
-    renderHome()
-    const opener = card('Redraft')
-    await user.click(opener)
-    opener.remove()
-    await user.keyboard('{Escape}')
-    expect(dialog()).toBeNull()
-    expect(document.activeElement).toBe(document.getElementById('dash-join'))
-  })
-
-  it('navigates to /leagues after a successful creation (8.4)', async () => {
-    const user = userEvent.setup()
-    const leagueService: LeagueService = {
-      createLeague: vi.fn(async () => ({ ok: true as const, leagueId: 'l1' })),
+    for (const f of SPORTS[0].formats) {
+      const button = screen.getByRole('button', { name: `Create a ${f.name} Baseball league` })
+      if (f.name === 'Dynasty') expect(button).toBeEnabled()
+      else expect(button).toBeDisabled()
     }
-    render(
-      <MemoryRouter initialEntries={['/home']}>
-        <Routes>
-          <Route path="/home" element={<Homepage leagueService={leagueService} />} />
-          <Route path="/leagues" element={<p>Leagues page</p>} />
-        </Routes>
-      </MemoryRouter>,
-    )
-    await user.click(card('Dynasty'))
-    await user.type(screen.getByLabelText('League name'), 'Sandlot Kings')
-    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Next' }))
-    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Next' }))
-    await user.click(screen.getByRole('button', { name: 'Create league' }))
-    expect(await screen.findByText('Leagues page')).toBeTruthy()
-    expect(leagueService.createLeague).toHaveBeenCalledTimes(1)
-    expect(dialog()).toBeNull()
+    await user.click(screen.getByRole('button', { name: 'Create a Bestball Baseball league' }))
+    expect(screen.queryByRole('dialog')).toBeNull()
   })
 })
