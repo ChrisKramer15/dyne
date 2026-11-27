@@ -8,6 +8,7 @@ import LandingPage from '../features/landing/LandingPage'
 // landing page. <RouteGuard> supplies the Suspense boundary.
 const Homepage = lazy(() => import('../features/home/Homepage'))
 const LeaguesPage = lazy(() => import('../features/leagues/LeaguesPage'))
+const LeagueDashboardPage = lazy(() => import('../features/leagues/LeagueDashboardPage'))
 const ProfilePage = lazy(() => import('../features/profile/ProfilePage'))
 
 const ConversationListPage = lazy(() => import('../features/chat/ConversationListPage'))
@@ -42,6 +43,13 @@ export function HomeRoute() {
 
 export function LeaguesRoute() {
   return <LeaguesPage />
+}
+
+/** A non-UUID id renders NotFoundView without any lookup. */
+export function LeagueDashboardRoute() {
+  const { leagueId } = useParams()
+  if (!leagueId || !UUID_PATTERN.test(leagueId)) return <NotFoundView />
+  return <LeagueDashboardPage leagueId={leagueId} />
 }
 
 export function ProfileRoute() {

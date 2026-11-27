@@ -2965,3 +2965,249 @@ button.profile-stat:focus-visible {
   font-size: 0.8rem;
   color: var(--text-muted);
 }
+/* ---------- League dashboard ---------- */
+/* The whole league card is clickable through the name link's stretched ::after */
+.league-card {
+  position: relative;
+}
+.league-link {
+  color: inherit;
+  text-decoration: none;
+}
+.league-link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+.league-link:hover {
+  text-decoration: underline;
+}
+.league-link:focus-visible {
+  outline: none;
+}
+.league-link:focus-visible::after {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  border-radius: 14px;
+}
+.ld-back {
+  align-self: flex-start;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  text-decoration: none;
+}
+.ld-back:hover {
+  color: var(--text);
+}
+.ld-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.ld-avatar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  font-size: 2rem;
+  line-height: 1;
+  border-radius: 16px;
+  background: linear-gradient(160deg, var(--accent), hsl(228 40% 14%));
+  box-shadow: 0 0 16px -6px var(--accent);
+}
+.ld-heading {
+  min-width: 0;
+}
+.ld-title {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 1.4rem;
+  line-height: 1.2;
+  font-weight: 600;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.ld-title:focus {
+  outline: none;
+}
+.ld-sub {
+  margin: 2px 0 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+.ld-tabs {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  border-bottom: 1px solid hsl(228 30% 18%);
+  scrollbar-width: none;
+}
+.ld-tab {
+  flex: none;
+  padding: 10px 14px;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+.ld-tab:hover {
+  color: var(--text);
+}
+.ld-tab[aria-selected='true'] {
+  color: var(--text);
+  border-bottom-color: var(--neon-cyan);
+}
+.ld-tab:focus-visible {
+  outline: 2px solid var(--neon-cyan);
+  outline-offset: -2px;
+}
+.ld-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+@media (min-width: 768px) {
+  .ld-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+.ld-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  background: var(--surface);
+  border: 1px solid hsl(228 30% 24%);
+  border-radius: 14px;
+}
+.ld-card-title {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.ld-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+.ld-note {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.ld-scoreboard {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 12px;
+}
+.ld-side {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.ld-side.is-right {
+  align-items: flex-end;
+  text-align: right;
+}
+.ld-side-name {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+.ld-side-score {
+  font-family: var(--display);
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.ld-vs {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+.ld-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.ld-table th,
+.ld-table td {
+  padding: 8px 6px;
+  text-align: left;
+  font-weight: 400;
+  color: var(--text);
+  border-bottom: 1px solid hsl(228 30% 18%);
+}
+.ld-table thead th {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+.ld-table tr.is-me th,
+.ld-table tr.is-me td {
+  font-weight: 600;
+  color: var(--neon-cyan);
+}
+.ld-table tr.is-open th,
+.ld-table tr.is-open td {
+  color: var(--text-muted);
+}
+.ld-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+}
+.ld-info-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.9rem;
+}
+.ld-info-row dt {
+  color: var(--text-muted);
+}
+.ld-info-row dd {
+  margin: 0;
+  color: var(--text);
+  text-align: right;
+}
+.ld-scoring {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+.ld-subtitle {
+  margin: 0 0 6px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+.ld-stat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ld-stat-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--text);
+}

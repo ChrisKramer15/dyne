@@ -6,6 +6,7 @@ import {
   ChatListRoute,
   HomeRoute,
   LandingRoute,
+  LeagueDashboardRoute,
   LeaguesRoute,
   ProfileRoute,
 } from './RouteViews'
@@ -37,6 +38,11 @@ export const appRoutes: RouteObject[] = [
         path: '/leagues',
         element: <LeaguesRoute />,
         handle: { access: 'protected', title: 'Leagues' } satisfies DyneRouteHandle,
+      },
+      {
+        path: '/leagues/:leagueId',
+        element: <LeagueDashboardRoute />,
+        handle: { access: 'protected', title: 'League' } satisfies DyneRouteHandle,
       },
       {
         path: '/profile',

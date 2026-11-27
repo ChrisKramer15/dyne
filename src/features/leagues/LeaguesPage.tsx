@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router'
 import '../../App.css'
 import BottomNav from '../../shared/BottomNav'
 import { getDefaultLeagueLoader, type LeagueLoader } from './leagueLoader'
@@ -29,7 +30,7 @@ function LeagueCard({ league }: { league: League }) {
         <div className="league-top">
           <div className="league-info">
             <h3 id={`league-${league.id}`} className="league-name">
-              {league.name}
+              <Link to={`/leagues/${league.id}`} className="league-link">{league.name}</Link>
             </h3>
             <p className="league-meta">
               {league.sport} · {league.record} · {ordinal(league.rank)} of {league.teams}
