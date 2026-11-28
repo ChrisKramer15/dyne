@@ -95,6 +95,28 @@ use:
 
 ## TODO
 
+### Move off the shared `github.io` origin before launch
+
+Every GitHub Pages project on the account is served from
+`chriskramer15.github.io`, so they all share one `localStorage` (about 5 million
+characters per origin in Chrome). Another project's cache (`rally.dailyCache.v1`,
+over 5 million characters) filled it on mobile, so "Keep me logged in" could not
+save the session and fell back to `sessionStorage`, which is cleared when the tab
+closes. Any page on the shared origin can also read Dyne's login token.
+
+Workaround for development: in Chrome on the phone, open the site, tap the icon
+left of the address, then **Site settings -> Clear & reset**.
+
+To fix, serve Dyne from its own origin: a custom domain on GitHub Pages (needs a
+purchased domain) or a free host such as Cloudflare Pages, Netlify or Vercel.
+Then:
+
+- Change `base: '/dyne/'` in `vite.config.ts` to `'/'`.
+- Update the `SITE_URL` secret and the allowed **Redirect URLs** in Supabase (see
+  above) to the new address.
+
+Separately, the rally project should move that cache to IndexedDB or cap its size.
+
 ### Configure custom SMTP before launch
 
 Auth emails (password reset, and email confirmation if re-enabled) currently
