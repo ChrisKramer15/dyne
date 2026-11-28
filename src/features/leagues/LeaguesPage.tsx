@@ -2,13 +2,12 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import '../../App.css'
 import BottomNav from '../../shared/BottomNav'
-import { SPORTS } from '../home/homeData'
-import { SportIcon } from '../home/SportIcon'
-import CreateLeagueWizard, { type WizardFormat } from './wizard/CreateLeagueWizard'
+import { RibbonHeading } from '../home/RibbonHeading'
+import CreateLeagueWizard from './wizard/CreateLeagueWizard'
 import type { LeagueService } from './wizard/leagueService'
 import { getDefaultFavoriteService, TOO_MANY_FAVORITES_MESSAGE, type FavoriteService } from './favoriteService'
 import { type LeagueLoader } from './leagueLoader'
-import { LEAGUES_PER_PAGE, LEAGUE_TYPE_ACCENT, MAX_TOP_LEAGUES, ordinal, type League } from './leaguesData'
+import { LEAGUES_PER_PAGE, LEAGUE_SPORTS, LEAGUE_TYPE_ACCENT, MAX_TOP_LEAGUES, ordinal, type League } from './leaguesData'
 import { useMyLeagues } from './useMyLeagues'
 import { Pager } from '../../shared/Pager'
 import { usePagination } from '../../shared/usePagination'
@@ -39,7 +38,7 @@ function LeagueCard({ league, onToggleFavorite }: { league: League; onToggleFavo
               <Link to={`/leagues/${league.id}`} className="league-link">{league.name}</Link>
             </h3>
             <p className="league-meta">
-              {league.sport} · {league.record} · {ordinal(league.rank)} of {league.teams}
+              {league.record} · {ordinal(league.rank)} of {league.teams}
             </p>
           </div>
           <span className={`status-badge status-${m.status}`}>{STATUS_LABEL[m.status]}</span>
@@ -63,7 +62,6 @@ function LeagueCard({ league, onToggleFavorite }: { league: League; onToggleFavo
           ) : (
             <span className="matchup-score">—</span>
           )}
-          {m.status === 'upcoming' && <span className="matchup-note">{m.note}</span>}
         </div>
         </div>
       </article>
@@ -76,22 +74,15 @@ export default function LeaguesPage({
   favoriteService,
   wizardService,
 }: { loader?: LeagueLoader; favoriteService?: FavoriteService; wizardService?: LeagueService } = {}) {
-  const [sport, setSport] = useState('all')
-  const [wizardFormat, setWizardFormat] = useState<WizardFormat | null>(null)
+  const [sport, setSport] = useState<string>(LEAGUE_SPORTS[0].name)
+  const [wizardOpen, setWizardOpen] = useState(false)
   const [favoriteError, setFavoriteError] = useState<string | null>(null)
   const { state: mine, reload, patchLeague } = useMyLeagues(loader)
   // Only the user's own leagues, in the order the loader returns them (newest first).
   const allLeagues = useMemo<readonly League[]>(() => (mine.status === 'ready' ? mine.leagues : []), [mine])
-  const sports = useMemo(
-    () => [...new Set(allLeagues.map((l) => l.sport))].sort((a, b) => a.localeCompare(b)),
-    [allLeagues],
-  )
-  const leagues = useMemo(
-    () => allLeagues.filter((l) => sport === 'all' || l.sport === sport),
-    [allLeagues, sport],
-  )
+  const selected = LEAGUE_SPORTS.find((s) => s.name === sport) ?? LEAGUE_SPORTS[0]
+  const leagues = useMemo(() => allLeagues.filter((l) => l.sport === sport), [allLeagues, sport])
   const { page, pageCount, visible, setPage } = usePagination(leagues, LEAGUES_PER_PAGE)
-  const liveCount = leagues.filter((l) => l.matchup.status === 'live').length
   const favoriteCount = allLeagues.filter((l) => l.isFavorite).length
 
   async function toggleFavorite(league: League) {
@@ -115,72 +106,48 @@ export default function LeaguesPage({
           </h1>
         </header>
 
-        <section className="dash-section" aria-labelledby="dash-join">
-          <h2 id="dash-join" tabIndex={-1} className="dash-heading dash-heading-icon">
-            <span className="sport-heading-pic" aria-hidden="true">
-              {SPORTS[0].emoji}
-            </span>
-            Create league
-          </h2>
-          {SPORTS.map((s) => (
-            <div key={s.name} className="sport-group">
-              <ul className="sport-grid">
-                {s.formats.map((f) => (
-                  <li key={f.name}>
-                    <button
-                      type="button"
-                      className={`sport-card accent-${f.accent}`}
-                      aria-label={`Create a ${f.name} ${s.name} league`}
-                      disabled={!f.enabled}
-                      onClick={() => setWizardFormat({ name: f.name, sport: s.name, accent: f.accent })}
-                    >
-                      <span className="sport-icon-wrap">
-                        <SportIcon name={f.icon} className="sport-pic" />
-                      </span>
-                      <span className="sport-text">
-                        <span className="sport-name">{f.name}</span>
-                        <span className="sport-tagline">{f.tagline}</span>
-                      </span>
-                      <span className="sport-chevron" aria-hidden="true">
-                        ›
-                      </span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+        <section className="dash-section" aria-labelledby="dash-sport">
+          <RibbonHeading id="dash-sport">Sport Category</RibbonHeading>
+          <ul className="sport-picker">
+            {LEAGUE_SPORTS.map((s) => (
+              <li key={s.name}>
+                <button
+                  type="button"
+                  className={`sport-pick accent-${s.accent}`}
+                  aria-pressed={s.name === sport}
+                  onClick={() => {
+                    setSport(s.name)
+                    setPage(0)
+                  }}
+                >
+                  <span className="sport-pick-emoji" aria-hidden="true">
+                    {s.emoji}
+                  </span>
+                  <span className="sport-pick-name">{s.name}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+          {!selected.available && (
+            <p className={`coming-soon accent-${selected.accent}`} role="status">
+              Coming Soon!
+            </p>
+          )}
         </section>
 
-        <p className="leagues-summary">
-          {leagues.length} leagues · {liveCount} live now
-        </p>
-
+        {selected.available && (
         <section className="dash-section" aria-labelledby="my-leagues">
-          <h2 id="my-leagues" className="dash-heading">
-            My leagues
-          </h2>
-          <div className="league-filter">
-            <label htmlFor="sport-filter">Sport</label>
-            <select
-              id="sport-filter"
-              value={sport}
-              onChange={(e) => {
-                setSport(e.target.value)
-                setPage(0)
-              }}
-            >
-              <option value="all">All sports</option>
-              {sports.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
+          <div className="section-head">
+            <RibbonHeading id="my-leagues">My leagues</RibbonHeading>
+            <button type="button" className="create-league-btn" onClick={() => setWizardOpen(true)}>
+              <span className="create-league-plus" aria-hidden="true">+</span>
+              Create league
+            </button>
           </div>
+          <Pager label="Leagues pages" page={page} pageCount={pageCount} onPageChange={setPage} />
           {mine.status === 'loading' && <p role="status">Loading your leagues…</p>}
           {mine.status === 'error' && <p role="alert">{mine.message}</p>}
-          {favoriteError && <p role="alert">{favoriteError}</p>}
+          {favoriteError && <p className="favorite-error" role="alert">{favoriteError}</p>}
           {leagues.length > 0 ? (
             <ul className="league-list">
               {visible.map((l) => (
@@ -188,19 +155,20 @@ export default function LeaguesPage({
               ))}
             </ul>
           ) : mine.status === 'ready' && (
-            <p className="empty-state">{allLeagues.length > 0 ? 'No leagues for this sport.' : 'No leagues yet.'}</p>
+            <p className="empty-state">No {selected.name.toLowerCase()} leagues yet.</p>
           )}
-          <Pager label="Leagues pages" page={page} pageCount={pageCount} onPageChange={setPage} />
         </section>
+        )}
+
       </main>
       <BottomNav />
-      {wizardFormat && (
+      {wizardOpen && (
         <CreateLeagueWizard
-          format={wizardFormat}
+          sport={sport}
           service={wizardService}
-          onClose={() => setWizardFormat(null)}
+          onClose={() => setWizardOpen(false)}
           onCreated={() => {
-            setWizardFormat(null)
+            setWizardOpen(false)
             reload()
           }}
         />

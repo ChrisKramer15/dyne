@@ -13,6 +13,14 @@ export const LEAGUE_TYPE_ACCENT: Record<LeagueType, 'blue' | 'purple' | 'magenta
   Redraft: 'blue',
 }
 
+/** Sports shown as cards at the top of the Leagues page. Only available ones can create leagues; the rest show "coming soon". */
+export const LEAGUE_SPORTS = [
+  { name: 'Baseball', emoji: '\u26BE', accent: 'green', available: true },
+  { name: 'Football', emoji: '\u{1F3C8}', accent: 'magenta', available: false },
+  { name: 'Basketball', emoji: '\u{1F3C0}', accent: 'orange', available: false },
+  { name: 'Hockey', emoji: '\u{1F3D2}', accent: 'blue', available: false },
+] as const
+
 export interface League {
   id: string
   name: string

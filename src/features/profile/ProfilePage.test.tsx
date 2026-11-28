@@ -50,7 +50,7 @@ describe('ProfilePage', () => {
     expect(screen.queryByText('Username')).toBeNull()
   })
 
-  it('shows days, favorites and blocked as three cards in one row', () => {
+  it('shows days, friends and blocked as three cards in one row', () => {
     localStorage.clear()
     renderProfile(serviceWith(vi.fn()), {
       status: 'authenticated',
@@ -61,7 +61,7 @@ describe('ProfilePage', () => {
     const cards = screen.getByRole('region', { name: 'Your stats' }).querySelectorAll('li')
     expect(cards).toHaveLength(3)
     expect(cards[0].textContent).toBe('3days on Dyne')
-    expect(cards[1].textContent).toBe('0Favorites')
+    expect(cards[1].textContent).toBe('0Friends')
     expect(cards[2].textContent).toBe('0Blocked')
     expect(screen.queryByText('Your journey')).toBeNull()
     expect(screen.queryByText(/weeks in the game/)).toBeNull()
@@ -76,8 +76,8 @@ describe('ProfilePage', () => {
     expect(screen.queryByText('Grace')).toBeNull()
     expect(screen.queryByText('Linus')).toBeNull()
 
-    await user.click(screen.getByRole('button', { name: /Favorites/ }))
-    const favorites = screen.getByRole('dialog', { name: 'Favorites' })
+    await user.click(screen.getByRole('button', { name: /Friends/ }))
+    const favorites = screen.getByRole('dialog', { name: 'Friends' })
     expect(within(favorites).getByText('Grace')).toBeTruthy()
     expect(within(favorites).queryByText('Linus')).toBeNull()
     await user.click(within(favorites).getByRole('button', { name: 'Close' }))
@@ -99,18 +99,18 @@ describe('ProfilePage', () => {
     )
     const user = userEvent.setup()
     renderProfile(serviceWith(vi.fn()), { ...authed, userId: 'remove-user' } as AuthState)
-    await user.click(screen.getByRole('button', { name: /Favorites/ }))
-    const dialog = screen.getByRole('dialog', { name: 'Favorites' })
-    await user.click(within(dialog).getByRole('button', { name: 'Remove Grace from favorites' }))
+    await user.click(screen.getByRole('button', { name: /Friends/ }))
+    const dialog = screen.getByRole('dialog', { name: 'Friends' })
+    await user.click(within(dialog).getByRole('button', { name: 'Remove Grace from friends' }))
     expect(within(dialog).queryByText('Grace')).toBeNull()
     expect(within(dialog).getByText('Linus')).toBeTruthy()
     expect(JSON.parse(localStorage.getItem('dyne:favorites:remove-user')!)).toEqual([
       { userId: 'u2', username: 'Linus' },
     ])
-    await user.click(within(dialog).getByRole('button', { name: 'Remove Linus from favorites' }))
-    expect(within(dialog).getByText('No favorites yet.')).toBeTruthy()
+    await user.click(within(dialog).getByRole('button', { name: 'Remove Linus from friends' }))
+    expect(within(dialog).getByText('No friends yet.')).toBeTruthy()
     await user.click(within(dialog).getByRole('button', { name: 'Close' }))
-    expect(screen.getByRole('button', { name: /Favorites/ }).textContent).toBe('0Favorites')
+    expect(screen.getByRole('button', { name: /Friends/ }).textContent).toBe('0Friends')
   })
   it('has no greeting line', () => {
     renderProfile(serviceWith(vi.fn()))

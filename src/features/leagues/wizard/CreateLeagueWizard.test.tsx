@@ -7,8 +7,6 @@ import { LEAGUE_AVATARS } from './leagueAvatars'
 import { DEFAULT_TEAMS, EMPTY_GENERAL, LEAGUE_NAME_MAX, validateGeneral } from './generalSettings'
 import { ALL_SCORING_STATS, defaultScoring, validateScoring } from './scoringSettings'
 
-const format = { name: 'Dynasty', sport: 'Baseball', accent: 'green' }
-
 const okService = (id = 'league-1') => ({ createLeague: vi.fn().mockResolvedValue({ ok: true, id }) })
 
 describe('league avatars', () => {
@@ -58,31 +56,40 @@ describe('CreateLeagueWizard General Settings view', () => {
   afterEach(() => cleanup())
 
   it('shows a General Settings header, a name field and 100 avatar choices', () => {
-    render(<CreateLeagueWizard format={format} onClose={() => {}} />)
+    render(<CreateLeagueWizard sport="Baseball" onClose={() => {}} />)
     const dialog = screen.getByRole('dialog', { name: 'General Settings' })
     expect(within(dialog).getByLabelText(/League name/)).toBeTruthy()
     expect(within(dialog).getAllByRole('radio')).toHaveLength(100)
   })
 
   it('uses the chosen format accent color', () => {
-    const { container } = render(<CreateLeagueWizard format={format} onClose={() => {}} />)
+    const { container } = render(<CreateLeagueWizard sport="Baseball" onClose={() => {}} />)
     expect(container.querySelector('.league-wizard')?.classList.contains('accent-green')).toBe(true)
   })
 
   it('has a Number of teams field that starts at 32', () => {
-    render(<CreateLeagueWizard format={format} onClose={() => {}} />)
+    render(<CreateLeagueWizard sport="Baseball" onClose={() => {}} />)
     expect((screen.getByLabelText(/Number of teams/) as HTMLInputElement).value).toBe('32')
     expect(screen.getByText('4 to 32 teams.')).toBeTruthy()
   })
 
-  it('shows a 6 team minimum for Guillotine', () => {
-    render(<CreateLeagueWizard format={{ ...format, name: 'Guillotine' }} onClose={() => {}} />)
-    expect(screen.getByText('6 to 32 teams.')).toBeTruthy()
+  it('has a League format field defaulting to Dynasty, with the other formats shown as coming soon', () => {
+    render(<CreateLeagueWizard sport="Baseball" onClose={() => {}} />)
+    const select = screen.getByLabelText('League format') as HTMLSelectElement
+    expect(select.value).toBe('Dynasty')
+    const options = within(select).getAllByRole('option') as HTMLOptionElement[]
+    expect(options.map((o) => o.textContent)).toEqual([
+      'Bestball (coming soon)',
+      'Dynasty',
+      'Guillotine (coming soon)',
+      'Keeper (coming soon)',
+      'Redraft (coming soon)',
+    ])
+    expect(options.filter((o) => !o.disabled).map((o) => o.value)).toEqual(['Dynasty'])
   })
-
   it('blocks Next on a bad team count and focuses the field', async () => {
     const user = userEvent.setup()
-    render(<CreateLeagueWizard format={format} onClose={() => {}} service={okService()} />)
+    render(<CreateLeagueWizard sport="Baseball" onClose={() => {}} service={okService()} />)
     await user.type(screen.getByLabelText(/League name/), 'Sunday Slugger')
     await user.click(screen.getByRole('radio', { name: 'Trophy' }))
     const teams = screen.getByLabelText(/Number of teams/)
@@ -97,7 +104,7 @@ describe('CreateLeagueWizard General Settings view', () => {
   it('blocks Next and shows errors when name and avatar are missing', async () => {
     const user = userEvent.setup()
     const service = okService()
-    render(<CreateLeagueWizard format={format} onClose={() => {}} service={service} />)
+    render(<CreateLeagueWizard sport="Baseball" onClose={() => {}} service={service} />)
     await user.click(screen.getByRole('button', { name: 'Next' }))
     expect(service.createLeague).not.toHaveBeenCalled()
     expect(screen.getByText('Enter a league name.')).toBeTruthy()
@@ -107,7 +114,7 @@ describe('CreateLeagueWizard General Settings view', () => {
 
   it('moves to Scoring Settings with a trimmed name and the selected avatar kept on Back', async () => {
     const user = userEvent.setup()
-    render(<CreateLeagueWizard format={format} onClose={() => {}} />)
+    render(<CreateLeagueWizard sport="Baseball" onClose={() => {}} />)
     await user.type(screen.getByLabelText(/League name/), '  Sunday Slugger ')
     await user.click(screen.getByRole('radio', { name: 'Trophy' }))
     await user.click(screen.getByRole('button', { name: 'Next' }))
@@ -119,7 +126,7 @@ describe('CreateLeagueWizard General Settings view', () => {
   })
   it('clears an error once the field is fixed', async () => {
     const user = userEvent.setup()
-    render(<CreateLeagueWizard format={format} onClose={() => {}} />)
+    render(<CreateLeagueWizard sport="Baseball" onClose={() => {}} />)
     await user.click(screen.getByRole('button', { name: 'Next' }))
     await user.click(screen.getByRole('radio', { name: 'Fire' }))
     expect(screen.queryByText('Choose a league avatar.')).toBeNull()
@@ -128,7 +135,7 @@ describe('CreateLeagueWizard General Settings view', () => {
   it('closes from Cancel and Escape', async () => {
     const user = userEvent.setup()
     const onClose = vi.fn()
-    render(<CreateLeagueWizard format={format} onClose={onClose} />)
+    render(<CreateLeagueWizard sport="Baseball" onClose={onClose} />)
     await user.click(screen.getByRole('button', { name: 'Cancel' }))
     await user.keyboard('{Escape}')
     expect(onClose).toHaveBeenCalledTimes(2)
@@ -136,7 +143,7 @@ describe('CreateLeagueWizard General Settings view', () => {
 })
 
 async function openScoring(user: ReturnType<typeof userEvent.setup>, service: LeagueService = okService(), onCreated?: (id: string) => void) {
-  render(<CreateLeagueWizard format={format} onClose={() => {}} service={service} onCreated={onCreated} />)
+  render(<CreateLeagueWizard sport="Baseball" onClose={() => {}} service={service} onCreated={onCreated} />)
   await user.type(screen.getByLabelText(/League name/), 'Sunday Slugger')
   await user.click(screen.getByRole('radio', { name: 'Trophy' }))
   await user.click(screen.getByRole('button', { name: 'Next' }))

@@ -1290,11 +1290,6 @@ a.nav-item {
   font-size: 1.5rem;
 }
 
-.leagues-summary {
-  margin: 0;
-  font-size: 0.9rem;
-  color: var(--text-muted);
-}
 
 .league-list {
   display: grid;
@@ -1323,7 +1318,7 @@ a.nav-item {
   width: 96px;
   font-size: 2.5rem;
   line-height: 1;
-  background: linear-gradient(160deg, var(--accent), hsl(228 40% 14%));
+  background: transparent;
 }
 .league-body {
   flex: 1;
@@ -1349,6 +1344,9 @@ a.nav-item {
   line-height: 1.2;
   font-weight: 600;
   color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .league-meta {
@@ -2221,28 +2219,6 @@ button.profile-stat:focus-visible {
   clip-path: inset(50%);
   white-space: nowrap;
   border: 0;
-}
-
-.league-filter {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
-  font-size: 0.875rem;
-  color: var(--text-muted);
-}
-.league-filter select {
-  min-height: 40px;
-  padding: 6px 12px;
-  font: inherit;
-  color: var(--text);
-  background: var(--surface);
-  border: 1px solid hsl(228 30% 24%);
-  border-radius: 10px;
-}
-.league-filter select:focus-visible {
-  outline: 3px solid var(--text);
-  outline-offset: 2px;
 }
 
 .chat-toggle {
@@ -3314,4 +3290,121 @@ button.profile-stat:focus-visible {
   border-left: 4px solid var(--ribbon-a);
   /* Swallow-tail cut on the right end */
   clip-path: polygon(0 0, 100% 0, calc(100% - 16px) 50%, 100% 100%, 0 100%);
+}
+
+/* ---------- Leagues page sport picker ---------- */
+.sport-picker {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sport-pick {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  aspect-ratio: 1;
+  padding: 6px;
+  font-family: var(--display);
+  color: var(--text);
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--accent) 14%, transparent),
+    color-mix(in srgb, var(--surface) 60%, transparent)
+  );
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+  border-radius: 20px;
+  cursor: pointer;
+  transition:
+    transform 160ms ease-out,
+    box-shadow 160ms ease-out,
+    border-color 160ms ease-out;
+}
+.sport-pick:hover,
+.sport-pick:focus-visible {
+  transform: translateY(-2px);
+}
+.sport-pick[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--accent) 32%, transparent),
+    color-mix(in srgb, var(--surface) 60%, transparent)
+  );
+}
+.sport-pick:focus-visible {
+  outline: 3px solid var(--text);
+  outline-offset: 3px;
+}
+.sport-pick-emoji {
+  font-size: 2rem;
+  line-height: 1;
+}
+.sport-pick-name {
+  max-width: 100%;
+  font-size: 0.8rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.coming-soon {
+  margin: 0;
+  padding: 40px 14px;
+  font-family: var(--display);
+  font-size: 2rem;
+  font-weight: 700;
+  text-align: center;
+  color: var(--text);
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  border: 1px dashed color-mix(in srgb, var(--accent) 60%, transparent);
+  border-radius: 14px;
+}
+
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.create-league-btn {
+  --create-accent: hsl(48 100% 60%);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  padding: 4px 12px;
+  font-family: var(--display);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--create-accent);
+  background: transparent;
+  border: 1px solid var(--create-accent);
+  border-radius: 999px;
+  cursor: pointer;
+}
+.create-league-btn:hover {
+  background: color-mix(in srgb, var(--create-accent) 14%, transparent);
+}
+.create-league-btn:focus-visible {
+  outline: 3px solid var(--text);
+  outline-offset: 3px;
+}
+.create-league-plus {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.favorite-error {
+  margin: 0;
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: hsl(0 100% 82%);
+  background: hsl(0 70% 14%);
+  border: 1px solid hsl(0 90% 60%);
+  border-radius: 10px;
 }

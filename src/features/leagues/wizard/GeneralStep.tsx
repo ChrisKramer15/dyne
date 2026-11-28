@@ -10,10 +10,15 @@ export interface GeneralStepProps {
   nameRef?: Ref<HTMLInputElement>
   /** Lowest allowed team count for this format. */
   minTeams: number
+  /** Formats offered for the sport. Ones that are not enabled show as coming soon and cannot be picked. */
+  formats: readonly { name: string; enabled: boolean }[]
+  format: string
+  onFormatChange: (name: string) => void
 }
 
-/** Step 1: league name and avatar. Both are required. */
-export function GeneralStep({ value, onChange, errors, nameRef, minTeams }: GeneralStepProps) {
+/** Step 1: league format, name, team count and avatar. */
+export function GeneralStep({ value, onChange, errors, nameRef, minTeams, formats, format, onFormatChange }: GeneralStepProps) {
+  const formatId = useId()
   const nameId = useId()
   const nameErrorId = `${nameId}-error`
   const teamsId = useId()
@@ -24,6 +29,16 @@ export function GeneralStep({ value, onChange, errors, nameRef, minTeams }: Gene
 
   return (
     <>
+      <label className="auth-label" htmlFor={formatId}>
+        League format
+      </label>
+      <select id={formatId} className="auth-input" value={format} onChange={(e) => onFormatChange(e.target.value)}>
+        {formats.map((f) => (
+          <option key={f.name} value={f.name} disabled={!f.enabled}>
+            {f.enabled ? f.name : `${f.name} (coming soon)`}
+          </option>
+        ))}
+      </select>
       <label className="auth-label" htmlFor={nameId}>
         League name <span className="wizard-required">(required)</span>
       </label>

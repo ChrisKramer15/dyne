@@ -63,7 +63,7 @@ function PeopleModal({
   onClose,
 }: {
   title: string
-  /** Used in the remove button's label, e.g. "favorites". */
+  /** Used in the remove button's label, e.g. "friends". */
   noun: string
   empty: string
   list: PeopleList
@@ -201,7 +201,7 @@ export default function ProfilePage({ authService }: ProfilePageProps) {
                 onClick={() => setListOpen('favorites')}
               >
                 <span className="profile-stat-value">{favorites.list.length}</span>
-                <span className="profile-stat-label">Favorites</span>
+                <span className="profile-stat-label">Friends</span>
               </button>
             </li>
             <li>
@@ -265,9 +265,9 @@ export default function ProfilePage({ authService }: ProfilePageProps) {
       )}
       {listOpen === 'favorites' && (
         <PeopleModal
-          title="Favorites"
-          noun="favorites"
-          empty="No favorites yet."
+          title="Friends"
+          noun="friends"
+          empty="No friends yet."
           list={favorites}
           onClose={() => setListOpen(null)}
         />

@@ -7,7 +7,6 @@ import { renderApp } from '../../routing/testUtils'
 import LeaguesPage from './LeaguesPage'
 import type { FavoriteService } from './favoriteService'
 import type { LeagueService } from './wizard/leagueService'
-import { SPORTS } from '../home/homeData'
 import type { LeagueLoader, LoadLeaguesResult } from './leagueLoader'
 import { LEAGUES_PER_PAGE, MAX_TOP_LEAGUES, ordinal, type League } from './leaguesData'
 
@@ -70,11 +69,10 @@ describe('LeaguesPage', () => {
     expect(cards().map((c) => c.querySelector('h3')?.textContent)).toEqual(['Zed New', 'Alpha Old'])
   })
 
-  it('shows "No leagues yet." when the user has none', async () => {
+  it('shows "No baseball leagues yet." when the user has none', async () => {
     renderLeagues()
-    expect((await screen.findByText('No leagues yet.')).textContent).toBe('No leagues yet.')
+    expect((await screen.findByText('No baseball leagues yet.')).textContent).toBe('No baseball leagues yet.')
     expect(cards()).toHaveLength(0)
-    expect(screen.getByText(/^0 leagues/)).toBeTruthy()
   })
 
   it('shows a loading state, then removes it', async () => {
@@ -98,16 +96,36 @@ describe('LeaguesPage', () => {
     expect(cards()).toHaveLength(2)
   })
 
-  it('filters by sport and offers only sports from loaded leagues', async () => {
-    const user = userEvent.setup()
+  it('shows only the leagues for the selected sport', async () => {
     const leagues = [mk('a', 'Diamond', 'Baseball'), mk('b', 'Gridiron', 'Football'), mk('c', 'Pitch', 'Baseball')]
     renderLeagues(loaderOf({ ok: true, leagues }))
     await screen.findByRole('article', { name: 'Diamond' })
-    const options = within(screen.getByLabelText('Sport')).getAllByRole('option').map((o) => o.textContent)
-    expect(options).toEqual(['All sports', 'Baseball', 'Football'])
-    await user.selectOptions(screen.getByLabelText('Sport'), 'Baseball')
-    expect(cards()).toHaveLength(2)
-    for (const c of cards()) expect(c.textContent).toContain('Baseball')
+    expect(cards().map((c) => c.querySelector('h3')?.textContent)).toEqual(['Diamond', 'Pitch'])
+  })
+  it('orders sections Sport Category, My leagues', () => {
+    renderLeagues()
+    const names = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)
+    expect(names).toEqual(['Sport Category', 'My leagues'])
+  })
+  it('offers a card for baseball, football, basketball and hockey, with baseball selected', () => {
+    renderLeagues()
+    const region = screen.getByRole('region', { name: 'Sport Category' })
+    const buttons = within(region).getAllByRole('button')
+    expect(buttons.map((b) => b.textContent)).toEqual(['\u26BEBaseball', '\u{1F3C8}Football', '\u{1F3C0}Basketball', '\u{1F3D2}Hockey'])
+    expect(buttons.map((b) => b.getAttribute('aria-pressed'))).toEqual(['true', 'false', 'false', 'false'])
+    expect(screen.queryByText(/coming soon/i)).toBeNull()
+  })
+  it('shows a coming soon banner and hides My leagues for sports that are not set up', async () => {
+    const user = userEvent.setup()
+    renderLeagues()
+    for (const name of ['Football', 'Basketball', 'Hockey']) {
+      await user.click(screen.getByRole('button', { name: new RegExp(name) }))
+      expect(screen.getByRole('status').textContent).toBe('Coming Soon!')
+      expect(screen.queryByRole('region', { name: 'My leagues' })).toBeNull()
+    }
+    await user.click(screen.getByRole('button', { name: /Baseball/ }))
+    expect(screen.queryByText(/coming soon/i)).toBeNull()
+    expect(screen.getByRole('region', { name: 'My leagues' })).toBeTruthy()
   })
 
   it('marks Leagues as the current page in the bottom nav', () => {
@@ -125,24 +143,25 @@ describe('LeaguesPage', () => {
 })
 
 describe('LeaguesPage Create league', () => {
-  it('shows one card per league format, with only Dynasty enabled', () => {
+  it('has a Create league button in the My leagues section and no Create league section', () => {
     renderLeagues()
-    const region = screen.getByRole('region', { name: 'Create league' })
-    const names = SPORTS[0].formats.map((f) => f.name)
-    expect(within(region).getAllByRole('button')).toHaveLength(names.length)
-    for (const f of SPORTS[0].formats) {
-      const button = within(region).getByRole('button', { name: `Create a ${f.name} Baseball league` })
-      if (f.name === 'Dynasty') expect(button).toBeEnabled()
-      else expect(button).toBeDisabled()
-    }
+    const region = screen.getByRole('region', { name: 'My leagues' })
+    expect(within(region).getByRole('button', { name: /Create league/ })).toBeEnabled()
+    expect(screen.queryByRole('region', { name: 'Create league' })).toBeNull()
   })
-
-  it('opens the themed wizard for an enabled format and closes it on Cancel', async () => {
+  it('hides the button along with My leagues for sports that are not set up yet', async () => {
+    const user = userEvent.setup()
+    renderLeagues()
+    await user.click(screen.getByRole('button', { name: /Hockey/ }))
+    expect(screen.queryByRole('button', { name: /Create league/ })).toBeNull()
+  })
+  it('opens the wizard for the selected sport and closes it on Cancel', async () => {
     const user = userEvent.setup()
     const { container } = renderLeagues()
     expect(screen.queryByRole('dialog')).toBeNull()
-    await user.click(screen.getByRole('button', { name: 'Create a Dynasty Baseball league' }))
+    await user.click(screen.getByRole('button', { name: /Create league/ }))
     expect(screen.getByRole('dialog', { name: 'General Settings' })).toBeTruthy()
+    expect(screen.getByText(/New Dynasty Baseball league/)).toBeTruthy()
     expect(container.querySelector('.league-wizard')?.classList.contains('accent-green')).toBe(true)
     await user.click(screen.getByRole('button', { name: 'Cancel' }))
     expect(screen.queryByRole('dialog')).toBeNull()

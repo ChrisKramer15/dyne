@@ -70,7 +70,7 @@ export function DirectActions({
       <button
         type="button"
         className={isFavorite ? 'icon-action is-on' : 'icon-action'}
-        aria-label={isFavorite ? `Remove ${name} from favorites` : `Add ${name} to favorites`}
+        aria-label={isFavorite ? `Remove ${name} from friends` : `Add ${name} to friends`}
         aria-pressed={isFavorite}
         disabled={!other}
         onClick={onToggleFavorite}
