@@ -4,7 +4,6 @@ import { errorFor } from './fieldMessages'
 import { SubmitButton } from './SubmitButton'
 import { TextField } from './TextField'
 import type { FormProps } from './types'
-import { useFocusOnMount } from './useFocusOnMount'
 
 /** Shown after a reset link: set a new password for the recovery session. */
 export function UpdatePasswordForm({ service, setBanner, onClose, onAuthenticated }: FormProps) {
@@ -12,7 +11,6 @@ export function UpdatePasswordForm({ service, setBanner, onClose, onAuthenticate
   const [confirmPassword, setConfirmPassword] = useState('')
   const [errors, setErrors] = useState<FieldError[]>([])
   const [busy, setBusy] = useState(false)
-  const firstField = useFocusOnMount()
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
@@ -41,7 +39,6 @@ export function UpdatePasswordForm({ service, setBanner, onClose, onAuthenticate
         label="New password"
         type="password"
         autoComplete="new-password"
-        inputRef={firstField}
         value={newPassword}
         onChange={setNewPassword}
         error={errorFor(errors, 'newPassword')}

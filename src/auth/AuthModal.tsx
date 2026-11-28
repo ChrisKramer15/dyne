@@ -1,4 +1,4 @@
-import { useId, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import type { AuthService } from './authService'
 import { LoginForm } from './forms/LoginForm'
 import { RegisterForm } from './forms/RegisterForm'
@@ -43,6 +43,11 @@ export default function AuthModal({ mode: initialMode, service, onClose, onAuthe
   const titleId = useId()
   const bannerId = useId()
 
+  // Focus the dialog itself (not a field) so screen readers announce it without raising the mobile keyboard.
+  useEffect(() => {
+    dialogRef.current?.focus()
+  }, [mode])
+
   function switchMode(next: AuthMode) {
     setMode(next)
     setBanner(null)
@@ -84,6 +89,7 @@ export default function AuthModal({ mode: initialMode, service, onClose, onAuthe
         aria-labelledby={titleId}
         aria-describedby={banner ? bannerId : undefined}
         ref={dialogRef}
+        tabIndex={-1}
         onKeyDown={onKeyDown}
       >
         <button type="button" className="auth-close" aria-label="Close" onClick={onClose}>

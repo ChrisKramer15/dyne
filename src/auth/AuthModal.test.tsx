@@ -119,12 +119,12 @@ describe('AuthModal', () => {
     expect((screen.getByLabelText('Username') as HTMLInputElement).value).toBe('ahenker')
   })
 
-  it('focuses the first field on open and after switching modes', async () => {
+  it('focuses the dialog, not a field, on open and after switching modes', async () => {
     const user = userEvent.setup()
     renderModal('login')
-    expect(document.activeElement).toBe(screen.getByLabelText('Username'))
+    expect(document.activeElement).toBe(screen.getByRole('dialog'))
     await user.click(screen.getByRole('button', { name: /forgot password/i }))
-    expect(document.activeElement).toBe(screen.getByLabelText('Username or email'))
+    expect(document.activeElement).toBe(screen.getByRole('dialog'))
   })
 
   it('keeps the dialog open to show the notice when "remember me" could not be saved', async () => {

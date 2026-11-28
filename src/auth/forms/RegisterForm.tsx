@@ -4,7 +4,6 @@ import { errorFor } from './fieldMessages'
 import { SubmitButton } from './SubmitButton'
 import { TextField } from './TextField'
 import type { FormProps } from './types'
-import { useFocusOnMount } from './useFocusOnMount'
 
 interface RegisterFormProps extends Pick<FormProps, 'service' | 'setBanner'> {
   /** Shared with the login form so a typed username survives switching. */
@@ -18,7 +17,6 @@ export function RegisterForm({ service, setBanner, username, onUsernameChange }:
   const [confirmPassword, setConfirmPassword] = useState('')
   const [errors, setErrors] = useState<FieldError[]>([])
   const [busy, setBusy] = useState(false)
-  const firstField = useFocusOnMount()
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
@@ -56,7 +54,6 @@ export function RegisterForm({ service, setBanner, username, onUsernameChange }:
       <TextField
         label="Username"
         autoComplete="username"
-        inputRef={firstField}
         value={username}
         onChange={onUsernameChange}
         error={errorFor(errors, 'username')}

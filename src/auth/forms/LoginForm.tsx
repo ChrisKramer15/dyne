@@ -4,7 +4,6 @@ import { errorFor } from './fieldMessages'
 import { SubmitButton } from './SubmitButton'
 import { TextField } from './TextField'
 import type { FormProps } from './types'
-import { useFocusOnMount } from './useFocusOnMount'
 
 interface LoginFormProps extends FormProps {
   /** Shared with the register form so a typed username survives switching. */
@@ -24,7 +23,6 @@ export function LoginForm({
   const [remember, setRemember] = useState(false)
   const [errors, setErrors] = useState<FieldError[]>([])
   const [busy, setBusy] = useState(false)
-  const firstField = useFocusOnMount()
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
@@ -64,7 +62,6 @@ export function LoginForm({
       <TextField
         label="Username"
         autoComplete="username"
-        inputRef={firstField}
         value={username}
         onChange={onUsernameChange}
         error={errorFor(errors, 'username')}

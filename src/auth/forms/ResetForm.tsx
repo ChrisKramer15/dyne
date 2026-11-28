@@ -4,13 +4,11 @@ import { errorFor } from './fieldMessages'
 import { SubmitButton } from './SubmitButton'
 import { TextField } from './TextField'
 import type { FormProps } from './types'
-import { useFocusOnMount } from './useFocusOnMount'
 
 export function ResetForm({ service, setBanner }: Pick<FormProps, 'service' | 'setBanner'>) {
   const [identifier, setIdentifier] = useState('')
   const [errors, setErrors] = useState<FieldError[]>([])
   const [busy, setBusy] = useState(false)
-  const firstField = useFocusOnMount()
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
@@ -37,7 +35,6 @@ export function ResetForm({ service, setBanner }: Pick<FormProps, 'service' | 's
       <TextField
         label="Username or email"
         autoComplete="username"
-        inputRef={firstField}
         value={identifier}
         onChange={setIdentifier}
         error={errorFor(errors, 'identifier')}
