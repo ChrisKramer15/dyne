@@ -3,7 +3,9 @@ import { render, cleanup, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import Homepage from './Homepage'
-import { ALERTS_PER_PAGE, SPORTS } from './homeData'
+import { ALERTS_PER_PAGE } from './homeData'
+import type { LeagueLoader, LoadLeaguesResult } from '../leagues/leagueLoader'
+import { MAX_TOP_LEAGUES, type League } from '../leagues/leaguesData'
 
 const renderHome = () =>
   render(
@@ -103,52 +105,67 @@ describe('Homepage structure and accessibility', () => {
     expect(screen.queryByText(/season points/i)).toBeNull()
   })
 
-  it('shows a Create league header with one card per league format', () => {
+  it('no longer shows the Create league section', () => {
     renderHome()
-    const region = screen.getByRole('region', { name: 'Create league' })
-    expect(SPORTS).toHaveLength(1)
-    expect(within(region).getByRole('heading', { name: 'Create league' })).toBeTruthy()
-    expect(within(region).queryByRole('heading', { name: /Baseball/ })).toBeNull()
-    const names = SPORTS[0].formats.map((f) => f.name)
-    expect(names).toEqual(['Bestball', 'Dynasty', 'Guillotine', 'Keeper', 'Redraft'])
-    expect(within(region).getAllByRole('button')).toHaveLength(names.length)
-    for (const n of names) {
-      expect(within(region).getByRole('button', { name: `Create a ${n} Baseball league` })).toBeTruthy()
-    }
-  })
-})
-describe('Homepage league format availability', () => {
-  afterEach(() => cleanup())
-  it('enables only Dynasty and greys out the other formats', async () => {
-    const user = userEvent.setup()
-    renderHome()
-    for (const f of SPORTS[0].formats) {
-      const button = screen.getByRole('button', { name: `Create a ${f.name} Baseball league` })
-      if (f.name === 'Dynasty') expect(button).toBeEnabled()
-      else expect(button).toBeDisabled()
-    }
-    await user.click(screen.getByRole('button', { name: 'Create a Bestball Baseball league' }))
-    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(screen.queryByRole('region', { name: 'Create league' })).toBeNull()
+    expect(screen.queryByRole('button', { name: /^Create a/ })).toBeNull()
   })
 })
 
-describe('Create league wizard from the homepage', () => {
+const league = (id: string, name: string, emoji: string, isFavorite: boolean): League => ({
+  id,
+  name,
+  sport: 'Baseball',
+  emoji,
+  leagueType: 'Dynasty',
+  isFavorite,
+  record: '0-0',
+  rank: 1,
+  teams: 12,
+  matchup: { opponent: 'TBD', status: 'upcoming', myScore: null, theirScore: null, note: 'Season not started' },
+})
+const loaderOf = (res: LoadLeaguesResult): LeagueLoader => ({ loadMyLeagues: () => Promise.resolve(res) })
+const renderWith = (loader: LeagueLoader) =>
+  render(
+    <MemoryRouter initialEntries={['/home']}>
+      <Homepage loader={loader} />
+    </MemoryRouter>,
+  )
+const topRegion = () => screen.getByRole('region', { name: 'Top leagues' })
+
+describe('Homepage Top leagues', () => {
   afterEach(() => cleanup())
 
-  it('opens the themed General Settings modal when an enabled format is clicked', async () => {
-    const user = userEvent.setup()
-    const { container } = renderHome()
-    expect(screen.queryByRole('dialog')).toBeNull()
-    await user.click(screen.getByRole('button', { name: 'Create a Dynasty Baseball league' }))
-    expect(screen.getByRole('dialog', { name: 'General Settings' })).toBeTruthy()
-    expect(container.querySelector('.league-wizard')?.classList.contains('accent-green')).toBe(true)
+  it('shows only starred leagues, each as an avatar bubble with its title, linking to the league', async () => {
+    renderWith(
+      loaderOf({
+        ok: true,
+        leagues: [league('a', 'Alpha', '🦁', true), league('b', 'Bravo', '🚀', false), league('c', 'Charlie', '🏆', true)],
+      }),
+    )
+    await within(topRegion()).findByRole('link', { name: /Alpha/ })
+    const links = within(topRegion()).getAllByRole('link')
+    expect(links.map((l) => l.textContent)).toEqual(['🦁Alpha', '🏆Charlie'])
+    expect(links[0].getAttribute('href')).toBe('/leagues/a')
+    expect(within(topRegion()).queryByText('Bravo')).toBeNull()
   })
 
-  it('closes the modal on Cancel', async () => {
-    const user = userEvent.setup()
-    renderHome()
-    await user.click(screen.getByRole('button', { name: 'Create a Dynasty Baseball league' }))
-    await user.click(screen.getByRole('button', { name: 'Cancel' }))
-    expect(screen.queryByRole('dialog')).toBeNull()
+  it('shows at most 5 leagues', async () => {
+    const leagues = ['a', 'b', 'c', 'd', 'e', 'f'].map((id) => league(id, `League ${id}`, '⚾', true))
+    renderWith(loaderOf({ ok: true, leagues }))
+    await within(topRegion()).findByRole('link', { name: /League a/ })
+    expect(within(topRegion()).getAllByRole('listitem')).toHaveLength(MAX_TOP_LEAGUES)
+  })
+
+  it('tells the user how to add favorites when none are starred', async () => {
+    renderWith(loaderOf({ ok: true, leagues: [league('a', 'Alpha', '🦁', false)] }))
+    expect(await within(topRegion()).findByText(/Add a league to your favorites from the/)).toBeTruthy()
+    expect(within(topRegion()).getByRole('link', { name: 'Leagues page' }).getAttribute('href')).toBe('/leagues')
+    expect(within(topRegion()).queryAllByRole('listitem')).toHaveLength(0)
+  })
+
+  it('shows an error when leagues cannot be loaded', async () => {
+    renderWith(loaderOf({ ok: false, reason: 'Your leagues could not be loaded.' }))
+    expect((await within(topRegion()).findByRole('alert')).textContent).toBe('Your leagues could not be loaded.')
   })
 })

@@ -17,8 +17,11 @@ export interface League {
   id: string
   name: string
   sport: string
+  /** The avatar picked when the league was created, or the sport emoji when none was saved. */
   emoji: string
   leagueType: LeagueType
+  /** True when the signed-in user starred this league as one of their top leagues. */
+  isFavorite: boolean
   record: string
   rank: number
   teams: number
@@ -32,6 +35,9 @@ export interface League {
     note: string
   }
 }
+
+/** Most leagues a user can star; the home page shows them as Top leagues. Also enforced in set_league_favorite(). */
+export const MAX_TOP_LEAGUES = 5
 
 /** Leagues shown per page; more than this turns on pagination. */
 export const LEAGUES_PER_PAGE = 5

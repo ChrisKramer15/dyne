@@ -5,20 +5,36 @@ import { MemoryRouter } from 'react-router'
 // testUtils must be imported before routes (it installs the Supabase mock).
 import { renderApp } from '../../routing/testUtils'
 import LeaguesPage from './LeaguesPage'
+import type { FavoriteService } from './favoriteService'
+import type { LeagueService } from './wizard/leagueService'
+import { SPORTS } from '../home/homeData'
 import type { LeagueLoader, LoadLeaguesResult } from './leagueLoader'
-import { LEAGUES_PER_PAGE, ordinal, type League } from './leaguesData'
+import { LEAGUES_PER_PAGE, MAX_TOP_LEAGUES, ordinal, type League } from './leaguesData'
 
 afterEach(cleanup)
 
 const loaderOf = (res: LoadLeaguesResult): LeagueLoader => ({ loadMyLeagues: () => Promise.resolve(res) })
 const none = loaderOf({ ok: true, leagues: [] })
 
-const renderLeagues = (loader: LeagueLoader = none) =>
+const renderLeagues = (loader: LeagueLoader = none, extra: { favoriteService?: FavoriteService; wizardService?: LeagueService } = {}) =>
   render(
     <MemoryRouter initialEntries={['/leagues']}>
-      <LeaguesPage loader={loader} />
+      <LeaguesPage loader={loader} {...extra} />
     </MemoryRouter>,
   )
+
+const mk = (id: string, name: string, sport = 'Baseball'): League => ({
+  id,
+  name,
+  sport,
+  emoji: '⚾',
+  leagueType: 'Dynasty',
+  isFavorite: false,
+  record: '0-0',
+  rank: 1,
+  teams: 12,
+  matchup: { opponent: 'TBD', status: 'upcoming', myScore: null, theirScore: null, note: 'Season not started' },
+})
 
 const cards = () =>
   within(screen.getByRole('region', { name: 'My leagues' })).queryAllByRole('article')
@@ -32,17 +48,6 @@ describe('LeaguesPage', () => {
     expect(screen.getAllByRole('main')).toHaveLength(1)
   })
 
-  const mk = (id: string, name: string, sport = 'Baseball'): League => ({
-    id,
-    name,
-    sport,
-    emoji: '⚾',
-    leagueType: 'Dynasty',
-    record: '0-0',
-    rank: 1,
-    teams: 12,
-    matchup: { opponent: 'TBD', status: 'upcoming', myScore: null, theirScore: null, note: 'Season not started' },
-  })
   const fakeLeagues = (n: number, sport = 'Baseball') =>
     Array.from({ length: n }, (_, i) => mk(`id${i}`, `League ${String(i).padStart(2, '0')}`, sport))
 
@@ -116,6 +121,89 @@ describe('LeaguesPage', () => {
     expect([1, 2, 3, 4, 11, 12, 13, 21, 22, 103].map(ordinal)).toEqual([
       '1st', '2nd', '3rd', '4th', '11th', '12th', '13th', '21st', '22nd', '103rd',
     ])
+  })
+})
+
+describe('LeaguesPage Create league', () => {
+  it('shows one card per league format, with only Dynasty enabled', () => {
+    renderLeagues()
+    const region = screen.getByRole('region', { name: 'Create league' })
+    const names = SPORTS[0].formats.map((f) => f.name)
+    expect(within(region).getAllByRole('button')).toHaveLength(names.length)
+    for (const f of SPORTS[0].formats) {
+      const button = within(region).getByRole('button', { name: `Create a ${f.name} Baseball league` })
+      if (f.name === 'Dynasty') expect(button).toBeEnabled()
+      else expect(button).toBeDisabled()
+    }
+  })
+
+  it('opens the themed wizard for an enabled format and closes it on Cancel', async () => {
+    const user = userEvent.setup()
+    const { container } = renderLeagues()
+    expect(screen.queryByRole('dialog')).toBeNull()
+    await user.click(screen.getByRole('button', { name: 'Create a Dynasty Baseball league' }))
+    expect(screen.getByRole('dialog', { name: 'General Settings' })).toBeTruthy()
+    expect(container.querySelector('.league-wizard')?.classList.contains('accent-green')).toBe(true)
+    await user.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+})
+
+describe('LeaguesPage top league stars', () => {
+  const withFav = (id: string, name: string, isFavorite: boolean): League => ({ ...mk(id, name), isFavorite })
+  const fav = (res: { ok: true } | { ok: false; reason: string } = { ok: true }) => {
+    const calls: [string, boolean][] = []
+    const service: FavoriteService = {
+      setFavorite: (id, favorite) => {
+        calls.push([id, favorite])
+        return Promise.resolve(res)
+      },
+    }
+    return { calls, service }
+  }
+
+  it('shows a pressed star on starred leagues and an unpressed one on the rest', async () => {
+    renderLeagues(loaderOf({ ok: true, leagues: [withFav('a', 'Alpha', true), withFav('b', 'Bravo', false)] }))
+    expect((await screen.findByRole('button', { name: 'Remove Alpha from top leagues' })).getAttribute('aria-pressed')).toBe('true')
+    expect(screen.getByRole('button', { name: 'Add Bravo to top leagues' }).getAttribute('aria-pressed')).toBe('false')
+  })
+
+  it('stars a league through the service and updates the card', async () => {
+    const user = userEvent.setup()
+    const { calls, service } = fav()
+    renderLeagues(loaderOf({ ok: true, leagues: [withFav('a', 'Alpha', false)] }), { favoriteService: service })
+    await user.click(await screen.findByRole('button', { name: 'Add Alpha to top leagues' }))
+    expect(calls).toEqual([['a', true]])
+    expect(await screen.findByRole('button', { name: 'Remove Alpha from top leagues' })).toBeTruthy()
+  })
+
+  it('unstars a league', async () => {
+    const user = userEvent.setup()
+    const { calls, service } = fav()
+    renderLeagues(loaderOf({ ok: true, leagues: [withFav('a', 'Alpha', true)] }), { favoriteService: service })
+    await user.click(await screen.findByRole('button', { name: 'Remove Alpha from top leagues' }))
+    expect(calls).toEqual([['a', false]])
+    expect(await screen.findByRole('button', { name: 'Add Alpha to top leagues' })).toBeTruthy()
+  })
+
+  it('blocks a star over the limit without calling the service', async () => {
+    const user = userEvent.setup()
+    const { calls, service } = fav()
+    const leagues = [withFav('x', 'Extra', false), ...Array.from({ length: MAX_TOP_LEAGUES }, (_, i) => withFav(`f${i}`, `Fav ${i}`, true))]
+    renderLeagues(loaderOf({ ok: true, leagues }), { favoriteService: service })
+    await user.click(await screen.findByRole('button', { name: 'Add Extra to top leagues' }))
+    expect((await screen.findByRole('alert')).textContent).toContain(`up to ${MAX_TOP_LEAGUES}`)
+    expect(calls).toEqual([])
+    expect(screen.getByRole('button', { name: 'Add Extra to top leagues' }).getAttribute('aria-pressed')).toBe('false')
+  })
+
+  it('keeps the star unchanged and shows the reason when saving fails', async () => {
+    const user = userEvent.setup()
+    const { service } = fav({ ok: false, reason: 'Nope.' })
+    renderLeagues(loaderOf({ ok: true, leagues: [withFav('a', 'Alpha', false)] }), { favoriteService: service })
+    await user.click(await screen.findByRole('button', { name: 'Add Alpha to top leagues' }))
+    expect((await screen.findByRole('alert')).textContent).toBe('Nope.')
+    expect(screen.getByRole('button', { name: 'Add Alpha to top leagues' }).getAttribute('aria-pressed')).toBe('false')
   })
 })
 

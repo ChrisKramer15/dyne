@@ -2,8 +2,9 @@ import { describe, expect, it } from 'vitest'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { LOAD_FAILURE_MESSAGE, createLeagueLoader } from './leagueLoader'
 
-const row = (id: string, created_at: string, format = 'Guillotine') => ({
-  leagues: { id, name: `League ${id}`, format, team_count: 8, created_at },
+const row = (id: string, created_at: string, format = 'Guillotine', is_favorite = false, avatar_id: string | null = null) => ({
+  is_favorite,
+  leagues: { id, name: `League ${id}`, format, avatar_id, team_count: 8, created_at },
 })
 
 function fakeClient(opts: { userId?: string | null; data?: unknown; error?: unknown }) {
@@ -45,6 +46,19 @@ describe('createLeagueLoader', () => {
     })
   })
 
+  it('uses the league avatar as the emoji and carries the favorite flag', async () => {
+    const { client } = fakeClient({
+      data: [
+        row('a', '2025-03-01T00:00:00Z', 'Dynasty', true, 'avatar-021'),
+        row('b', '2025-02-01T00:00:00Z', 'Dynasty', false, null),
+      ],
+    })
+    const res = await createLeagueLoader(client).loadMyLeagues()
+    expect(res.ok && res.leagues.map((l) => [l.emoji, l.isFavorite])).toEqual([
+      ['🦁', true],
+      ['⚾', false],
+    ])
+  })
   it('returns a failure reason on a database error', async () => {
     const { client } = fakeClient({ error: { message: 'x' } })
     expect(await createLeagueLoader(client).loadMyLeagues()).toEqual({ ok: false, reason: LOAD_FAILURE_MESSAGE })

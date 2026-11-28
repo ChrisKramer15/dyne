@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { withTimeout } from '../../auth/authService'
 import { SPORTS } from '../home/homeData'
 import { LEAGUE_TYPE_ACCENT, type League, type LeagueType } from './leaguesData'
+import { findAvatar } from './wizard/leagueAvatars'
 
 export type LoadLeaguesResult = { ok: true; leagues: League[] } | { ok: false; reason: string }
 
@@ -16,11 +17,13 @@ interface LeagueRow {
   id: string
   name: string
   format: string
+  avatar_id: string | null
   team_count: number
   created_at: string
 }
 
 interface MemberRow {
+  is_favorite: boolean | null
   leagues: LeagueRow | LeagueRow[] | null
 }
 
@@ -29,15 +32,16 @@ function isLeagueType(v: string): v is LeagueType {
 }
 
 /** A new league: 0-0, first place, no matchup yet. */
-function toLeague(r: LeagueRow): League | null {
+function toLeague(r: LeagueRow, isFavorite: boolean): League | null {
   if (!isLeagueType(r.format)) return null
   const sport = SPORTS.find((s) => s.formats.some((f) => f.name === r.format)) ?? SPORTS[0]
   return {
     id: r.id,
     name: r.name,
     sport: sport.name,
-    emoji: sport.emoji,
+    emoji: findAvatar(r.avatar_id)?.emoji ?? sport.emoji,
     leagueType: r.format,
+    isFavorite,
     record: '0-0',
     rank: 1,
     teams: r.team_count,
@@ -57,19 +61,19 @@ export function createLeagueLoader(client: SupabaseClient): LeagueLoader {
           Promise.resolve(
             client
               .from('league_members')
-              .select('leagues(id, name, format, team_count, created_at)')
+              .select('is_favorite, leagues(id, name, format, avatar_id, team_count, created_at)')
               .eq('user_id', userId),
           ),
         )
         if (error) return { ok: false, reason: LOAD_FAILURE_MESSAGE }
 
-        const rows: LeagueRow[] = []
+        const rows: { row: LeagueRow; isFavorite: boolean }[] = []
         for (const m of (data ?? []) as unknown as MemberRow[]) {
           const l = Array.isArray(m.leagues) ? m.leagues[0] : m.leagues
-          if (l) rows.push(l)
+          if (l) rows.push({ row: l, isFavorite: m.is_favorite === true })
         }
-        rows.sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at))
-        const leagues = rows.map(toLeague).filter((l): l is League => l !== null)
+        rows.sort((a, b) => Date.parse(b.row.created_at) - Date.parse(a.row.created_at))
+        const leagues = rows.map((r) => toLeague(r.row, r.isFavorite)).filter((l): l is League => l !== null)
         return { ok: true, leagues }
       } catch {
         return { ok: false, reason: LOAD_FAILURE_MESSAGE }

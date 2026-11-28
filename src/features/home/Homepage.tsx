@@ -1,18 +1,23 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useMemo } from 'react'
+import { Link } from 'react-router'
 import '../../App.css'
 import BottomNav from '../../shared/BottomNav'
-import { ACTIONS, ALERTS_PER_PAGE, SPORTS } from './homeData'
-import { SportIcon } from './SportIcon'
+import { ACTIONS, ALERTS_PER_PAGE } from './homeData'
+import { RibbonHeading } from './RibbonHeading'
 import { Pager } from '../../shared/Pager'
 import { usePagination } from '../../shared/usePagination'
-import CreateLeagueWizard, { type WizardFormat } from '../leagues/wizard/CreateLeagueWizard'
+import type { LeagueLoader } from '../leagues/leagueLoader'
+import { LEAGUE_TYPE_ACCENT, MAX_TOP_LEAGUES } from '../leagues/leaguesData'
+import { useMyLeagues } from '../leagues/useMyLeagues'
 
 
-export default function Homepage() {
+export default function Homepage({ loader }: { loader?: LeagueLoader } = {}) {
   const { page, pageCount, visible, setPage } = usePagination(ACTIONS, ALERTS_PER_PAGE)
-  const [wizardFormat, setWizardFormat] = useState<WizardFormat | null>(null)
-  const navigate = useNavigate()
+  const { state: mine } = useMyLeagues(loader)
+  const topLeagues = useMemo(
+    () => (mine.status === 'ready' ? mine.leagues.filter((l) => l.isFavorite).slice(0, MAX_TOP_LEAGUES) : []),
+    [mine],
+  )
 
   return (
     <div className="app-shell">
@@ -26,47 +31,32 @@ export default function Homepage() {
           </div>
         </header>
 
-        <section className="dash-section" aria-labelledby="dash-join">
-          <h2 id="dash-join" tabIndex={-1} className="dash-heading dash-heading-icon">
-            <span className="sport-heading-pic" aria-hidden="true">
-              {SPORTS[0].emoji}
-            </span>
-            Create league
-          </h2>
-          {SPORTS.map((s) => (
-            <div key={s.name} className="sport-group">
-              <ul className="sport-grid">
-                {s.formats.map((f) => (
-                  <li key={f.name}>
-                    <button
-                      type="button"
-                      className={`sport-card accent-${f.accent}`}
-                      aria-label={`Create a ${f.name} ${s.name} league`}
-                      disabled={!f.enabled}
-                      onClick={() => setWizardFormat({ name: f.name, sport: s.name, accent: f.accent })}
-                    >
-                      <span className="sport-icon-wrap">
-                        <SportIcon name={f.icon} className="sport-pic" />
+        <section className="dash-section" aria-labelledby="dash-top-leagues">
+          <RibbonHeading id="dash-top-leagues">Top leagues</RibbonHeading>
+          {mine.status === 'error' && <p role="alert">{mine.message}</p>}
+          {mine.status === 'ready' &&
+            (topLeagues.length > 0 ? (
+              <ul className="top-leagues">
+                {topLeagues.map((l) => (
+                  <li key={l.id}>
+                    <Link to={`/leagues/${l.id}`} className={`top-league accent-${LEAGUE_TYPE_ACCENT[l.leagueType]}`}>
+                      <span className="top-league-bubble" aria-hidden="true">
+                        {l.emoji}
                       </span>
-                      <span className="sport-text">
-                        <span className="sport-name">{f.name}</span>
-                        <span className="sport-tagline">{f.tagline}</span>
-                      </span>
-                      <span className="sport-chevron" aria-hidden="true">
-                        ›
-                      </span>
-                    </button>
+                      <span className="top-league-name">{l.name}</span>
+                    </Link>
                   </li>
                 ))}
               </ul>
-            </div>
-          ))}
+            ) : (
+              <p className="empty-state top-leagues-empty">
+                Add a league to your favorites from the <Link to="/leagues">Leagues page</Link>.
+              </p>
+            ))}
         </section>
 
         <section className="dash-section" aria-labelledby="dash-actions">
-          <h2 id="dash-actions" className="dash-heading">
-            Alerts
-          </h2>
+          <RibbonHeading id="dash-actions">Alerts</RibbonHeading>
           <ul className="action-list">
             {visible.map((a) => (
               <li key={a.id}>
@@ -93,13 +83,6 @@ export default function Homepage() {
         </section>
       </main>
       <BottomNav />
-      {wizardFormat && (
-        <CreateLeagueWizard
-          format={wizardFormat}
-          onClose={() => setWizardFormat(null)}
-          onCreated={() => navigate('/leagues')}
-        />
-      )}
     </div>
   )
 }
