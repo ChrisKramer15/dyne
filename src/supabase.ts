@@ -1,3 +1,5 @@
+// TEMPORARY: must stay the first import so the storage snapshot is taken before Supabase starts.
+import { withDebugLog } from './debug/authDebug'
 import { createClient } from '@supabase/supabase-js'
 import { createSwitchableStorage, type StorageLike } from './auth/switchableStorage'
 
@@ -32,8 +34,8 @@ function getBrowserStore(name: 'localStorage' | 'sessionStorage'): StorageLike {
 }
 
 export const authStorage = createSwitchableStorage(
-  getBrowserStore('localStorage'),
-  getBrowserStore('sessionStorage'),
+  withDebugLog('local', getBrowserStore('localStorage')),
+  withDebugLog('session', getBrowserStore('sessionStorage')),
 )
 
 export const supabase = createClient(url, anonKey, {
