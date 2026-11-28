@@ -1,4 +1,3 @@
-import { debugLog } from '../debug/authDebug' // TEMPORARY
 import type { SwitchableStorage } from './switchableStorage'
 
 export type SignInResult =
@@ -126,7 +125,6 @@ function httpStatus(err: unknown): number | undefined {
 export function createAuthService(client: AuthServiceClient, storage: SwitchableStorage): AuthService {
   return {
     async signIn({ username, password, remember }) {
-      debugLog(`signIn started, remember=${remember}`) // TEMPORARY
       storage.setMode(remember ? 'local' : 'session')
       try {
         const { data, error } = await withTimeout(
@@ -146,7 +144,6 @@ export function createAuthService(client: AuthServiceClient, storage: Switchable
           }),
         )
         if (sessionError) return { ok: false, error: 'unavailable' }
-        debugLog(`signIn succeeded, degraded=${storage.degraded}`) // TEMPORARY
         return { ok: true, rememberFailed: storage.degraded }
       } catch {
         return { ok: false, error: 'unavailable' }
