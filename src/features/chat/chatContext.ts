@@ -17,6 +17,8 @@ export interface ChatContextValue {
   totalDms: number
   /** Unread messages in group chats. */
   totalGroups: number
+  /** Unread messages across one league's group chat and private messages. */
+  leagueUnread(leagueId: string): number
   /** Unread count for one conversation; null when it could not be retrieved. */
   unreadFor(conversationId: string): number | null
   /**
@@ -44,6 +46,12 @@ export function useChat(): ChatContextValue {
     throw new Error('useChat must be used within a ChatProvider')
   }
   return value
+}
+
+/** Safe outside a ChatProvider: reports no unread messages in a league. */
+export function useLeagueChatUnread(leagueId: string): number {
+  const value = useContext(ChatContext)
+  return value?.leagueUnread(leagueId) ?? 0
 }
 
 /** Safe outside a ChatProvider: reports no unread messages. */

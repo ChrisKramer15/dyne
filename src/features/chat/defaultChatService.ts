@@ -46,6 +46,8 @@ interface ConversationRow {
   latest_message_at: string | null
   unread: number | string | null
   last_read_at: string
+  /** Absent until the league-chat migration is applied. */
+  league_id?: string | null
 }
 
 function toSummary(r: ConversationRow): ConversationSummary {
@@ -58,6 +60,7 @@ function toSummary(r: ConversationRow): ConversationSummary {
     latestMessageText: r.latest_message_text,
     latestMessageAt: r.latest_message_at,
     unread: r.unread === null || r.unread === undefined ? null : Number(r.unread),
+    leagueId: r.league_id ?? null,
   }
 }
 
@@ -409,6 +412,54 @@ export function createChatService(client: SupabaseClient): ChatService {
       }
     },
 
+    async getOrCreateLeagueChat(leagueId) {
+      try {
+        const { data, error } = await withTimeout(
+          client.rpc('get_or_create_league_chat', { lg: leagueId }),
+        )
+        if (error) {
+          return errorText(error).includes('not_league_member') ||
+            errorText(error).includes('league_not_found')
+            ? { ok: false, error: 'not_member' }
+            : { ok: false, error: 'unavailable' }
+        }
+        return { ok: true, conversationId: data as string }
+      } catch {
+        return { ok: false, error: 'unavailable' }
+      }
+    },
+
+    async listLeagueMembers(leagueId) {
+      try {
+        const { data, error } = await withTimeout(
+          client.rpc('league_member_list', { lg: leagueId }),
+        )
+        if (error) return { ok: false, error: 'unavailable' }
+        const rows = (data ?? []) as { user_id: string; username: string }[]
+        for (const r of rows) names.set(r.user_id, r.username)
+        return { ok: true, members: rows.map((r) => ({ userId: r.user_id, username: r.username })) }
+      } catch {
+        return { ok: false, error: 'unavailable' }
+      }
+    },
+
+    async openLeagueDm({ leagueId, otherUserId }) {
+      try {
+        const { data, error } = await withTimeout(
+          client.rpc('get_or_create_league_dm', { lg: leagueId, other: otherUserId }),
+        )
+        if (error) {
+          const text = errorText(error)
+          if (text.includes('self_conversation')) return { ok: false, error: 'self' }
+          if (text.includes('not_league_member')) return { ok: false, error: 'not_member' }
+          return { ok: false, error: 'unavailable' }
+        }
+        return { ok: true, conversationId: data as string }
+      } catch {
+        return { ok: false, error: 'unavailable' }
+      }
+    },
+
     async loadUnreadTotal() {
       try {
         const rows = await fetchConversations()
@@ -421,6 +472,7 @@ export function createChatService(client: SupabaseClient): ChatService {
             lastReadAt: r.last_read_at,
             kind: r.kind,
             otherUserName: r.other_user_name,
+            leagueId: r.league_id ?? null,
           })),
         }
       } catch {

@@ -9,6 +9,8 @@ import LandingPage from '../features/landing/LandingPage'
 const Homepage = lazy(() => import('../features/home/Homepage'))
 const LeaguesPage = lazy(() => import('../features/leagues/LeaguesPage'))
 const LeagueDashboardPage = lazy(() => import('../features/leagues/LeagueDashboardPage'))
+const LeagueChatPage = lazy(() => import('../features/leagues/chat/LeagueChatPage'))
+const LeagueChatConversationPage = lazy(() => import('../features/leagues/chat/LeagueChatConversationPage'))
 const ProfilePage = lazy(() => import('../features/profile/ProfilePage'))
 
 const ConversationListPage = lazy(() => import('../features/chat/ConversationListPage'))
@@ -50,6 +52,19 @@ export function LeagueDashboardRoute() {
   const { leagueId } = useParams()
   if (!leagueId || !UUID_PATTERN.test(leagueId)) return <NotFoundView />
   return <LeagueDashboardPage leagueId={leagueId} />
+}
+
+export function LeagueChatRoute() {
+  const { leagueId } = useParams()
+  if (!leagueId || !UUID_PATTERN.test(leagueId)) return <NotFoundView />
+  return <LeagueChatPage leagueId={leagueId} />
+}
+
+export function LeagueChatConversationRoute() {
+  const { leagueId, conversationId } = useParams()
+  if (!leagueId || !UUID_PATTERN.test(leagueId)) return <NotFoundView />
+  if (!conversationId || !UUID_PATTERN.test(conversationId)) return <NotFoundView />
+  return <LeagueChatConversationPage leagueId={leagueId} conversationId={conversationId} />
 }
 
 export function ProfileRoute() {

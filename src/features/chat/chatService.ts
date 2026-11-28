@@ -28,6 +28,8 @@ export interface ConversationSummary {
   latestMessageAt: string | null
   /** null when the count could not be retrieved. */
   unread: number | null
+  /** The league this conversation belongs to; null or absent outside leagues. */
+  leagueId?: string | null
 }
 
 export interface ChatMessage {
@@ -67,6 +69,8 @@ export interface UnreadEntry {
   kind?: ConversationKind
   /** The other person's username for a DM; used to apply blocks to unread counts. */
   otherUserName?: string | null
+  /** The league this conversation belongs to, if any. League conversations stay out of the global Chat badge. */
+  leagueId?: string | null
 }
 
 export type Unsubscribe = () => void
@@ -114,6 +118,18 @@ export type LeaveGroupResult =
 export type UnreadTotalResult =
   | { ok: true; entries: UnreadEntry[] }
   | { ok: false; error: 'unavailable' }
+
+export type LeagueChatResult =
+  | { ok: true; conversationId: string }
+  | { ok: false; error: 'not_member' | 'unavailable' }
+
+export type ListLeagueMembersResult =
+  | { ok: true; members: UserSummary[] }
+  | { ok: false; error: 'unavailable' }
+
+export type OpenLeagueDmResult =
+  | { ok: true; conversationId: string }
+  | { ok: false; error: 'self' | 'not_member' | 'unavailable' }
 
 export interface ChatEventHandlers {
   /** messages INSERT. */
@@ -163,5 +179,11 @@ export interface ChatService {
   }): Promise<ManageMemberResult>
   /** Admins, and moderators for plain members. */
   removeMember?(i: { conversationId: string; userId: string }): Promise<ManageMemberResult>
+  /** The group chat for everyone in a league; created on first use. Optional so older services still work. */
+  getOrCreateLeagueChat?(leagueId: string): Promise<LeagueChatResult>
+  /** Everyone in a league, for choosing who to message. */
+  listLeagueMembers?(leagueId: string): Promise<ListLeagueMembersResult>
+  /** A private thread with another league member, separate from DMs outside the league. */
+  openLeagueDm?(i: { leagueId: string; otherUserId: string }): Promise<OpenLeagueDmResult>
   subscribe(handlers: ChatEventHandlers): Unsubscribe
 }

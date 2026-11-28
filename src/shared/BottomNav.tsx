@@ -42,7 +42,7 @@ const NAV_ITEMS: readonly NavItem[] = [
   },
 ]
 
-function Bubble({ icon, label, badges }: { icon: ReactNode; label: string; badges?: ReactNode }) {
+export function Bubble({ icon, label, badges }: { icon: ReactNode; label: string; badges?: ReactNode }) {
   return (
     <>
       <span className="nav-bubble" aria-hidden="true">

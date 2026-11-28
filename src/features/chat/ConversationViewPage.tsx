@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import '../../App.css'
 import { useAuth } from '../../auth/authContext'
@@ -35,10 +35,26 @@ function newMessageId(): string {
 
 export interface ConversationViewProps {
   conversationId: string
+  /**
+   * Set when the view is shown inside a league. Only that league's conversations
+   * open there, and league conversations do not open outside it.
+   */
+  leagueId?: string
+  /** Where "back" and leaving/blocking go. Defaults to the global chat list. */
+  backTo?: string
+  backLabel?: string
+  /** Replaces the global bottom navigation. */
+  bottomNav?: ReactNode
 }
 
 /** The conversation view for one conversation id. Exported for tests. */
-export function ConversationView({ conversationId }: ConversationViewProps) {
+export function ConversationView({
+  conversationId,
+  leagueId,
+  backTo = '/chat',
+  backLabel = 'Back to chat',
+  bottomNav,
+}: ConversationViewProps) {
   const chat = useChat()
   const { service, openConversation, closeConversation, reportLatest, markRead, addListener } = chat
   const auth = useAuth()
@@ -315,11 +331,14 @@ export function ConversationView({ conversationId }: ConversationViewProps) {
     leavingRef.current = false
     if (!mountedRef.current) return
     setLeaving(false)
-    if (result.ok) navigate('/chat')
+    if (result.ok) navigate(backTo)
     else setLeaveError('You could not leave this group. Try again.')
   }
 
   if (status === 'not_found') return <NotFoundView />
+  // League conversations open only inside their league, and nothing else opens there.
+  if (conversation && (conversation.leagueId ?? null) !== (leagueId ?? null)) return <NotFoundView />
+  const inLeague = conversation?.leagueId != null
 
   const title = conversation ? displayName(conversation) : 'Conversation'
   const other = members.find((m) => m.userId !== selfId) ?? null
@@ -338,10 +357,10 @@ export function ConversationView({ conversationId }: ConversationViewProps) {
       <main className="home-main conversation-view">
         <header className="conversation-view-header">
           <div className="conversation-actions">
-            <Link to="/chat" className="conversation-back">
-              Back to chat
+            <Link to={backTo} className="conversation-back">
+              {backLabel}
             </Link>
-            {conversation?.kind === 'group' && (
+            {conversation?.kind === 'group' && !inLeague && (
               <button
                 type="button"
                 className="conversation-leave"
@@ -371,11 +390,11 @@ export function ConversationView({ conversationId }: ConversationViewProps) {
                 onBlock={() => {
                   if (!other) return
                   blocked.add(other)
-                  navigate('/chat')
+                  navigate(backTo)
                 }}
               />
             )}
-            {conversation?.kind === 'group' && (
+            {conversation?.kind === 'group' && !inLeague && (
               <GroupActions
                 groupName={title}
                 members={members}
@@ -448,15 +467,18 @@ export function ConversationView({ conversationId }: ConversationViewProps) {
           />
         )}
       </main>
-      <BottomNav />
+      {bottomNav ?? <BottomNav />}
     </div>
   )
 }
 
 /** Route component: reads `:conversationId` unless one is passed. */
-export default function ConversationViewPage({ conversationId }: { conversationId?: string }) {
+export default function ConversationViewPage({
+  conversationId,
+  ...view
+}: { conversationId?: string } & Omit<ConversationViewProps, 'conversationId'>) {
   const params = useParams()
   const id = conversationId ?? params.conversationId
   if (!id) return <NotFoundView />
-  return <ConversationView key={id} conversationId={id} />
+  return <ConversationView key={id} conversationId={id} {...view} />
 }

@@ -143,8 +143,9 @@ describe('result mapping', () => {
           latestMessageText: 'yo',
           latestMessageAt: 't1',
           unread: 3,
+          leagueId: null,
         },
-        expect.objectContaining({ id: 'c2', name: 'G', unread: null }),
+        expect.objectContaining({ id: 'c2', name: 'G', unread: null, leagueId: null }),
       ],
     })
   })

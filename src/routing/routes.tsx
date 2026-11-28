@@ -6,6 +6,8 @@ import {
   ChatListRoute,
   HomeRoute,
   LandingRoute,
+  LeagueChatConversationRoute,
+  LeagueChatRoute,
   LeagueDashboardRoute,
   LeaguesRoute,
   ProfileRoute,
@@ -43,6 +45,16 @@ export const appRoutes: RouteObject[] = [
         path: '/leagues/:leagueId',
         element: <LeagueDashboardRoute />,
         handle: { access: 'protected', title: 'League' } satisfies DyneRouteHandle,
+      },
+      {
+        path: '/leagues/:leagueId/chat',
+        element: <LeagueChatRoute />,
+        handle: { access: 'protected', title: 'League chat' } satisfies DyneRouteHandle,
+      },
+      {
+        path: '/leagues/:leagueId/chat/:conversationId',
+        element: <LeagueChatConversationRoute />,
+        handle: { access: 'protected', title: 'League conversation' } satisfies DyneRouteHandle,
       },
       {
         path: '/profile',

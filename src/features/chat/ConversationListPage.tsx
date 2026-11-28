@@ -120,9 +120,12 @@ export default function ConversationListPage() {
   const sorted = useMemo(
     () =>
       state.status === 'loaded'
-        ? sortConversations(state.conversations).filter(
-            (c) => c.kind !== 'personal' || !blockedNames.has((c.otherUserName ?? '').toLowerCase()),
-          )
+        ? sortConversations(state.conversations)
+            // League chats live on their league's chat page, not here.
+            .filter((c) => !c.leagueId)
+            .filter(
+              (c) => c.kind !== 'personal' || !blockedNames.has((c.otherUserName ?? '').toLowerCase()),
+            )
         : [],
     [state, blockedNames],
   )

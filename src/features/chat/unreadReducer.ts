@@ -10,6 +10,8 @@ export interface UnreadState {
   kinds: Record<string, ConversationKind>
   /** DM partner's username per id (null for groups). */
   others: Record<string, string | null>
+  /** League id per conversation; null for conversations outside leagues. */
+  leagues: Record<string, string | null>
   status: 'idle' | 'loaded' | 'failed'
 }
 
@@ -28,7 +30,7 @@ export type UnreadAction =
   | { type: 'CONVERSATION_REMOVED'; conversationId: string }
   | { type: 'RESET' }
 
-export const initialUnreadState: UnreadState = { counts: {}, markers: {}, kinds: {}, others: {}, status: 'idle' }
+export const initialUnreadState: UnreadState = { counts: {}, markers: {}, kinds: {}, others: {}, leagues: {}, status: 'idle' }
 
 /** Compares two ISO timestamps by instant; falls back to string order if unparsable. */
 function compareTime(a: string, b: string): number {
@@ -45,13 +47,15 @@ export function unreadReducer(state: UnreadState, action: UnreadAction): UnreadS
       const markers: Record<string, string> = {}
       const kinds: Record<string, ConversationKind> = {}
       const others: Record<string, string | null> = {}
+      const leagues: Record<string, string | null> = {}
       for (const e of action.entries) {
         counts[e.conversationId] = e.unread
         markers[e.conversationId] = e.lastReadAt
         kinds[e.conversationId] = e.kind ?? 'personal'
         others[e.conversationId] = e.otherUserName ?? null
+        leagues[e.conversationId] = e.leagueId ?? null
       }
-      return { counts, markers, kinds, others, status: 'loaded' }
+      return { counts, markers, kinds, others, leagues, status: 'loaded' }
     }
     case 'LOAD_FAILED':
       return state.status === 'failed' ? state : { ...state, status: 'failed' }
@@ -89,11 +93,13 @@ export function unreadReducer(state: UnreadState, action: UnreadAction): UnreadS
       const markers = { ...state.markers }
       const kinds = { ...state.kinds }
       const others = { ...state.others }
+      const leagues = { ...state.leagues }
+      delete leagues[id]
       delete counts[id]
       delete markers[id]
       delete kinds[id]
       delete others[id]
-      return { ...state, counts, markers, kinds, others }
+      return { ...state, counts, markers, kinds, others, leagues }
     }
     case 'RESET':
       return initialUnreadState
@@ -119,6 +125,27 @@ export function unreadByKind(
   for (const [id, c] of Object.entries(state.counts)) {
     if (typeof c !== 'number' || exclude?.has(id)) continue
     if ((state.kinds[id] ?? 'personal') === kind) total += c
+  }
+  return total
+}
+
+/** Ids of conversations that belong to any league. */
+export function leagueConversationIds(state: UnreadState): Set<string> {
+  const ids = new Set<string>()
+  for (const [id, league] of Object.entries(state.leagues)) if (league) ids.add(id)
+  return ids
+}
+
+/** Sum of known unread counts across one league's conversations, skipping excluded ids. */
+export function unreadForLeague(
+  state: UnreadState,
+  leagueId: string,
+  exclude?: ReadonlySet<string>,
+): number {
+  let total = 0
+  for (const [id, c] of Object.entries(state.counts)) {
+    if (typeof c !== 'number' || exclude?.has(id)) continue
+    if (state.leagues[id] === leagueId) total += c
   }
   return total
 }

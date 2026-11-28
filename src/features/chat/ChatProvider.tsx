@@ -12,7 +12,14 @@ import type { ChatService, LeaveGroupResult } from './chatService'
 import { getDefaultChatService } from './defaultChatService'
 import { ChatContext } from './chatContext'
 import type { ChatContextValue, ChatListener } from './chatContext'
-import { blockedDmIds, initialUnreadState, unreadByKind, unreadReducer } from './unreadReducer'
+import {
+  blockedDmIds,
+  initialUnreadState,
+  leagueConversationIds,
+  unreadByKind,
+  unreadForLeague,
+  unreadReducer,
+} from './unreadReducer'
 import type { UnreadState } from './unreadReducer'
 import { useUserList } from './userLists'
 
@@ -288,9 +295,20 @@ export function ChatProvider({
     [state.counts, state.status, hiddenIds],
   )
 
-  const totalDms = unreadByKind(state, 'personal', hiddenIds)
-  const totalGroups = unreadByKind(state, 'group', hiddenIds)
+  // League conversations have their own badge on the league nav; the global
+  // Chat badge only counts conversations outside leagues.
+  const globalExcluded = useMemo(
+    () => new Set([...hiddenIds, ...leagueConversationIds(state)]),
+    [hiddenIds, state],
+  )
+  const totalDms = unreadByKind(state, 'personal', globalExcluded)
+  const totalGroups = unreadByKind(state, 'group', globalExcluded)
   const total = totalDms + totalGroups
+
+  const leagueUnread = useCallback(
+    (leagueId: string): number => unreadForLeague(state, leagueId, hiddenIds),
+    [state, hiddenIds],
+  )
 
   const value = useMemo<ChatContextValue>(
     () => ({
@@ -298,6 +316,7 @@ export function ChatProvider({
       total,
       totalDms,
       totalGroups,
+      leagueUnread,
       unreadFor,
       markRead,
       openConversation,
@@ -312,6 +331,7 @@ export function ChatProvider({
       total,
       totalDms,
       totalGroups,
+      leagueUnread,
       unreadFor,
       markRead,
       openConversation,
