@@ -24,7 +24,14 @@ export default function LeagueBottomNav({ leagueId }: { leagueId: string }) {
           <NavLink to={`/leagues/${leagueId}`} end className="nav-item">
             <Bubble
               label="Overview"
-              icon={<path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z" />}
+              icon={
+                <>
+                  <rect x="4" y="4" width="7" height="7" rx="1" />
+                  <rect x="13" y="4" width="7" height="7" rx="1" />
+                  <rect x="4" y="13" width="7" height="7" rx="1" />
+                  <rect x="13" y="13" width="7" height="7" rx="1" />
+                </>
+              }
             />
           </NavLink>
         </li>

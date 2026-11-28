@@ -13,9 +13,9 @@ export function badgeText(count: number): string {
 }
 
 /** Accessible name of the Chat nav item, with the exact uncapped total. */
-export function chatNavLabel(total: number): string {
+export function chatNavLabel(total: number, label = 'Chat'): string {
   const whole = Number.isFinite(total) ? Math.floor(total) : 0
-  return whole > 0 ? `Chat, ${unreadPhrase(whole)}` : 'Chat'
+  return whole > 0 ? `${label}, ${unreadPhrase(whole)}` : label
 }
 
 /**

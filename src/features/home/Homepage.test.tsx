@@ -47,7 +47,7 @@ describe('Homepage structure and accessibility', () => {
     renderHome()
     const nav = screen.getByRole('navigation', { name: 'Primary' })
     const items = within(nav).getAllByRole('listitem').map((li) => li.textContent)
-    expect(items).toEqual(['Home', 'Leagues', 'Chat', 'Profile'])
+    expect(items).toEqual(['Home', 'Leagues', 'Messages', 'Profile'])
     expect(within(nav).getByRole('link', { name: 'Home' }).getAttribute('aria-current')).toBe('page')
     expect(within(nav).getByRole('link', { name: 'Leagues' }).getAttribute('href')).toBe('/leagues')
     expect(within(nav).getByRole('link', { name: 'Leagues' }).getAttribute('aria-current')).toBeNull()
@@ -61,7 +61,7 @@ describe('Homepage structure and accessibility', () => {
     await user.tab({ shift: true })
     expect(document.activeElement).toBe(profile)
     await user.tab({ shift: true })
-    expect(document.activeElement).toBe(screen.getByRole('link', { name: 'Chat' }))
+    expect(document.activeElement).toBe(screen.getByRole('link', { name: 'Messages' }))
   })
   it('has no top-right icon buttons', () => {
     renderHome()

@@ -27,7 +27,7 @@ function currentLinks(): HTMLElement[] {
 const exactPaths = [
   ['/home', 'Home'],
   ['/leagues', 'Leagues'],
-  ['/chat', 'Chat'],
+  ['/chat', 'Messages'],
   ['/profile', 'Profile'],
 ] as const
 
@@ -37,8 +37,8 @@ describe('BottomNav current item', () => {
   it('marks exactly one item current for any section path, and Chat for every /chat/* path', () => {
     const sectionPath = fc.oneof(
       fc.constantFrom(...exactPaths).map(([p, label]) => ({ path: p as string, label: label as string })),
-      fc.uuid().map((id) => ({ path: `/chat/${id}`, label: 'Chat' })),
-      fc.uuid().map((id) => ({ path: `/chat/${id}/`, label: 'Chat' })),
+      fc.uuid().map((id) => ({ path: `/chat/${id}`, label: 'Messages' })),
+      fc.uuid().map((id) => ({ path: `/chat/${id}/`, label: 'Messages' })),
     )
     fc.assert(
       fc.property(sectionPath, ({ path, label }) => {
@@ -71,12 +71,12 @@ describe('BottomNav current item', () => {
 describe('BottomNav Chat item', () => {
   it('links to /chat', () => {
     renderAt('/home')
-    expect(screen.getByRole('link', { name: 'Chat' })).toHaveAttribute('href', '/chat')
+    expect(screen.getByRole('link', { name: 'Messages' })).toHaveAttribute('href', '/chat')
   })
 
   it('shows no badge outside a ChatProvider', () => {
     const { container } = renderAt('/home')
     expect(container.querySelector('.unread-alert')).toBeNull()
-    expect(screen.getByRole('link', { name: 'Chat' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Messages' })).toBeInTheDocument()
   })
 })

@@ -29,7 +29,7 @@ const NAV_ITEMS: readonly NavItem[] = [
       </>
     ),
   },
-  { label: 'Chat', to: '/chat', icon: <path d="M4 5h16v11H9l-5 4z" /> },
+  { label: 'Messages', to: '/chat', icon: <path d="M4 5h16v11H9l-5 4z" /> },
   {
     label: 'Profile',
     to: '/profile',
@@ -73,12 +73,12 @@ export default function BottomNav() {
           <li key={item.label}>
             {item.to ? (
               // NavLink sets aria-current="page" on the active route.
-              item.label === 'Chat' ? (
+              item.label === 'Messages' ? (
                 <NavLink
                   to={item.to}
                   end={false}
                   className="nav-item"
-                  aria-label={chatNavLabel(total)}
+                  aria-label={chatNavLabel(total, 'Messages')}
                 >
                   <Bubble
                     icon={item.icon}

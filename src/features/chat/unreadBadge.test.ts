@@ -16,6 +16,10 @@ describe('badgeText', () => {
 describe('chatNavLabel', () => {
   it('has no count when zero', () => expect(chatNavLabel(0)).toBe('Chat'))
   it('uses singular for 1', () => expect(chatNavLabel(1)).toBe('Chat, 1 unread message'))
+  it('uses a custom label', () => {
+    expect(chatNavLabel(0, 'Messages')).toBe('Messages')
+    expect(chatNavLabel(3, 'Messages')).toBe('Messages, 3 unread messages')
+  })
   it('uses plural', () => expect(chatNavLabel(5)).toBe('Chat, 5 unread messages'))
   it('is uncapped above 99', () => expect(chatNavLabel(142)).toBe('Chat, 142 unread messages'))
 })
