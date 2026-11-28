@@ -39,7 +39,7 @@ export default function Homepage({ loader }: { loader?: LeagueLoader } = {}) {
               <ul className="top-leagues">
                 {topLeagues.map((l) => (
                   <li key={l.id}>
-                    <Link to={`/leagues/${l.id}`} className={`top-league accent-${LEAGUE_TYPE_ACCENT[l.leagueType]}`}>
+                    <Link to={`/leagues/${l.id}`} className={`top-league accent-${LEAGUE_TYPE_ACCENT[l.leagueType]}`} title={l.name}>
                       <span className="top-league-bubble" aria-hidden="true">
                         {l.emoji}
                       </span>

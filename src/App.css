@@ -3253,6 +3253,12 @@ button.profile-stat:focus-visible {
   line-height: 1.2;
   text-align: center;
   overflow-wrap: anywhere;
+  /* At most two lines; the full name is in the link's title and on the league page. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
 }
 .top-leagues-empty a {
   color: var(--text);
